@@ -1,38 +1,21 @@
 // Copyright 2019 YOUR NAME
 // This file is licensed under MIT License, as specified in the file LISENSE located at the root folder of this repository.
 
-#include <odd.h>
+#include "odd.h"
 #include <stdio.h>
 #include <stdbool.h>
 
-using namespace std;
 
-bool numMembership(ODD* odd, int* numSeq){
-
-    Layer currentLayer;
-    State currentState;
-    bool noTransitionFound;
-
-
-    //Try all initial states
-    for(int i=0; i< odd.layers[0].initialStates.nStates; i++){
-
-    }
-
-    //Try all initial states
-    for(state s : odd.layers[0].initialStates.set){
-        bool b = tryPath(odd, 0, s, odd.layerSequence[0], 0);
-        if(b){
-            return 1;
-        }
-    }
-    return 0;
-}
 
 bool tryPath(ODD* odd, int* numSeq, State state, Layer layer, int seq){
-    for(transition t : layer.transition.set){
-        if(t.s1 == state && t. == numSeq[seq]){
-            bool b = tryPath(odd, numSeq, t.s2, odd.layerSequence[seq+1], seq+1);
+    Transition t;
+    for(int i=0; i < layer.transitions.nTransitions; i++){
+        t = layer.transitions.set[i];
+        if(t.s1 == state && t.a == numSeq[seq]){
+            if(layer.finalFlag){
+                return 1;
+            }
+            bool b = tryPath(odd, numSeq, t.s2, odd->layerSequence[seq+1], seq+1);
             if(b){
                 return 1;
             }
@@ -41,6 +24,19 @@ bool tryPath(ODD* odd, int* numSeq, State state, Layer layer, int seq){
     return 0;
 }
 
+bool numMembership(ODD* odd, int* numSeq){
+
+    //Try all initial states
+    for(int i=0; i < odd -> layerSequence[0] . initialStates . nStates; i++){
+        bool b = tryPath(odd, 0, odd->layerSequence[0] . initialStates . set[i], odd->layerSequence[0], 0);
+        if(b){
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/*
 bool strMembership(ODD* odd, char** strSeq){
 
     State currentState = odd.InitialStates.set[i];
@@ -98,3 +94,4 @@ bool strMembership(ODD* odd, char** strSeq){
 
     return 1;
 }
+ */
