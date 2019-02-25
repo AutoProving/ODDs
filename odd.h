@@ -94,8 +94,8 @@ typedef struct{
 			// This is useful when dealing with large alphabets.
 } AlphabetMap;
 
-void symbolName(NumSymbol a); // returns N2S[a]
-void numberSymbol(char* name); // returns the number of the the symbol named name. 
+char* symbolName(NumSymbol a); // returns N2S[a]
+int numberSymbol(char* name); // returns the number of the the symbol named name. 
 
 
 
@@ -139,13 +139,13 @@ void readODD(char* filename, ODD* odd); // Reads a sequence of layers
 
 //Printing to file. 
 
-void printSymbol(char* filename, NumSymbol s); 
-void printAlphabetMap(char* filename, AlphabetMap* map);
-void printState(char* filename, State s); 
-void printStates(char* filename, StateContainer* states);
-void printTransition(char* filename, Transition t); 
-void printTransitions(char* filename, TransitionContainer* transitions); 
-void printLayer(char* filename, Layer* layer);
+void printSymbol(FILE *f, NumSymbol s); 
+void printAlphabetMap(FILE *f, AlphabetMap* map);
+void printState(FILE *f, State s); 
+void printStates(FILE *f, StateContainer* states);
+void printTransition(FILE *f, Transition t); 
+void printTransitions(FILE *f, TransitionContainer* transitions); 
+void printLayer(FILE *f, Layer* layer);
 void printODD(char* filename, ODD* odd); 
 
 
