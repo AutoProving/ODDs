@@ -81,7 +81,6 @@ void readTransitions(FILE *reader, TransitionContainer* transitions){
         Transition transition;
         readTransition(reader, &transition);
         transitions->set[i] = transition;
-        printf("%d %d %d\n", transitions->set[i].s1, transitions->set[i].a, transitions->set[i].s2);
     }
 } // Reads nTransitions transitions
 
