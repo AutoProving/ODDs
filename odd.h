@@ -1,4 +1,5 @@
-// Copyright 2019/02 Mateus de Oliveira Oliveira
+// Copyright 2019 Mateus de Oliveira Oliveira
+// This file is licensed under MIT License, as specified in the file LISENSE located at the root folder of this repository.
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -126,7 +127,7 @@ typedef struct{
 } ODD; 
 
 
-//Read from file,
+//Read from file. (Functions implemented in file reading.c)
 
 void readSymbol(char*filename); // Reads a string representing the name of a symbol
 void readAlphabetMap(char* filename, int nSymbols, AlphabetMap* map); // Reads nSymbols 
@@ -137,7 +138,7 @@ void readTransitions(char* filename, int nTransitions, TransitionContainer* tran
 void readLayer(char* filename); // Reads a layer 
 void readODD(char* filename, ODD* odd); // Reads a sequence of layers
 
-//Printing to file. 
+//Printing to file. (Functions implemented in file printing.c) 
 
 void printSymbol(FILE *f, NumSymbol s); 
 void printAlphabetMap(FILE *f, AlphabetMap* map);
@@ -149,61 +150,70 @@ void printLayer(FILE *f, Layer* layer);
 void printODD(char* filename, ODD* odd); 
 
 
-//Membership Testing (Numerical and String)
+//Membership Testing (Numerical and String)  (Functions implemented in file membership.c)
 
 bool numMembership(ODD* odd, int* numSeq); // returns 1 iff the sequence numSeq is accepted by odd
 bool strMembership(ODD* odd, char** strSeq); // returns 1 if the sequence of symbol names represented by strSeq is accepted by odd
 
 
-//Union
+//Union (Functions implemented in file union.c)
 
 void unionLayers(Layer* layer1, Layer* layer2, Layer* result);
 void uniontODDs(ODD* odd1, ODD* odd2, ODD* odd); 
 
-//Intersection
+//Intersection (Functions implemented in file intersection.c)
+
 
 void intersectionLayers(Layer* layer1, Layer layer2, Layer* result);
 void intersectionODD(ODD* odd1, ODD* odd2, ODD odd); 
 
-//tensorProduct
+//tensorProduct (Functions implemented in file tensorProduct.c)
+
 
 void tensorLayers(Layer* layer1, Layer layer2, Layer* result);
 void tensorODD(ODD* odd1, ODD* odd2, ODD odd); 
 
-//test deterministic
+//test deterministic (Functions implemented in file deterministic.c)
+
 
 void isDeterministicLayer(Layer* layer); 
 void isDeterministicODD(ODD* odd); 
 
-//test complete
+//test complete (Functions implemented in file complete.c)
+
 
 void isCompleteLayer(Layer* layer); 
 void isCompleteODD(ODD* odd); 
 
 
-//Negation
+//Negation (Functions implemented in file negation.c)
+
 
 void negationLayer(Layer* layer, Layer result);
 void negationODD(ODD* odd, ODD* result); 
 
-//Power Set
+//Power Set (Functions implemented in file powerSet.c)
+
 
 int orderSet(int* S, Layer* layer); // maps subsets of integers to numbers. S has layer.width positions. S[i]=1 indicates that i belongs to S
 int* next(int* S, NumSymbol a, Layer* layer); // Returns the set obtained by reading symbol a from some state in set S.  
 void powerSetLayer (Layer* layer, Layer* result);  
 void powerSetODD(ODD* odd, ODD* result); 
 
-//Completion
+//Completion (Functions implemented in file completion.c)
+
 
 void makeCompleteLayer(Layer* layer, Layer result);
 void makeCompleteODD(ODD* odd, ODD* result); 
 
-//Memorization
+//Memorization (Functions implemented in file memorization.c)
+
 
 void memorizeLayer(Layer* layer, Layer result);
 void memorizeODD(ODD* odd, ODD* result); 
 
-//minimization
+//minimization (Functions implemented in file minimization.c)
+
 
 void minimizeODD(ODD* odd, ODD* result); 
 
