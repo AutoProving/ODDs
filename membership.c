@@ -4,6 +4,7 @@
 #include "odd.h"
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 
 
@@ -31,14 +32,17 @@ bool tryPath(ODD* odd, int* numSeq, State state, Layer layer, int seq){
 bool numMembership(ODD* odd, int* numSeq){
 
     //Try all initial states
-    for(int i=0; i < odd -> layerSequence[0] . initialStates . nStates; i++){
-        bool b = tryPath(odd, numSeq, odd->layerSequence[0] . initialStates . set[i], odd->layerSequence[0], 0);
+    for(int i=0; i < (odd -> layerSequence[0] .initialStates .nStates); i++){
+        bool b = tryPath(odd, numSeq, odd->layerSequence[0] .initialStates . set[i], odd->layerSequence[0], 0);
         if(b){
             return 1;
         }
     }
     return 0;
 }
+
+
+
 
 bool tryStringPath(ODD* odd, char** strSeq, State state, Layer layer, int seq){
 
