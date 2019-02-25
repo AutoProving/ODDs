@@ -98,11 +98,11 @@ void readLayer(FILE *reader, Layer* layer){
         int flag;
         if (strstr(line, "INITIAL_FLAG") != NULL) {
             sscanf(line, "%s %d", c, &flag);
-            layer->initialFlag = flag == 1 ? true : false;
+            layer->initialFlag = flag == 1;
         }
         if (strstr(line, "FINAL_FLAG") != NULL) {
             sscanf(line, "%s %d", c, &flag);
-            layer->finalFlag = flag == 1 ? true : false;
+            layer->finalFlag = flag == 1;
         }
     }
 } // Reads a layer
