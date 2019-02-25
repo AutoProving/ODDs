@@ -164,9 +164,3 @@ void readODD(char* filename, ODD* odd){
     }
     fclose(reader);
 } // Reads a sequence of layers
-
-int main(){
-    ODD odd;
-    readODD("ODD-Example.txt", &odd);
-    return 0;
-}
