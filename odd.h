@@ -140,13 +140,13 @@ void readODD(char* filename, ODD* odd); // Reads a sequence of layers
 
 //Printing to file. (Functions implemented in file printing.c) 
 
-void printSymbol(char* filename, NumSymbol s); 
-void printAlphabetMap(char* filename, AlphabetMap* map);
-void printState(char* filename, State s); 
-void printStates(char* filename, StateContainer* states);
-void printTransition(char* filename, Transition t); 
-void printTransitions(char* filename, TransitionContainer* transitions); 
-void printLayer(char* filename, Layer* layer);
+void printSymbol(FILE* filename, NumSymbol s); 
+void printAlphabetMap(FILE* filename, AlphabetMap* map);
+void printState(FILE* filename, State s); 
+void printStates(FILE* filename, StateContainer* states);
+void printTransition(FILE* filename, Transition t); 
+void printTransitions(FILE* filename, TransitionContainer* transitions); 
+void printLayer(FILE* filename, Layer* layer);
 void printODD(char* filename, ODD* odd); 
 
 
