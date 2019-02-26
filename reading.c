@@ -1,5 +1,6 @@
-// Copyright 2019 Ole Magnus Lie
-// This file is licensed under MIT License, as specified in the file LICENSE located at the root folder of this repository.
+// Copyright 2019 YOUR NAME
+// This file is licensed under MIT License, as specified in the file LISENSE located at the root folder of this repository.
+
 
 #include <stdlib.h>
 #include <string.h>
