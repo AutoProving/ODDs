@@ -112,6 +112,7 @@ void readLayer(FILE *reader, Layer* layer){
     layer->rightStates = rightStates;
     layer->initialStates = initialStates;
     layer->finalStates = finalStates;
+    layer->transitions = transitions;
     layer->width = leftStates.nStates > rightStates.nStates ? leftStates.nStates : rightStates.nStates;
 
     while(fgets(line, sizeof(line), reader)) {
