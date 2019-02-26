@@ -8,10 +8,12 @@
 /**
 	Will print a number n and its corresponding string N2S[n].
 */
+/*
 void printSymbol(FILE *f, NumSymbol s)
 {
-	fprintf(f, "%d %s\n", s, symbolName(s));
+	
 }
+*/
 
 /**
 	Calls printSymbol for each element in the map.
@@ -20,7 +22,7 @@ void printAlphabetMap(FILE *f, AlphabetMap* map)
 {
 	for(int i = 0; i < map->sizeAlphabet; i++) 
 	{
-		printSymbol(f, i);
+		fprintf(f, "%d %s\n", i, map->N2S[i]);
 	}
 }
 
@@ -67,7 +69,7 @@ void printTransitions(FILE *f, TransitionContainer* transitions)
 */
 void printLayer(FILE *f, Layer* layer)
 {
-	fprintf(f, "LAYER\n ALPHABET_MAP %d\n", layer->map.sizeAlphabet);
+	fprintf(f, "LAYER\nALPHABET_MAP %d\n", layer->map.sizeAlphabet);
 	printAlphabetMap(f, &(layer->map));
 	fprintf(f, "LEFT_STATES %d\n", layer->leftStates.nStates);
 	printStates(f, &(layer->leftStates));
@@ -94,17 +96,12 @@ void printODD(char* filename, ODD* odd)
 		printf("Error opening the file!\n");
 		exit(1);
 	}
+	printf("HelloS");
 	fprintf(f, "ODD %d\n", odd->nLayers);
 	for(int i = 0; i < odd->nLayers; i++)
 	{
 		printLayer(f, &(odd->layerSequence[i]));
 		fprintf(f, "\n");
 	}
-
 	fclose(f);
-}
-
-int main()
-{
-	return 0;
 }

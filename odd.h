@@ -1,5 +1,4 @@
-// Copyright 2019 Mateus de Oliveira Oliveira
-// This file is licensed under MIT License, as specified in the file LISENSE located at the root folder of this repository.
+// Copyright 2019/02 Mateus de Oliveira Oliveira
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -28,7 +27,7 @@
 
 
 /////////////////////////////// NumSymbol type ////////////////////////////////////
-typedef int NumSymbol;  
+typedef int NumSymbol;
 ////////////////////////////////////////////////////////////////////////////////
 
 
@@ -95,8 +94,8 @@ typedef struct{
 			// This is useful when dealing with large alphabets.
 } AlphabetMap;
 
-char* symbolName(NumSymbol a); // returns N2S[a]
-int numberSymbol(char* name); // returns the number of the the symbol named name. 
+void symbolName(NumSymbol a); // returns N2S[a]
+void numberSymbol(char* name); // returns the number of the the symbol named name. 
 
 
 
@@ -127,93 +126,84 @@ typedef struct{
 } ODD; 
 
 
-//Read from file. (Functions implemented in file reading.c)
+//Read from file,
 
-void readSymbol(char*filename); // Reads a string representing the name of a symbol
-void readAlphabetMap(char* filename, int nSymbols, AlphabetMap* map); // Reads nSymbols 
-void readState(char* fileName); // Reads a state (represented by an int)
-void readStates(char* filename, int nStates, StateContainer* states);  // Reads nStates
-void readTransition(char* filename); // reads a transition represented by a triple of integers 
-void readTransitions(char* filename, int nTransitions, TransitionContainer* transitions); // Reads nTransitions transitions
-void readLayer(char* filename); // Reads a layer 
+void readSymbol(FILE*, NumSymbol *symbol); // Reads a string representing the name of a symbol
+void readAlphabetMap(FILE* filename, AlphabetMap* map); // Reads nSymbols 
+void readState(FILE* fileName, State *state); // Reads a state (represented by an int)
+void readStates(FILE* filename, StateContainer* states);  // Reads nStates
+void readTransition(FILE* filename, Transition *transition); // reads a transition represented by a triple of integers 
+void readTransitions(FILE* filename, TransitionContainer* transitions); // Reads nTransitions transitions
+void readLayer(FILE* filename, Layer* layer); // Reads a layer 
 void readODD(char* filename, ODD* odd); // Reads a sequence of layers
 
-//Printing to file. (Functions implemented in file printing.c) 
+//Printing to file. 
 
-void printSymbol(FILE *f, NumSymbol s); 
-void printAlphabetMap(FILE *f, AlphabetMap* map);
-void printState(FILE *f, State s); 
-void printStates(FILE *f, StateContainer* states);
-void printTransition(FILE *f, Transition t); 
-void printTransitions(FILE *f, TransitionContainer* transitions); 
-void printLayer(FILE *f, Layer* layer);
+void printSymbol(FILE* filename, NumSymbol s); 
+void printAlphabetMap(FILE* filename, AlphabetMap* map);
+void printState(FILE* filename, State s); 
+void printStates(FILE* filename, StateContainer* states);
+void printTransition(FILE* filename, Transition t); 
+void printTransitions(FILE* filename, TransitionContainer* transitions); 
+void printLayer(FILE* filename, Layer* layer);
 void printODD(char* filename, ODD* odd); 
 
 
-//Membership Testing (Numerical and String)  (Functions implemented in file membership.c)
+//Membership Testing (Numerical and String)
 
 bool numMembership(ODD* odd, int* numSeq); // returns 1 iff the sequence numSeq is accepted by odd
 bool strMembership(ODD* odd, char** strSeq); // returns 1 if the sequence of symbol names represented by strSeq is accepted by odd
 
 
-//Union (Functions implemented in file union.c)
+//Union
 
 void unionLayers(Layer* layer1, Layer* layer2, Layer* result);
 void uniontODDs(ODD* odd1, ODD* odd2, ODD* odd); 
 
-//Intersection (Functions implemented in file intersection.c)
-
+//Intersection
 
 void intersectionLayers(Layer* layer1, Layer layer2, Layer* result);
 void intersectionODD(ODD* odd1, ODD* odd2, ODD odd); 
 
-//tensorProduct (Functions implemented in file tensorProduct.c)
-
+//tensorProduct
 
 void tensorLayers(Layer* layer1, Layer layer2, Layer* result);
 void tensorODD(ODD* odd1, ODD* odd2, ODD odd); 
 
-//test deterministic (Functions implemented in file deterministic.c)
-
+//test deterministic
 
 void isDeterministicLayer(Layer* layer); 
 void isDeterministicODD(ODD* odd); 
 
-//test complete (Functions implemented in file complete.c)
-
+//test complete
 
 void isCompleteLayer(Layer* layer); 
 void isCompleteODD(ODD* odd); 
 
 
-//Negation (Functions implemented in file negation.c)
-
+//Negation
 
 void negationLayer(Layer* layer, Layer result);
 void negationODD(ODD* odd, ODD* result); 
 
-//Power Set (Functions implemented in file powerSet.c)
-
+//Power Set
 
 int orderSet(int* S, Layer* layer); // maps subsets of integers to numbers. S has layer.width positions. S[i]=1 indicates that i belongs to S
 int* next(int* S, NumSymbol a, Layer* layer); // Returns the set obtained by reading symbol a from some state in set S.  
 void powerSetLayer (Layer* layer, Layer* result);  
 void powerSetODD(ODD* odd, ODD* result); 
 
-//Completion (Functions implemented in file completion.c)
-
+//Completion
 
 void makeCompleteLayer(Layer* layer, Layer result);
 void makeCompleteODD(ODD* odd, ODD* result); 
 
-//Memorization (Functions implemented in file memorization.c)
-
+//Memorization
 
 void memorizeLayer(Layer* layer, Layer result);
 void memorizeODD(ODD* odd, ODD* result); 
 
-//minimization (Functions implemented in file minimization.c)
-
+//minimization
 
 void minimizeODD(ODD* odd, ODD* result); 
 
