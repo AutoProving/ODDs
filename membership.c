@@ -31,7 +31,6 @@ bool tryPath(ODD* odd, int* numSeq, State* state, Layer* layer, int seq){
                     continue;
                 }
                 else{
-                    printf("Accept  \n");
                     return 1; 
                 }
                 
@@ -74,7 +73,6 @@ bool tryStringPath(ODD* odd, char** strSeq, State* state, Layer* layer, int seq)
 
 
     while(true){
-        printf("Low: %d, high: %d \n", lowerBound, upperBound );
 
         int comparison =strcmp(layer->map.N2S[layer->map.S2N[partition]],strSeq[seq]);
 
