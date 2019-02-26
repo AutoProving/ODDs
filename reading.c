@@ -1,6 +1,3 @@
-// Copyright 2019 YOUR NAME
-// This file is licensed under MIT License, as specified in the file LISENSE located at the root folder of this repository.
-
 // Copyright 2019 Ole Magnus Lie
 // This file is licensed under MIT License, as specified in the file LICENSE located at the root folder of this repository.
 
@@ -77,7 +74,7 @@ void readTransitions(FILE *reader, TransitionContainer* transitions){
             if (commentPosition == NULL || keywordPosition < commentPosition)
                 break;
     }
-    
+
     sscanf(line, "%s %d", c, &transitions->nTransitions);
     transitions->set = malloc(transitions->nTransitions * sizeof(Transition));
     for(int i = 0; i < transitions->nTransitions; i++){
