@@ -165,5 +165,5 @@ void readODD(char* filename, ODD* odd){
         odd->width = odd->layerSequence[i].width > odd->width ? odd->layerSequence[i].width : odd->width;
     }
     fclose(reader);
- // Reads a sequence of layers
 
+} // Reads a sequence of layers

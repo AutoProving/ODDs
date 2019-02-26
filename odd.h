@@ -128,7 +128,6 @@ typedef struct{
 
 
 //Read from file. (Functions implemented in file reading.c)
-
 void readSymbol(FILE* reader, NumSymbol *symbol); // Reads a string representing the name of a symbol
 void readAlphabetMap(FILE* reader, AlphabetMap* map); // Reads nSymbols
 void readState(FILE* reader, State *state); // Reads a state (represented by an int)
