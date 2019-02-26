@@ -2,7 +2,6 @@
 // This file is licensed under MIT License, as specified in the file LISENSE located at the root folder of this repository.
 
 
-
 #include <stdlib.h>
 #include <string.h>
 #include "odd.h"
@@ -22,7 +21,6 @@ void readAlphabetMap(FILE *reader, AlphabetMap* map){
             if (commentPosition == NULL || keywordPosition < commentPosition)
                 break;
     }
-
 
 
     sscanf(line, "%s %d", c, &map->sizeAlphabet);
@@ -168,5 +166,5 @@ void readODD(char* filename, ODD* odd){
         odd->width = odd->layerSequence[i].width > odd->width ? odd->layerSequence[i].width : odd->width;
     }
     fclose(reader);
-} // Reads a sequence of layers
+ // Reads a sequence of layers
 
