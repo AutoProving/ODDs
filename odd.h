@@ -8,7 +8,7 @@
 
 ///////////////////////////// CONVENTIONS /////////////////////////////////////////////////////
 //
-// New type names start with Captal letters. 
+// New type names start with Capital letters.
 // New variable and function names start with lower-case letters.
 // Compound names are named LikeThis for types and likeThis for variables.
 //
@@ -129,13 +129,13 @@ typedef struct{
 
 //Read from file. (Functions implemented in file reading.c)
 
-void readSymbol(char*filename); // Reads a string representing the name of a symbol
-void readAlphabetMap(char* filename, int nSymbols, AlphabetMap* map); // Reads nSymbols 
-void readState(char* fileName); // Reads a state (represented by an int)
-void readStates(char* filename, int nStates, StateContainer* states);  // Reads nStates
-void readTransition(char* filename); // reads a transition represented by a triple of integers 
-void readTransitions(char* filename, int nTransitions, TransitionContainer* transitions); // Reads nTransitions transitions
-void readLayer(char* filename); // Reads a layer 
+void readSymbol(FILE* reader, NumSymbol *symbol); // Reads a string representing the name of a symbol
+void readAlphabetMap(FILE* reader, AlphabetMap* map); // Reads nSymbols
+void readState(FILE* reader, State *state); // Reads a state (represented by an int)
+void readStates(FILE* reader, StateContainer* states);  // Reads nStates
+void readTransition(FILE* reader, Transition *transition); // reads a transition represented by a triple of integers
+void readTransitions(FILE* reader, TransitionContainer* transitions); // Reads nTransitions transitions
+void readLayer(FILE* reader, Layer* layer); // Reads a layer
 void readODD(char* filename, ODD* odd); // Reads a sequence of layers
 
 //Printing to file. (Functions implemented in file printing.c) 
