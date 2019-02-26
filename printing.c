@@ -96,7 +96,6 @@ void printODD(char* filename, ODD* odd)
 		printf("Error opening the file!\n");
 		exit(1);
 	}
-	printf("HelloS");
 	fprintf(f, "ODD %d\n", odd->nLayers);
 	for(int i = 0; i < odd->nLayers; i++)
 	{
