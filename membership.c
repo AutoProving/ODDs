@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 
 State* findState(StateContainer* states, State* s){
     for(int i=0; i<states->nStates;i++){
@@ -70,8 +71,14 @@ bool tryStringPath(ODD* odd, char** strSeq, State* state, Layer* layer, int seq)
     lowerBound = 0;
     upperBound = layer->map.sizeAlphabet;
     partition = (upperBound + lowerBound) / 2;
+
+
     while(true){
-        if(layer->map.N2S[layer->map.S2N[partition]] == strSeq[seq]){
+        printf("Low: %d, high: %d \n", lowerBound, upperBound );
+
+        int comparison =strcmp(layer->map.N2S[layer->map.S2N[partition]],strSeq[seq]);
+
+        if(comparison == 0){
             currentInt = layer->map.S2N[partition];
             break;
         }
@@ -80,7 +87,7 @@ bool tryStringPath(ODD* odd, char** strSeq, State* state, Layer* layer, int seq)
         else if(upperBound == lowerBound){
             return 0;
         }
-        else if(layer->map.N2S[layer->map.S2N[partition]] < strSeq[seq]){
+        else if(comparison < 0){
             lowerBound = partition;
         }
         else{
@@ -117,10 +124,7 @@ bool strMembership(ODD* odd, char** strSeq){
 
     Layer* initial = &(odd -> layerSequence[0]);
 
-    printf("test %d\n",initial->initialStates.nStates);
-
     for(int i = 0; i < initial->initialStates . nStates; i++){
-        printf("i :%d\n",i );
         bool b = tryStringPath(odd, strSeq, &(initial->initialStates.set[i]), initial, 0);
         if(b){
             return 1;
