@@ -30,7 +30,8 @@ bool tryPath(ODD* odd, int* numSeq, State* state, Layer* layer, int seq){
                     continue;
                 }
                 else{
-                   return 1; 
+                    printf("Accept  \n");
+                    return 1; 
                 }
                 
             }
@@ -44,10 +45,10 @@ bool tryPath(ODD* odd, int* numSeq, State* state, Layer* layer, int seq){
 }
 
 bool numMembership(ODD* odd, int* numSeq){
-
-    //Try all initial states
-    for(int i=0; i < (odd -> layerSequence[0] .initialStates .nStates); i++){
-        bool b = tryPath(odd, numSeq, &(odd->layerSequence[0] .initialStates . set[i]), &(odd->layerSequence[0]), 0);
+    
+    Layer* initial = &(odd -> layerSequence[0]);
+    for(int i = 0; i < initial->initialStates . nStates; i++){
+        bool b = tryPath(odd, numSeq, &(initial->initialStates.set[i]), initial, 0);
         if(b){
             return 1;
         }
@@ -114,8 +115,13 @@ bool tryStringPath(ODD* odd, char** strSeq, State* state, Layer* layer, int seq)
 
 bool strMembership(ODD* odd, char** strSeq){
 
-    for(int i = 0; i < odd -> layerSequence[0] . initialStates . nStates; i++){
-        bool b = tryStringPath(odd, strSeq, &(odd->layerSequence[0].initialStates.set[i]), &(odd->layerSequence[0]), 0);
+    Layer* initial = &(odd -> layerSequence[0]);
+
+    printf("test %d\n",initial->initialStates.nStates);
+
+    for(int i = 0; i < initial->initialStates . nStates; i++){
+        printf("i :%d\n",i );
+        bool b = tryStringPath(odd, strSeq, &(initial->initialStates.set[i]), initial, 0);
         if(b){
             return 1;
         }
