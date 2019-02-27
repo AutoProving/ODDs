@@ -9,76 +9,25 @@
 void intersectionLayers(Layer* layer1, Layer* layer2, Layer* result);
 void intersectionODD(ODD* odd1, ODD* odd2, ODD* odd);
 
-void intersectionLeftStates(Layer* layer1, Layer* layer2, Layer* result);
-void intersectionRightStates(Layer* layer1, Layer* layer2, Layer* result);
-void intersectionInitialStates(Layer* layer1, Layer* layer2, Layer* result);
-void intersectionFinalStates(Layer* layer1, Layer* layer2, Layer* result);
 int countIntersectionTransitions(Layer* layer1, Layer* layer2);
 void intersectionTransitions(Layer* layer1, Layer* layer2, Layer* result);
+void intersectionStates(StateContainer* s1, StateContainer* s2, StateContainer* result, int l2width);
 
 /*
- * Adds the cartesian product of layer1 and layer2 leftStates to result leftStates using:
+ * Adds the cartesian product of layer1 and layer2 stats to result state using:
  * (a,b) = a * b.width + b
  */
-void intersectionLeftStates(Layer* layer1, Layer* layer2, Layer* result) {
-    result->leftStates.nStates = layer1->leftStates.nStates * layer2->leftStates.nStates;
-    result->leftStates.set = (State*) malloc(sizeof(State) * result->leftStates.nStates);
+void intersectionStates(StateContainer* s1, StateContainer* s2, StateContainer* result, int l2width) {
+    result->nStates = s1->nStates * s2->nStates;
+    result->set = (State*) malloc(sizeof(State) * result->nStates);
 
     int index = 0;
-    for(int i = 0; i < layer1->leftStates.nStates; i++) {
-        for(int j = 0; j < layer2->leftStates.nStates; j++) {
-            result->leftStates.set[index++] = layer1->leftStates.set[i] * layer2->width + layer2->leftStates.set[j];
+    for(int i = 0; i < s1->nStates; i++) {
+        for(int j = 0; j < s2->nStates; j++) {
+            result->set[index++] = s1->set[i] * l2width + s2->set[j];
         }
     }
 }
-
-/*
- * Adds the cartesian product of layer1 and layer2 rightStates to result rightStates using:
- * (a,b) = a * b.width + b
- */
-void intersectionRightStates(Layer* layer1, Layer* layer2, Layer* result) {
-    result->rightStates.nStates = layer1->rightStates.nStates * layer2->rightStates.nStates;
-    result->rightStates.set = (State*) malloc(sizeof(State) * result->rightStates.nStates);
-
-    int index = 0;
-    for(int i = 0; i < layer1->rightStates.nStates; i++) {
-        for(int j = 0; j < layer2->rightStates.nStates; j++) {
-            result->rightStates.set[index++] = layer1->rightStates.set[i] * layer2->width + layer2->rightStates.set[j];
-        }
-    }
-}
-
-/*
- * Adds the cartesian product of layer1 and layer2 initialStates to result initialStates using:
- * (a,b) = a * b.width + b
- */
-void intersectionInitialStates(Layer* layer1, Layer* layer2, Layer* result) {
-    result->initialStates.nStates = layer1->initialStates.nStates * layer2->initialStates.nStates;
-    result->initialStates.set = (State*) malloc(sizeof(State) * result->initialStates.nStates);
-
-    int index = 0;
-    for(int i = 0; i < layer1->initialStates.nStates; i++) {
-        for(int j = 0; j < layer2->initialStates.nStates; j++) {
-            result->initialStates.set[index++] = layer1->initialStates.set[i] * layer2->width + layer2->initialStates.set[j];
-        }
-    }
-}
-
-/*
- * Adds the cartesian product of layer1 and layer2 finalStates to result finalStates using:
- * (a,b) = a * b.width + b
- */
-void intersectionFinalStates(Layer* layer1, Layer* layer2, Layer* result) {
-    result->finalStates.nStates = layer1->finalStates.nStates * layer2->finalStates.nStates;
-    result->finalStates.set = (State*) malloc(sizeof(State) * result->finalStates.nStates);
-
-    int index = 0;
-    for(int i = 0; i < layer1->finalStates.nStates; i++) {
-        for(int j = 0; j < layer2->finalStates.nStates; j++) {
-            result->finalStates.set[index++] = layer1->finalStates.set[i] * layer2->width + layer2->finalStates.set[j];
-        }
-    }
-};
 
 /*
  * Counts the number of transitions in layer1 and layer2 with same a
@@ -118,17 +67,17 @@ void intersectionTransitions(Layer* layer1, Layer* layer2, Layer* result) {
 }
 
 void intersectionLayers(Layer* layer1, Layer* layer2, Layer* result) {
-    intersectionLeftStates(layer1, layer2, result);
-    intersectionRightStates(layer1, layer2, result);
-    intersectionInitialStates(layer1, layer2, result);
-    intersectionFinalStates(layer1, layer2, result);
+    intersectionStates(&layer1->leftStates, &layer2->leftStates, &result->leftStates, layer2->width);
+    intersectionStates(&layer1->rightStates, &layer2->rightStates, &result->rightStates, layer2->width);
+    intersectionStates(&layer1->initialStates, &layer2->initialStates, &result->initialStates, layer2->width);
+    intersectionStates(&layer1->finalStates, &layer2->finalStates, &result->finalStates, layer2->width);
     intersectionTransitions(layer1, layer2, result);
-
     result->initialFlag = layer1->initialFlag;
     result->finalFlag = layer1->finalFlag;
     result->map = layer1->map;
     result->width = result->leftStates.nStates > result->rightStates.nStates ? result->leftStates.nStates : result->rightStates.nStates;
 }
+
 void intersectionODD(ODD* odd1, ODD* odd2, ODD* odd) {
     assert(odd1->nLayers == odd2->nLayers);
     odd->nLayers = odd1->nLayers;
@@ -142,5 +91,4 @@ void intersectionODD(ODD* odd1, ODD* odd2, ODD* odd) {
             odd->width = layer.width;
         }
     }
-
 }
