@@ -30,35 +30,51 @@ int* next(int* S, NumSymbol a, Layer* layer) // Returns the set obtained by read
 
 void powerSetLayer(Layer* layer, Layer* result)
 {   
+    result->initialFlag = layer->initialFlag;
+    result->finalFlag = layer->finalFlag;
+
+    long long initsz = setStateSize(&layer->initialStates, &result->initialStates);
     long long leftsz = setStateSize(&layer->leftStates, &result->leftStates);
     long long rightsz = setStateSize(&layer->rightStates, &result->rightStates);
-    long long initsz = setStateSize(&layer->initialStates, &result->initialStates);
     long long finsz = setStateSize(&layer->finalStates, &result->finalStates);
     
-    long long maxinitsz = ((layer->leftStates.nStates) >= (layer->rightStates.nStates)) ? (layer->leftStates.nStates) : (layer->rightStates.nStates);
-    long long maxsz = pow(2, maxinitsz);
+    //long long maxinitsz = ((layer->leftStates.nStates) >= (layer->rightStates.nStates)) ? (layer->leftStates.nStates) : (layer->rightStates.nStates);
+    //^ = layer->width
 
-    int *s = calloc(maxinitsz, sizeof(int));
+    long long maxsz = pow(2, layer->width);
+
+    result->nTransitions = maxsz;
+    result->transitions = malloc(maxsz * sizeof(int)); //How many transitions should it be in the new layer?
+    
+    int *s = calloc(layer->width, sizeof(int));
 
     for(long long i = 0; i < maxsz; i++)
     {
+        int order = orderSet(s, layer);
+
         if (i < leftsz) {
-            result->leftStates.set[i] = orderSet(s, layer);
+            result->leftStates.set[i] = order;
         }
 
         if (i < rightsz) {
-            result->rightStates.set[i] = orderSet(s, layer);            
+            result->rightStates.set[i] = order;           
         }
 
         if (i < initsz) {
-            result->initialStates.set[i] = orderSet(s, layer);            
+            result->initialStates.set[i] = order;          
         }
 
         if (i < finsz && hasCommonStates(s, layer->rightStates, layer->finalStates)) {
-            result->finalStates.set[i] = orderSet(s, layer);            
+            result->finalStates.set[i] = order;           
         }
 
-        bitshift(s, maxinitsz);
+        /* how to update this..m
+        result->transitions[i].s1 = 
+        result->transitions[i].a = 
+        result->transitions[i].s2 = 
+        */
+
+        bitshift(s, layer->width);
     }
 }
 
@@ -93,6 +109,7 @@ void bitshift(int *s, int sz)
     }
 }
 
+//initState as in original
 long long setStateSize(StateContainer *initState, StateContainer *state)
 {
     long long sz = pow(2, initState->nStates);
@@ -105,6 +122,20 @@ long long setStateSize(StateContainer *initState, StateContainer *state)
 
 void powerSetODD(ODD* odd, ODD* result)
 {
+    result->width = 0;
+    result->nLayers = odd->nLayers;
+    result->layerSequence = malloc(odd->nLayers * sizeof(Layer));
+
+    for (int i = 0; i < odd->width; i++) {
+
+        Layer powerlayer;
+        powerSetLayer(odd->layerSequence[i], &powerlayer);
+        result->layerSequence[i] = powerlayer;
+        
+        if (powerlayer.width > result->width) {
+            result->width = powerlayer.width;
+        }
+    }
 
 }
 

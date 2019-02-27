@@ -82,7 +82,6 @@ void sortTransitions(TransitionContainer* transitions); // Sorts transitions.set
 ///////////////////////////////////////////////////////////////////////////////
 
 
-
 ///////////////////////////// AlphabetMap type ////////////////////////////////// 
 
 typedef struct{
@@ -116,7 +115,6 @@ typedef struct{
 	bool initialFlag; // set to 1 if if this is the first layer of the ODD
 	bool finalFlag;   // set to 1 if this is the last layer of the ODD
 } Layer;
-
 
 
 // Defines ODD type
