@@ -1,4 +1,4 @@
-// Copyright 2019 YOUR NAME
+// Copyright 2019 Ole Magnus Lie
 // This file is licensed under MIT License, as specified in the file LISENSE located at the root folder of this repository.
 
 #include <stdlib.h>
@@ -12,6 +12,7 @@ void readSymbol(FILE *reader, NumSymbol *symbol){
 
 void readAlphabetMap(FILE *reader, AlphabetMap* map){
     char line[64], c[32];
+
     while(fgets(line, sizeof(line), reader)) {
         char *keywordPosition = strstr(line, "ALPHABET_MAP");
         char *commentPosition = strstr(line, "//");
@@ -29,6 +30,7 @@ void readAlphabetMap(FILE *reader, AlphabetMap* map){
         fgets(line, sizeof(line), reader);
         map->N2S[i] = malloc(sizeof((line)));
         sscanf(line, "%d %s", &map->S2N[i], map->N2S[i]);
+
     }
 } // Reads nSymbols
 
@@ -47,6 +49,7 @@ void readStates(FILE *reader, StateContainer* states){
             if (commentPosition == NULL || keywordPosition < commentPosition)
                 break;
     }
+
 
     sscanf(line, "%s %d", c, &states->nStates);
     states->set = malloc(states->nStates * sizeof(State*));
@@ -98,7 +101,6 @@ void readLayer(FILE *reader, Layer* layer){
             if (commentPosition == NULL || keywordPosition < commentPosition)
                 break;
     }
-
 
     readAlphabetMap(reader, &map);
     readStates(reader, &leftStates);
@@ -163,4 +165,5 @@ void readODD(char* filename, ODD* odd){
         odd->width = odd->layerSequence[i].width > odd->width ? odd->layerSequence[i].width : odd->width;
     }
     fclose(reader);
+
 } // Reads a sequence of layers
