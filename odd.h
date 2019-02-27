@@ -163,8 +163,8 @@ void uniontODDs(ODD* odd1, ODD* odd2, ODD* odd);
 //Intersection (Functions implemented in file intersection.c)
 
 
-void intersectionLayers(Layer* layer1, Layer layer2, Layer* result);
-void intersectionODD(ODD* odd1, ODD* odd2, ODD odd); 
+void intersectionLayers(Layer* layer1, Layer* layer2, Layer* result);
+void intersectionODD(ODD* odd1, ODD* odd2, ODD* odd);
 
 //tensorProduct (Functions implemented in file tensorProduct.c)
 
