@@ -34,12 +34,6 @@ int isDeterministicLayerBool(Layer* layer) {
     Transition* transition_set = trans.set;
     int num_transitions = trans.nTransitions;
 
-    int width = layer -> width;
-
-    if (width > num_transitions) {
-        return 0;
-    }
-
     for(size_t i = 1; i < num_transitions; i++)
     {
         if (transition_set[i - 1].s1 == transition_set[i].s1) {
