@@ -128,25 +128,24 @@ typedef struct{
 
 
 //Read from file. (Functions implemented in file reading.c)
-
-void readSymbol(char*filename); // Reads a string representing the name of a symbol
-void readAlphabetMap(char* filename, int nSymbols, AlphabetMap* map); // Reads nSymbols 
-void readState(char* fileName); // Reads a state (represented by an int)
-void readStates(char* filename, int nStates, StateContainer* states);  // Reads nStates
-void readTransition(char* filename); // reads a transition represented by a triple of integers 
-void readTransitions(char* filename, int nTransitions, TransitionContainer* transitions); // Reads nTransitions transitions
-void readLayer(char* filename); // Reads a layer 
+void readSymbol(FILE* reader, NumSymbol *symbol); // Reads a string representing the name of a symbol
+void readAlphabetMap(FILE* reader, AlphabetMap* map); // Reads nSymbols
+void readState(FILE* reader, State *state); // Reads a state (represented by an int)
+void readStates(FILE* reader, StateContainer* states);  // Reads nStates
+void readTransition(FILE* reader, Transition *transition); // reads a transition represented by a triple of integers
+void readTransitions(FILE* reader, TransitionContainer* transitions); // Reads nTransitions transitions
+void readLayer(FILE* reader, Layer* layer); // Reads a layer 
 void readODD(char* filename, ODD* odd); // Reads a sequence of layers
 
 //Printing to file. (Functions implemented in file printing.c) 
 
-void printSymbol(char* filename, NumSymbol s); 
-void printAlphabetMap(char* filename, AlphabetMap* map);
-void printState(char* filename, State s); 
-void printStates(char* filename, StateContainer* states);
-void printTransition(char* filename, Transition t); 
-void printTransitions(char* filename, TransitionContainer* transitions); 
-void printLayer(char* filename, Layer* layer);
+void printSymbol(FILE* filename, NumSymbol s); 
+void printAlphabetMap(FILE* filename, AlphabetMap* map);
+void printState(FILE* filename, State s); 
+void printStates(FILE* filename, StateContainer* states);
+void printTransition(FILE* filename, Transition t); 
+void printTransitions(FILE* filename, TransitionContainer* transitions); 
+void printLayer(FILE* filename, Layer* layer);
 void printODD(char* filename, ODD* odd); 
 
 
@@ -216,7 +215,3 @@ void memorizeODD(ODD* odd, ODD* result);
 
 
 void minimizeODD(ODD* odd, ODD* result); 
-
-
-
-
