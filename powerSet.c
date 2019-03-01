@@ -6,7 +6,8 @@
 #include "odd.h"
 
 long long choose(int n,int k);
-long long setStateSize(StateContainer *initState, StateContainer *state);
+int setStateSize(StateContainer *initState, StateContainer *state);
+int findStateIndex(Layer *layer, State s2, int j);
 void bitshift(int *s, int sz);
 
 int orderSet(int* S, Layer* layer) // maps subsets of integers to numbers. S has layer.width positions. S[i]=1 indicates that i belongs to S
@@ -30,7 +31,7 @@ int* next(int* S, NumSymbol a, Layer* layer) // Returns the set obtained by read
             for(size_t j = 0; j < layer->transitions.nTransitions; j++)
             {
                 if (layer->transitions.set[j].s1 == layer->leftStates.set[i] && layer->transitions.set[j].a == a) {
-                    sout[layer->transitions.set[j].s2] = 1;
+                    sout[findStateIndex(layer, layer->transitions.set[j].s2, j)] = 1;
                 }
                 
             }
@@ -40,27 +41,47 @@ int* next(int* S, NumSymbol a, Layer* layer) // Returns the set obtained by read
     }
 }
 
+int findStateIndex(Layer *layer, State s2, int j) 
+{
+    if (layer->rightStates.set[s2] == s2) 
+    { 
+        return s2;
+    } 
+    else
+    {
+        for(size_t i = 0; i < layer->rightStates.nStates; i++)
+        {
+            if (layer->rightStates.set[i] == s2) {
+                return i;
+            }
+        }
+    }
+
+    perror("Could not find the state in next-function.");
+    exit(-1);
+}
+
 void powerSetLayer(Layer* layer, Layer* result)
 {   
     result->initialFlag = layer->initialFlag;
     result->finalFlag = layer->finalFlag;
 
-    long long initsz = setStateSize(&layer->initialStates, &result->initialStates);
-    long long leftsz = setStateSize(&layer->leftStates, &result->leftStates);
-    long long rightsz = setStateSize(&layer->rightStates, &result->rightStates);
-    long long finsz = setStateSize(&layer->finalStates, &result->finalStates);
+    int initsz = setStateSize(&layer->initialStates, &result->initialStates);
+    int leftsz = setStateSize(&layer->leftStates, &result->leftStates);
+    int rightsz = setStateSize(&layer->rightStates, &result->rightStates);
+    int finsz = setStateSize(&layer->finalStates, &result->finalStates);
     
     //long long maxinitsz = ((layer->leftStates.nStates) >= (layer->rightStates.nStates)) ? (layer->leftStates.nStates) : (layer->rightStates.nStates);
     //^ = layer->width
 
-    long long maxsz = pow(2, layer->width);
+    int maxsz = pow(2, layer->width);
 
     result->transitions.nTransitions = maxsz;
     result->transitions.set = malloc(maxsz * sizeof(int)); //How many transitions should it be in the new layer?
     
     int *s = calloc(layer->width, sizeof(int));
 
-    for(long long i = 0; i < maxsz; i++)
+    for(int i = 0; i < maxsz; i++)
     {
         int order = orderSet(s, layer);
 
@@ -122,9 +143,9 @@ void bitshift(int *s, int sz)
 }
 
 //initState as in original
-long long setStateSize(StateContainer *initState, StateContainer *state)
+int setStateSize(StateContainer *initState, StateContainer *state)
 {
-    long long sz = pow(2, initState->nStates);
+    int sz = pow(2, initState->nStates);
     
     state->nStates = sz;
     state->set = malloc(sz * sizeof(int));
