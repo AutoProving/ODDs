@@ -31,14 +31,12 @@ void testbitshift() {
 }
 
 int main(){
+    // printf() displays the string inside quotation
+    printf("Hello, World!");
 
+    ODD odd;
+    readODD("ODD-Example.txt", &odd);
 
-    //testbitshift();
-
-    //ODD odd, pwodd;
-    //readODD("ODD-Exampletxt", &odd);
-    //powerSetODD(&odd, &pwodd);
-    //printODD("powerODD.txt", &pwodd);
-    
+    printODD("test.txt", &odd);
     return 0;
 }

@@ -12,7 +12,7 @@ void bitshift(int *s, int sz);
 int orderSet(int* S, Layer* layer) // maps subsets of integers to numbers. S has layer.width positions. S[i]=1 indicates that i belongs to S
 {
     int sum = 0;
-    for(size_t i = 0; i < layer->width; i++)
+    for(int i = 0; i < layer->width; i++)
     {
         sum += S[i] * pow(2, i);
     }
@@ -22,8 +22,20 @@ int orderSet(int* S, Layer* layer) // maps subsets of integers to numbers. S has
 
 int* next(int* S, NumSymbol a, Layer* layer) // Returns the set obtained by reading symbol a from some state in set S.  
 {
+    int *sout = calloc(layer->width, sizeof(int));
+
     for(size_t i = 0; i < layer->width; i++)
     {
+        if (S[i]) {
+            for(size_t j = 0; j < layer->transitions.nTransitions; j++)
+            {
+                if (layer->transitions.set[j].s1 == layer->leftStates.set[i] && layer->transitions.set[j].a == a) {
+                    sout[layer->transitions.set[j].s2] = 1;
+                }
+                
+            }
+            
+        }
         
     }
 }
@@ -43,8 +55,8 @@ void powerSetLayer(Layer* layer, Layer* result)
 
     long long maxsz = pow(2, layer->width);
 
-    result->nTransitions = maxsz;
-    result->transitions = malloc(maxsz * sizeof(int)); //How many transitions should it be in the new layer?
+    result->transitions.nTransitions = maxsz;
+    result->transitions.set = malloc(maxsz * sizeof(int)); //How many transitions should it be in the new layer?
     
     int *s = calloc(layer->width, sizeof(int));
 
@@ -129,7 +141,7 @@ void powerSetODD(ODD* odd, ODD* result)
     for (int i = 0; i < odd->width; i++) {
 
         Layer powerlayer;
-        powerSetLayer(odd->layerSequence[i], &powerlayer);
+        powerSetLayer(&odd->layerSequence[i], &powerlayer);
         result->layerSequence[i] = powerlayer;
         
         if (powerlayer.width > result->width) {
