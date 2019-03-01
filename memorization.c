@@ -4,4 +4,4 @@
 #include <stdlib.h>
 #include "odd.h"
 
-// TESTING THIS BRANCH WITH NO SURVIVORS
+// Trying to fix username, also making sure IDE files aren't clogging up commits
