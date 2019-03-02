@@ -1,6 +1,9 @@
 // Copyright 2019 Mateus de Oliveira Oliveira
 // This file is licensed under MIT License, as specified in the file LISENSE located at the root folder of this repository.
 
+#ifndef ODD_H
+#define ODD_H
+
 #include <stdio.h>
 #include <stdbool.h>
 
@@ -214,4 +217,6 @@ void memorizeODD(ODD* odd, ODD* result);
 //minimization (Functions implemented in file minimization.c)
 
 
-void minimizeODD(ODD* odd, ODD* result); 
+void minimizeODD(ODD* odd, ODD* result);
+
+#endif
