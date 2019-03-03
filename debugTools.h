@@ -9,6 +9,9 @@
  */
 void showODD(ODD *odd);
 
+/*
+ * Prints any given layer and its respective state to stdout.
+ */
 void showLayer(Layer *layer);
 
 #endif //ODDS_DEBUGTOOLS_H

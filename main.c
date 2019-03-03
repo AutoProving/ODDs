@@ -6,26 +6,26 @@
 #include "reading.c"
 #include "memorization.c"
 
-
 int main(){
 
     char filename[] = "ODD-Example.txt";
-    printf("%zu", sizeof(ODD));
-    ODD *odd = malloc(sizeof(ODD));;
+    ODD *odd = malloc(sizeof(ODD));
     readODD(filename, odd);
-    showODD(odd);
-
-    Layer *oddLayer = &odd->layerSequence[0];
-    Layer newLayer;
-
-    showLayer(&odd->layerSequence[0]);
-    showLayer(&odd->layerSequence[1]);
-    showLayer(&odd->layerSequence[2]);
-    showLayer(&odd->layerSequence[3]);
-
-//    oddLayer->width = 666;
-//
 //    showODD(odd);
+
+    Layer *inputLayer = &odd->layerSequence[0];
+    Layer *resultLayer = malloc(sizeof(Layer));
+
+    printf("\ninputLayer BEFORE memorizeLayer(inputLayer, resultLayer);\n\n");
+    showLayer(inputLayer);
+    memorizeLayer(inputLayer, resultLayer);
+
+    printf("\nresultLayer AFTER memorizeLayer(inputLayer, resultLayer);\n\n");
+    showLayer(resultLayer);
+
+
+    printf("\n\n-----Show ODD-----\n\n");
+    showODD(odd);
 
     return 0;
 }
