@@ -106,7 +106,7 @@ void powerSetLayer(Layer *layer, Layer *result)
             }
             ////////////////
 
-            if (layer->initialStates.nStates > 0 /*&& i > 0 */ && isSubSet(S, initialS, layer->width))
+            if (layer->initialStates.nStates > 0 && i > 0 && isSubSet(S, initialS, layer->width))
             {
                 result->initialStates.set[result->initialStates.nStates] = order;
                 result->initialStates.nStates++;
