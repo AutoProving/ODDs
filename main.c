@@ -36,20 +36,27 @@ void testbitshift()
     }
 }
 
-void showTransitions(TransitionContainer transitions) {
+void showTransitions(TransitionContainer transitions)
+{
     printf("{");
-    for (int i = 0; i < transitions.nTransitions - 1; i++) {
-        printf("%d, ", transitions.set[i]);
+    for (int i = 0; i < transitions.nTransitions; i++)
+    {
+        printf("(%d, %d, %d)", transitions.set[i].s1, transitions.set[i].s2, transitions.set[i].a);
+        if (i != transitions.nTransitions - 1) {
+            printf(", ");
+        }
     }
-    printf("%d}\n", transitions.set[transitions.nTransitions - 1]);
+    printf("}\n");
 }
 
-void showStates(StateContainer states) {
+void showStates(StateContainer states)
+{
     printf("{");
-    for (int i = 0; i < states.nStates - 1; i++) {
+    for (int i = 0; i < states.nStates - 1; i++)
+    {
         printf("%d, ", states.set[i]);
     }
-    printf("%d}\n", states.set[states.nStates-1]);
+    printf("%d}\n", states.set[states.nStates - 1]);
 }
 
 void testPowerSetODD(ODD odd, ODD powerODD)
@@ -59,34 +66,40 @@ void testPowerSetODD(ODD odd, ODD powerODD)
     printf("Original ODD has width: %d and powerODD has width: %d\n", odd.width, powerODD.width);
     printf("Original ODD has %d layers and powerODD has %d layers\n", odd.nLayers, powerODD.nLayers);
 
-    for (int i = 0; i < powerODD.nLayers; i++) {
-        
+    for (int i = 0; i < powerODD.nLayers; i++)
+    {
+
         Layer pl = powerODD.layerSequence[i];
         printf("\nPowerLayer %d with initFlag = %d, finalFlag = %d\n", i, pl.initialFlag, pl.finalFlag);
 
-        printf("InitialStates: ");
-        showStates(pl.initialStates);
+        if (pl.initialStates.nStates > 0) {
+            printf("InitialStates: ");
+            showStates(pl.initialStates);
+        }
+        
 
         printf("LeftStates: ");
-        showStates(pl.leftStates); 
+        showStates(pl.leftStates);
 
         printf("RightStates: ");
         showStates(pl.rightStates);
 
-        printf("FinalStates: ");
-        showStates(pl.finalStates);
+        if (pl.finalStates.nStates > 0)
+        {
+            printf("FinalStates: ");
+            showStates(pl.finalStates);
+        }
 
         printf("Transitions: ");
         showTransitions(pl.transitions);
 
         //alphabetmap
     }
-    
+
     printf("--------------------------------------------------------------------------\n");
     printf("--------------------------------------------------------------------------\n");
     printf("Done printing powerODD\n");
 }
-
 
 int main()
 {

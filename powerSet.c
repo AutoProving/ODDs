@@ -11,23 +11,24 @@ void setStateSize(StateContainer *oldstate, StateContainer *powerstate);
 void bitshift(int *S, int sz);
 int findStateIndex(Layer *layer, State s2, int j);
 int hasCommonStates(int *S, StateContainer rightstate, StateContainer finstate);
-
+int isSubSet(int *subS, int *S, int sz);
 
 void powerSetODD(ODD *odd, ODD *result)
 {
     result->nLayers = odd->nLayers;
     result->layerSequence = malloc(odd->nLayers * sizeof(Layer));
+    result->width = 0;
 
-    for (int i = 0; i < odd->width; i++)
+    for (int i = 0; i < odd->nLayers; i++)
     {
-        Layer powerlayer;
-        powerSetLayer(&odd->layerSequence[i], &powerlayer);
+        // Layer powerlayer;
+        powerSetLayer(&odd->layerSequence[i], &result->layerSequence[i]);
 
-        result->layerSequence[i] = powerlayer;
+        // result->layerSequence[i] = powerlayer;
 
-        if (powerlayer.width > result->width)
+        if (result->layerSequence[i].width > result->width)
         {
-            result->width = powerlayer.width;
+            result->width = result->layerSequence[i].width;
         }
     }
 
@@ -45,11 +46,20 @@ void powerSetLayer(Layer *layer, Layer *result)
     result->map.S2N = layer->map.S2N;
 
     //ALLOCATE FOR POWER-STATES
-    setStateSize(&layer->initialStates, &result->initialStates);
     setStateSize(&layer->leftStates, &result->leftStates);
     setStateSize(&layer->rightStates, &result->rightStates);
-    setStateSize(&layer->finalStates, &result->finalStates);
 
+    if (layer->initialStates.nStates > 0) {
+        setStateSize(&layer->initialStates, &result->initialStates);
+    } 
+    result->initialStates.nStates = 0;
+    
+    if (layer->finalStates.nStates > 0) {
+        setStateSize(&layer->finalStates, &result->finalStates);
+    }
+    result->finalStates.nStates = 0;
+    
+    
     int maxsz = pow(2, layer->width);
 
     //ALLOCATE FOR POWER-TRANSITIONS
@@ -58,14 +68,25 @@ void powerSetLayer(Layer *layer, Layer *result)
     result->transitions.set = malloc(maxsz * sizeof(Transition));
 
     int *S = calloc(layer->width, sizeof(int));
-    //s[0] = 1;
+    int *initialS = calloc(layer->width, sizeof(int));
+    for(int i = 0; i < layer->initialStates.nStates; i++)
+    {
+        int posNotFound = 1; 
+        for(int j = 0; posNotFound && j < layer->leftStates.nStates; j++)
+        {
+            if (layer->initialStates.set[i] == layer->leftStates.set[j]) {
+                initialS[j] = 1;
+                posNotFound = 0;
+            }
+        }
+    }
 
     for (int i = 0; i < maxsz; i++)
     {
 
         int order = orderSet(S, layer);
 
-        if (i < result->initialStates.nStates)
+        if (i < result->leftStates.nStates)
         {
             result->leftStates.set[i] = order;
 
@@ -84,29 +105,42 @@ void powerSetLayer(Layer *layer, Layer *result)
                 }
             }
             ////////////////
+
+            if (layer->initialStates.nStates > 0 /*&& i > 0 */ && isSubSet(S, initialS, layer->width))
+            {
+                result->initialStates.set[result->initialStates.nStates] = order;
+                result->initialStates.nStates++;
+            }
         }
 
         if (i < result->rightStates.nStates)
         {
             result->rightStates.set[i] = order;
-        }
 
-        if (i < result->initialStates.nStates)
-        {
-            result->initialStates.set[i] = order;
+            if (layer->finalStates.nStates > 0 && hasCommonStates(S, layer->rightStates, layer->finalStates))
+            {
+                result->finalStates.set[result->finalStates.nStates] = order;
+                result->finalStates.nStates++;
+            }
         }
-
-        if (i < result->finalStates.nStates && hasCommonStates(S, layer->rightStates, layer->finalStates))
-        {
-            result->finalStates.set[i] = order;
-        }
-
         bitshift(S, layer->width);
     }
 
+    free(initialS);
     result->width = fmax(result->leftStates.nStates, result->rightStates.nStates);
 }
 
+int isSubSet(int *subS, int *S, int sz)
+{
+    for(int i = 0; i < sz; i++)
+    {
+        if (subS[i] == 1 && S[i] != 1) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
 
 // maps subsets of integers to numbers. S has layer.width positions. S[i]=1 indicates that i belongs to S
 int orderSet(int *S, Layer *layer) 
@@ -148,6 +182,7 @@ void setStateSize(StateContainer *oldstate, StateContainer *powerstate)
 {
     int sz = pow(2, oldstate->nStates);
     powerstate->nStates = sz;
+    // powerstate->set = calloc(sz, sizeof(State));
     powerstate->set = malloc(sz * sizeof(int));
 }
 
@@ -170,7 +205,7 @@ void bitshift(int *S, int sz)
 
 int hasCommonStates(int *S, StateContainer rightstate, StateContainer finstate)
 {
-    for (size_t i = 0; i < rightstate.nStates; i++)
+    for (int i = 0; i < rightstate.nStates; i++)
     {
         if (S[i])
         {
