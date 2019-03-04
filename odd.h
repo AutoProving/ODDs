@@ -192,6 +192,7 @@ void isCompleteODD(ODD* odd);
 void negationLayer(Layer* layer, Layer* result);
 void negationODD(ODD* odd, ODD* result);
 
+
 //Power Set (Functions implemented in file powerSet.c)
 
 
@@ -205,6 +206,7 @@ void powerSetODD(ODD* odd, ODD* result);
 
 void makeCompleteLayer(Layer* layer, Layer* result);
 void makeCompleteODD(ODD* odd, ODD* result);
+
 
 //Memorization (Functions implemented in file memorization.c)
 
