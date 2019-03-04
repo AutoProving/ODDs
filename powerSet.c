@@ -64,8 +64,8 @@ void powerSetLayer(Layer *layer, Layer *result)
 
     //ALLOCATE FOR POWER-TRANSITIONS
     //TODO: What is max possible transitions? 
-    result->transitions.nTransitions = maxsz;
-    result->transitions.set = malloc(maxsz * sizeof(Transition));
+    result->transitions.nTransitions = 0;
+    result->transitions.set = malloc(maxsz * layer->map.sizeAlphabet *  sizeof(Transition));
 
     int *S = calloc(layer->width, sizeof(int));
     int *initialS = calloc(layer->width, sizeof(int));
@@ -94,14 +94,15 @@ void powerSetLayer(Layer *layer, Layer *result)
             for (int j = 0; j < layer->map.sizeAlphabet; j++)
             {
 
-                int a = layer->transitions.set[j].a;
+                int a = layer->map.S2N[j];
                 int ordernext = orderSet(next(S, a, layer), layer);
 
                 if (ordernext != 0)
                 {
-                    result->transitions.set[i].s1 = order;
-                    result->transitions.set[i].a = a;
-                    result->transitions.set[i].s2 = ordernext;
+                    result->transitions.set[result->transitions.nTransitions].s1 = order;
+                    result->transitions.set[result->transitions.nTransitions].a = a;
+                    result->transitions.set[result->transitions.nTransitions].s2 = ordernext;
+                    result->transitions.nTransitions++;
                 }
             }
             ////////////////
@@ -159,11 +160,11 @@ int *next(int *S, NumSymbol a, Layer *layer)
 {
     int *sout = calloc(layer->width, sizeof(int));
 
-    for (size_t i = 0; i < layer->width; i++)
+    for (int i = 0; i < layer->width; i++)
     {
         if (S[i])
         {
-            for (size_t j = 0; j < layer->transitions.nTransitions; j++)
+            for (int j = 0; j < layer->transitions.nTransitions; j++)
             {
                 if (layer->transitions.set[j].s1 == layer->leftStates.set[i] && layer->transitions.set[j].a == a)
                 {
