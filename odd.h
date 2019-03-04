@@ -161,14 +161,14 @@ void uniontODDs(ODD* odd1, ODD* odd2, ODD* odd);
 //Intersection (Functions implemented in file intersection.c)
 
 
-void intersectionLayers(Layer* layer1, Layer layer2, Layer* result);
-void intersectionODD(ODD* odd1, ODD* odd2, ODD odd); 
+void intersectionLayers(Layer* layer1, Layer* layer2, Layer* result);
+void intersectionODD(ODD* odd1, ODD* odd2, ODD* odd); 
 
 //tensorProduct (Functions implemented in file tensorProduct.c)
 
 
-void tensorLayers(Layer* layer1, Layer layer2, Layer* result);
-void tensorODD(ODD* odd1, ODD* odd2, ODD odd); 
+void tensorLayers(Layer* layer1, Layer* layer2, Layer* result);
+void tensorODD(ODD* odd1, ODD* odd2, ODD* odd); 
 
 //test deterministic (Functions implemented in file deterministic.c)
 
@@ -186,7 +186,7 @@ void isCompleteODD(ODD* odd);
 //Negation (Functions implemented in file negation.c)
 
 
-void negationLayer(Layer* layer, Layer result);
+void negationLayer(Layer* layer, Layer* result);
 void negationODD(ODD* odd, ODD* result); 
 
 //Power Set (Functions implemented in file powerSet.c)
@@ -200,13 +200,13 @@ void powerSetODD(ODD* odd, ODD* result);
 //Completion (Functions implemented in file completion.c)
 
 
-void makeCompleteLayer(Layer* layer, Layer result);
+void makeCompleteLayer(Layer* layer, Layer* result);
 void makeCompleteODD(ODD* odd, ODD* result); 
 
 //Memorization (Functions implemented in file memorization.c)
 
 
-void memorizeLayer(Layer* layer, Layer result);
+void memorizeLayer(Layer* layer, Layer* result);
 void memorizeODD(ODD* odd, ODD* result); 
 
 //minimization (Functions implemented in file minimization.c)
