@@ -47,7 +47,7 @@ void showLayer(Layer *layer) {
         printf("\n");
     }
 
-    printf("-States:\n");
+    printf("-States: %d|%d\n",layer->leftStates.nStates, layer->rightStates.nStates);
     int maxStates =
             (layer->leftStates.nStates > layer->rightStates.nStates) ?
             layer->leftStates.nStates :
@@ -66,12 +66,11 @@ void showLayer(Layer *layer) {
             printf("\n");
     }
 
-    printf("-Transitions:\n");
+    printf("-Transitions: %d\n", layer->transitions.nTransitions);
     for (int l = 0; l < layer->transitions.nTransitions; ++l) {
-        printf("%d --{%s=%d}--> %d\n",
+        printf("%d --{%s}--> %d\n",
                layer->transitions.set[l].s1,
                layer->map.N2S[layer->transitions.set[l].a],
-               layer->transitions.set[l].a,
                layer->transitions.set[l].s2
         );
     }

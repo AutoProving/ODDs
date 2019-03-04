@@ -27,11 +27,20 @@ void updateStateContainer(StateContainer *states, int newSize);
 /*
  * Input:
  *      *states : Either the layer.initialStates or layer.finalStates to be updated.
- *      alphabetSize : The layer.map.sizeAlphabet.
+ *      alphaSize : The layer.map.sizeAlphabet.
  * Effect:
  *      *states should be updated to match the expanded state numbers.
  */
 void updateInitialFinal(StateContainer *states, int alphaSize);
+
+/*
+ * Input:
+ *      *transitions: The layer.transitions TransitionsContainer that we wish to update.
+ *      alphaSize : The layer.map.sizeAlphabet.
+ * Effect:
+ *      *transitions should be updated to show the mappings from the expanded left states to the expanded right states.
+ */
+void updateTransitions(TransitionContainer *transitions, int alphaSize);
 
 void memorizeLayer(Layer *layer, Layer *result) {
 
@@ -40,6 +49,7 @@ void memorizeLayer(Layer *layer, Layer *result) {
 
     int newLeftSize = expandedSetSize(layer, true);
     int newRightSize = expandedSetSize(layer, false);
+    int alphaSize = clonedLayer.map.sizeAlphabet;
 
     clonedLayer.width = (newLeftSize > newRightSize) ? newLeftSize : newRightSize;
 
@@ -50,10 +60,12 @@ void memorizeLayer(Layer *layer, Layer *result) {
     updateStateContainer(&clonedLayer.rightStates, newRightSize);
 
     if (clonedLayer.initialFlag)
-        updateInitialFinal(&clonedLayer.initialStates, clonedLayer.map.sizeAlphabet);
+        updateInitialFinal(&clonedLayer.initialStates, alphaSize);
 
     if (clonedLayer.finalFlag)
-        updateInitialFinal(&clonedLayer.finalStates, clonedLayer.map.sizeAlphabet);
+        updateInitialFinal(&clonedLayer.finalStates, alphaSize);
+
+    updateTransitions(&clonedLayer.transitions, alphaSize);
 
     free(result);
     *result = *cP;
@@ -65,6 +77,7 @@ void memorizeODD(ODD *odd, ODD *result) {
     ODD clonedODD = *odd;
     ODD *cP = &clonedODD;
 
+    int maxWidth = 0;
     for (int i = 0; i < odd->nLayers; ++i) {
 
         Layer *inputLayer = &odd->layerSequence[i];
@@ -73,8 +86,10 @@ void memorizeODD(ODD *odd, ODD *result) {
         memorizeLayer(inputLayer, resultLayer);
 
 //        free(inputLayer); // TODO CAUSES SIGSEGV, FIGURE IT OUT
+        maxWidth = (resultLayer->width > maxWidth) ? resultLayer->width : maxWidth;
         *inputLayer = *resultLayer;
     }
+    clonedODD.width = maxWidth;
     free(result);
     *result = *cP;
 }
@@ -105,10 +120,7 @@ void updateInitialFinal(StateContainer *states, int alphaSize) {
 
     for (int i = 0; i < oldSetSize; ++i) {
         states->set[i] *= alphaSize;
-        newSet[i * alphaSize] =
-                states->set[i] == 0 ?
-                0 :
-                states->set[i];
+        newSet[i * alphaSize] = states->set[i];
     }
 
     for (int l = 0; l < newSetSize; ++l) {
@@ -119,4 +131,27 @@ void updateInitialFinal(StateContainer *states, int alphaSize) {
     states->nStates = newSetSize;
     free(states->set);
     states->set = newSet;
+}
+
+void updateTransitions(TransitionContainer *transitions, int alphaSize) {
+
+    int newTransSize = transitions->nTransitions * alphaSize;
+    Transition *newTrans = malloc(newTransSize * sizeof(Transition));
+
+    for (int i = 0; i < transitions->nTransitions; ++i) {
+
+        int s1 = transitions->set[i].s1;
+        int a = transitions->set[i].a;
+        int s2 = transitions->set[i].s2;
+
+        for (int j = 0; j < alphaSize; ++j) {
+            newTrans[j + (alphaSize * i)].s1 = s1 * alphaSize + j;
+            newTrans[j + (alphaSize * i)].a = a;
+            newTrans[j + (alphaSize * i)].s2 = s2 * alphaSize + a;
+        }
+    }
+
+    transitions->nTransitions = newTransSize;
+    free(transitions->set);
+    transitions->set = newTrans;
 }
