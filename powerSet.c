@@ -6,12 +6,16 @@
 #include "odd.h"
 
 
-//Some helper functions
+// Some helper functions
 void setStateSize(StateContainer *oldstate, StateContainer *powerstate);
 void bitshift(int *S, int sz);
 int findStateIndex(Layer *layer, State s2, int j);
 int hasCommonStates(int *S, StateContainer rightstate, StateContainer finstate);
 int isSubSet(int *subS, int *S, int sz);
+void showTransitions(TransitionContainer transitions);
+void showStates(StateContainer states);
+void testPowerSetODD(ODD odd, ODD powerODD);
+// End helper functions
 
 void powerSetODD(ODD *odd, ODD *result)
 {
@@ -63,7 +67,6 @@ void powerSetLayer(Layer *layer, Layer *result)
     int maxsz = pow(2, layer->width);
 
     //ALLOCATE FOR POWER-TRANSITIONS
-    //TODO: What is max possible transitions? 
     result->transitions.nTransitions = 0;
     result->transitions.set = malloc(maxsz * layer->map.sizeAlphabet *  sizeof(Transition));
 
@@ -88,9 +91,17 @@ void powerSetLayer(Layer *layer, Layer *result)
 
         if (i < result->leftStates.nStates)
         {
+            // Left states:
             result->leftStates.set[i] = order;
 
-            //TODO:::::::::
+            // Initial states:
+            if (layer->initialStates.nStates > 0 && i > 0 && isSubSet(S, initialS, layer->width))
+            {
+                result->initialStates.set[result->initialStates.nStates] = order;
+                result->initialStates.nStates++;
+            }
+
+            // Transitions:
             for (int j = 0; j < layer->map.sizeAlphabet; j++)
             {
 
@@ -105,19 +116,14 @@ void powerSetLayer(Layer *layer, Layer *result)
                     result->transitions.nTransitions++;
                 }
             }
-            ////////////////
-
-            if (layer->initialStates.nStates > 0 && i > 0 && isSubSet(S, initialS, layer->width))
-            {
-                result->initialStates.set[result->initialStates.nStates] = order;
-                result->initialStates.nStates++;
-            }
         }
 
         if (i < result->rightStates.nStates)
         {
+            // Right states:
             result->rightStates.set[i] = order;
 
+            // Final states:
             if (layer->finalStates.nStates > 0 && hasCommonStates(S, layer->rightStates, layer->finalStates))
             {
                 result->finalStates.set[result->finalStates.nStates] = order;
@@ -129,18 +135,6 @@ void powerSetLayer(Layer *layer, Layer *result)
 
     free(initialS);
     result->width = fmax(result->leftStates.nStates, result->rightStates.nStates);
-}
-
-int isSubSet(int *subS, int *S, int sz)
-{
-    for(int i = 0; i < sz; i++)
-    {
-        if (subS[i] == 1 && S[i] != 1) {
-            return 0;
-        }
-    }
-
-    return 1;
 }
 
 // maps subsets of integers to numbers. S has layer.width positions. S[i]=1 indicates that i belongs to S
@@ -187,7 +181,6 @@ void setStateSize(StateContainer *oldstate, StateContainer *powerstate)
     powerstate->set = malloc(sz * sizeof(int));
 }
 
-
 void bitshift(int *S, int sz)
 {
     for (size_t i = 0; i < sz; i++)
@@ -202,6 +195,18 @@ void bitshift(int *S, int sz)
             S[i] = 0;
         }
     }
+}
+
+int isSubSet(int *subS, int *S, int sz)
+{
+    for(int i = 0; i < sz; i++)
+    {
+        if (subS[i] == 1 && S[i] != 1) {
+            return 0;
+        }
+    }
+
+    return 1;
 }
 
 int hasCommonStates(int *S, StateContainer rightstate, StateContainer finstate)
@@ -243,4 +248,69 @@ int findStateIndex(Layer *layer, State s2, int j)
 
     perror("Could not find the state in next-function.");
     exit(-1);
+}
+
+void showTransitions(TransitionContainer transitions)
+{
+    printf("{");
+    for (int i = 0; i < transitions.nTransitions; i++)
+    {
+        printf("(%d, %d, %d)", transitions.set[i].s1, transitions.set[i].s2, transitions.set[i].a);
+        if (i != transitions.nTransitions - 1) {
+            printf(", ");
+        }
+    }
+    printf("}\n");
+}
+
+void showStates(StateContainer states)
+{
+    printf("{");
+    for (int i = 0; i < states.nStates - 1; i++)
+    {
+        printf("%d, ", states.set[i]);
+    }
+    printf("%d}\n", states.set[states.nStates - 1]);
+}
+
+void testPowerSetODD(ODD odd, ODD powerODD)
+{
+    printf("\n------------------------ Result of PowerSetODD ---------------------------\n");
+    printf("--------------------------------------------------------------------------\n");
+    printf("Original ODD has width: %d and powerODD has width: %d\n", odd.width, powerODD.width);
+    printf("Original ODD has %d layers and powerODD has %d layers\n", odd.nLayers, powerODD.nLayers);
+
+    for (int i = 0; i < powerODD.nLayers; i++)
+    {
+
+        Layer pl = powerODD.layerSequence[i];
+        printf("\nPowerLayer %d with initFlag = %d, finalFlag = %d\n", i, pl.initialFlag, pl.finalFlag);
+
+        if (pl.initialStates.nStates > 0) {
+            printf("InitialStates: ");
+            showStates(pl.initialStates);
+        }
+        
+
+        printf("LeftStates: ");
+        showStates(pl.leftStates);
+
+        printf("RightStates: ");
+        showStates(pl.rightStates);
+
+        if (pl.finalStates.nStates > 0)
+        {
+            printf("FinalStates: ");
+            showStates(pl.finalStates);
+        }
+
+        printf("Transitions: ");
+        showTransitions(pl.transitions);
+
+        //alphabetmap
+    }
+
+    printf("--------------------------------------------------------------------------\n");
+    printf("--------------------------------------------------------------------------\n");
+    printf("Done printing powerODD\n");
 }
