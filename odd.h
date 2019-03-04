@@ -164,13 +164,13 @@ void uniontODDs(ODD* odd1, ODD* odd2, ODD* odd);
 
 
 void intersectionLayers(Layer* layer1, Layer* layer2, Layer* result);
-void intersectionODD(ODD* odd1, ODD* odd2, ODD* odd); 
+void intersectionODD(ODD* odd1, ODD* odd2, ODD* odd);
 
 //tensorProduct (Functions implemented in file tensorProduct.c)
 
 
 void tensorLayers(Layer* layer1, Layer* layer2, Layer* result);
-void tensorODD(ODD* odd1, ODD* odd2, ODD* odd); 
+void tensorODD(ODD* odd1, ODD* odd2, ODD* odd);
 
 //test deterministic (Functions implemented in file deterministic.c)
 
