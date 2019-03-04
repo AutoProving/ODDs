@@ -16,12 +16,12 @@ bool isDeterministicLayer(Layer* layer) {
     {
         if (transition_set[i - 1].s1 == transition_set[i].s1) {
             if (transition_set[i - 1].a == transition_set[i].a) {
-                return 0;
+                return false;
             }
         }
     }
     
-    return 1;
+    return true;
 }
 
 bool isDeterministicODD(ODD* odd) {
