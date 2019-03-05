@@ -4,6 +4,8 @@
 #ifndef ODDS_DEBUGTOOLS_H
 #define ODDS_DEBUGTOOLS_H
 
+#include "odd.h"
+
 /*
  * Prints the all the layers and their respective states of the parameter ODD to stdout.
  */
