@@ -9,13 +9,11 @@
 
 
 void unionStates(StateContainer* state1, StateContainer* state2, StateContainer* result, int l2wth){
-    result->nStates = state1->nStates*state2->nStates;
-    result->set = malloc(sizeof(State)*result->nStates);
-
     int length1=state1->nStates;
     int length2=state2->nStates;
 
-    //check if one of the layers has 0 states
+    //check if one of the layers has 0 states(mostly because of the initial states, but check anyway)
+    
     if(length1==0 && length2!=0){                       //state1 has no states
         result->nStates=length2;
         result->set=malloc(sizeof(State)*length2);
@@ -36,7 +34,9 @@ void unionStates(StateContainer* state1, StateContainer* state2, StateContainer*
         result=state1;    
     }
     
-    else{                                               //both statecontainers has states
+    else{
+        result->nStates = state1->nStates*state2->nStates;
+        result->set = malloc(sizeof(State)*result->nStates);    //both statecontainers has states
         int index=0;
         for(int i=0; i<state1->nStates; i++){
             for(int j=0; j<state2->nStates; j++){
@@ -66,7 +66,7 @@ void unionTransitions(Layer* layer1, Layer* layer2, Layer* result){
     int n1=transStates1->nTransitions;
     int n2=transStates2->nTransitions;
     int transCount=countTrans(layer1, layer2);
-    //Transition* newTransitions=malloc(sizeof(Transition)*n2*n1);
+   
     result->transitions.set=malloc(sizeof(Transition)*transCount);
     result->transitions.nTransitions=transCount;
 
@@ -109,6 +109,7 @@ void unionLayers(Layer* layer1, Layer* layer2, Layer* result){
     result->finalFlag=layer1->finalFlag;
     result->map=layer1->map;
 
+    //width
     if(result->leftStates.nStates > result->rightStates.nStates){
         result->width=result->leftStates.nStates;
     }
@@ -118,13 +119,27 @@ void unionLayers(Layer* layer1, Layer* layer2, Layer* result){
 
                   
 
-    result->finalStates=layer1->finalStates;  // FIKS DENNA
+   //final states  , don't know if this works as it should
+    StateContainer* finalStates1=&(layer1->finalStates);
+    StateContainer* finalStates2=&(layer2->finalStates);
 
+    if(finalStates1->nStates==0){
+        unionStates(leftStates1, finalStates2, &result->finalStates, layer2->width);
+    }
+    else if(finalStates2->nStates==0){
+        unionStates(leftStates2, finalStates1, &result->finalStates, layer2->width);
+    }
+    else{
+        unionStates(finalStates1, finalStates2, &result->finalStates, layer2->width);
+    }
+
+    //transitions
     unionTransitions(layer1, layer2, result);
+    result->finalStates=layer1->finalStates;
 }
 
 
-void uniontODDs(ODD* odd1, ODD* odd2, ODD* odd){
+void unionODDs(ODD* odd1, ODD* odd2, ODD* odd){
     odd->nLayers=odd1->nLayers;
     odd->layerSequence=malloc(sizeof(Layer)*odd->nLayers);
     odd->width=0;
