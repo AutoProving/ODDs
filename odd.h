@@ -77,9 +77,10 @@ typedef struct{
 // Use function findTransition(transitions,t) if you want to determine if a transition t belongs to transitions
 Transition* findTransition(TransitionContainer* transitions, Transition* t); // returns address of transition t or NULL if t is not there
 
-void sortTransitions(TransitionContainer* transitions); // Sorts transitions.set lexicographically
-
-
+void sortLeftTransitions(TransitionContainer* transitions); // Sorts transitions.set lexicographically
+void sortRightTransitions(TransitionContainer* transitions); // Sorts transitions.set lexicographically
+void mergesort(TransitionContainer* transitions, int lo, int hi, bool sortLeft);
+void merge(TransitionContainer* transitions, int leftLo, int leftHi, int rightLo, int rightHi, bool sortLeft);
 ///////////////////////////////////////////////////////////////////////////////
 
 
