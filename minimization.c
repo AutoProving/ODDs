@@ -45,12 +45,19 @@ void deleteDeadTransitions(Layer* layer, int* livingCount, int* livingStates, in
     }
 }
 
+//need to go twice, forwards and backwards to remove states which have nothing from the left and nothing from the right
 
-void minimize (ODD* odd) {
+ODD* minimize (ODD* odd) {
 
     //create copy of ODD, I guess this is how we copy anything we need to 
     ODD* p = &odd;
     ODD newODD = *p;
+
+    //maybe this is better to define new ODD
+    ODD o;
+    o.nLayers = odd->nLayers;
+
+    o.layerSequence = malloc(o.nLayers * sizeof(Layer));
 
     //better to create new ODD and add layers to it like we thought orignally LOL
 
@@ -88,4 +95,9 @@ void minimize (ODD* odd) {
     for(int i = 0; i < odd->nLayers; i++) {
         odd->width = odd->layerSequence[i].width > odd->width ? odd->layerSequence[i].width : odd->width;
     }
+
+    //free original ODD?
+    free(odd);
+
+    return &o;
 }
