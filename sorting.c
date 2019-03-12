@@ -5,6 +5,23 @@
 #include "odd.h"
 #include <stdlib.h>
 
+void sortAllLeftTransitions(ODD* odd)
+{
+    for (int i = 0; i < odd->nLayers; i++)
+    {
+        sortLeftTransitions(&(odd->layerSequence[i].transitions));
+    }
+}
+
+void sortAllRightTransitions(ODD* odd)
+{
+    for (int i = 0; i < odd->nLayers; i++)
+    {
+        sortRightTransitions(&(odd->layerSequence[i].transitions));
+    }
+}
+
+
 void sortLeftTransitions(TransitionContainer* transitions)
 {
 	mergesort(transitions, 0, transitions->nTransitions - 1, true);
@@ -18,16 +35,16 @@ void sortRightTransitions(TransitionContainer* transitions)
 void mergesort(TransitionContainer* transitions, int lo, int hi, bool sortLeft)
 {
 	if (lo >= hi) return;
-
-	mergesort(transitions, lo, hi/2, sortLeft);
-	mergesort(transitions, (hi/2) + 1, hi, sortLeft);
+    int mid =(lo + (hi-lo)/2); 
+	mergesort(transitions, lo, mid, sortLeft);
+	mergesort(transitions, mid+1, hi, sortLeft);
 	
-	merge(transitions, lo, hi/2, (hi/2) + 1, hi, sortLeft);
+	merge(transitions, lo, mid, mid+1, hi, sortLeft);
 }
 
 void merge(TransitionContainer* transitions, int leftLo, int leftHi, int rightLo, int rightHi, bool sortLeft)
 {	
-    printf("%d", rightHi);
+    printf("%d\n", rightHi);
 
 	TransitionContainer* leftArr;
     TransitionContainer* rightArr;
@@ -47,7 +64,7 @@ void merge(TransitionContainer* transitions, int leftLo, int leftHi, int rightLo
 	int secondArrPointer = 0;
 	index = leftLo;
 	
-	while (firstArrPointer <= leftHi && secondArrPointer <= rightHi)
+	while (firstArrPointer <= leftHi && secondArrPointer <= rightHi - rightLo && index <= rightHi)
 	{	
 		int comparison;
 		if (sortLeft) comparison = leftArr->set[firstArrPointer].s1 - rightArr->set[secondArrPointer].s1;
@@ -58,11 +75,11 @@ void merge(TransitionContainer* transitions, int leftLo, int leftHi, int rightLo
 		if (comparison <= 0) transitions->set[index++] = leftArr->set[firstArrPointer++];
 		else transitions->set[index++] = rightArr->set[secondArrPointer++];
 	}
-	while (firstArrPointer <= leftHi)
+	while (firstArrPointer <= leftHi && index <= rightHi)
 	{
 		transitions->set[index++] = leftArr->set[firstArrPointer++]; 
 	}
-	while (secondArrPointer <= rightHi)
+	while (secondArrPointer <= rightHi - rightLo && index <= rightHi)
 	{
 		transitions->set[index++] = rightArr->set[secondArrPointer++];
 	}

@@ -77,10 +77,6 @@ typedef struct{
 // Use function findTransition(transitions,t) if you want to determine if a transition t belongs to transitions
 Transition* findTransition(TransitionContainer* transitions, Transition* t); // returns address of transition t or NULL if t is not there
 
-void sortLeftTransitions(TransitionContainer* transitions); // Sorts transitions.set lexicographically
-void sortRightTransitions(TransitionContainer* transitions); // Sorts transitions.set lexicographically
-void mergesort(TransitionContainer* transitions, int lo, int hi, bool sortLeft);
-void merge(TransitionContainer* transitions, int leftLo, int leftHi, int rightLo, int rightHi, bool sortLeft);
 ///////////////////////////////////////////////////////////////////////////////
 
 
@@ -127,6 +123,15 @@ typedef struct{
 	int width;   // The maximum width of a layer
 	Layer* layerSequence;
 } ODD;
+
+
+//Sorting - functions (Functions implemented in file sorting.c)
+void sortAllLeftTransitions(ODD* odd);
+void sortAllRightTransitions(ODD* odd);
+void sortLeftTransitions(TransitionContainer* transitions); // Sorts transitions.set lexicographically
+void sortRightTransitions(TransitionContainer* transitions); // Sorts transitions.set lexicographically
+void mergesort(TransitionContainer* transitions, int lo, int hi, bool sortLeft);
+void merge(TransitionContainer* transitions, int leftLo, int leftHi, int rightLo, int rightHi, bool sortLeft);
 
 
 //Read from file. (Functions implemented in file reading.c)
