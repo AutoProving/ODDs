@@ -5,43 +5,29 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h>
 
 void intersectionLayers(Layer* layer1, Layer* layer2, Layer* result);
 void intersectionODD(ODD* odd1, ODD* odd2, ODD* odd);
 
 int countIntersectionTransitions(Layer* layer1, Layer* layer2);
 void intersectionTransitions(Layer* layer1, Layer* layer2, Layer* result);
-void intersectionStates(StateContainer* s1, StateContainer* s2, StateContainer* result, int l2width);
+void intersectionStates(StateContainer* s1, StateContainer* s2, StateContainer* result, int l2Width);
 
 /*
  * Adds the cartesian product of layer1 and layer2 stats to result state using:
  * (a,b) = a * b.width + b
  */
-void intersectionStates(StateContainer* s1, StateContainer* s2, StateContainer* result, int l2width) {
+void intersectionStates(StateContainer* s1, StateContainer* s2, StateContainer* result, int l2Width) {
     result->nStates = s1->nStates * s2->nStates;
     result->set = (State*) malloc(sizeof(State) * result->nStates);
 
     int index = 0;
     for(int i = 0; i < s1->nStates; i++) {
-        for(int j = 0; j < s2->nStates; j++) {
-            result->set[index++] = s1->set[i] * l2width + s2->set[j];
+        for(int i1 = 0; i1 < s2->nStates; i1++) {
+            result->set[index++] = s1->set[i] * l2Width + s2->set[i1];
         }
     }
-}
-
-/*
- * Counts the number of transitions in layer1 and layer2 with same a
- */
-int countIntersectionTransitions(Layer* layer1, Layer* layer2) {
-    int nTrans = 0;
-    for(int i = 0; i < layer1->transitions.nTransitions; i++ ) {
-        for(int j = 0; j < layer2->transitions.nTransitions; j++) {
-            if(layer1->transitions.set[i].a == layer2->transitions.set[i].a) {
-                nTrans++;
-            }
-        }
-    }
-    return nTrans;
 }
 
 /*
@@ -49,21 +35,22 @@ int countIntersectionTransitions(Layer* layer1, Layer* layer2) {
  * ((l1.s1, l2.s1), a, (l1.s2, l2.s2))
  */
 void intersectionTransitions(Layer* layer1, Layer* layer2, Layer* result) {
-    result->transitions.nTransitions = countIntersectionTransitions(layer1, layer2);
-    result->transitions.set = (Transition*) malloc(sizeof(Transition) * result->transitions.nTransitions);
+    result->transitions.set = (Transition*) malloc(sizeof(Transition) * layer1->transitions.nTransitions * layer2->transitions.nTransitions);
 
     int index = 0;
     for(int i = 0; i < layer1->transitions.nTransitions; i++ ) {
-        for(int j = 0; j < layer2->transitions.nTransitions; j++) {
+        for(int i1 = 0; i1 < layer2->transitions.nTransitions; i1++) {
             if(layer1->transitions.set[i].a == layer2->transitions.set[i].a) {
-                Transition transition;
-                transition.s1 = layer1->transitions.set[i].s1 * layer2->width * layer2->transitions.set[j].s1;
-                transition.s2 = layer1->transitions.set[i].s2 * layer2->width * layer2->transitions.set[j].s2;
-                transition.a = layer1->transitions.set[i].a;
-                result->transitions.set[index++] = transition;
+                result->transitions.set[index].s1 = layer1->transitions.set[i].s1 * layer2->width + layer2->transitions.set[i1].s1; // TODO: fix coordinate
+                result->transitions.set[index].s2 = layer1->transitions.set[i].s2 * layer2->width + layer2->transitions.set[i1].s2; // TODO: fix coordinate
+                result->transitions.set[index++].a = layer1->transitions.set[i].a;
             }
         }
     }
+    result->transitions.nTransitions = index;
+    //TODO: Is this the right way to reallocate memory?
+    result->transitions.set = (Transition*) realloc(result->transitions.set, result->transitions.nTransitions * sizeof(Transition));
+    assert(result->transitions.set != NULL);
 }
 
 void intersectionLayers(Layer* layer1, Layer* layer2, Layer* result) {
@@ -72,9 +59,12 @@ void intersectionLayers(Layer* layer1, Layer* layer2, Layer* result) {
     intersectionStates(&layer1->initialStates, &layer2->initialStates, &result->initialStates, layer2->width);
     intersectionStates(&layer1->finalStates, &layer2->finalStates, &result->finalStates, layer2->width);
     intersectionTransitions(layer1, layer2, result);
+
+    assert(layer1->initialFlag == layer2->initialFlag);
+    assert(layer1->finalFlag == layer2->finalFlag);
     result->initialFlag = layer1->initialFlag;
     result->finalFlag = layer1->finalFlag;
-    result->map = layer1->map;
+    memcpy(&result->map, &layer1->map, sizeof(AlphabetMap));
     result->width = result->leftStates.nStates > result->rightStates.nStates ? result->leftStates.nStates : result->rightStates.nStates;
 }
 
@@ -84,11 +74,9 @@ void intersectionODD(ODD* odd1, ODD* odd2, ODD* odd) {
     odd->width = 0;
     odd->layerSequence = (Layer*) malloc(sizeof(Layer) * odd->nLayers);
     for(int i = 0; i < odd->nLayers; i++) {
-        Layer layer;
-        intersectionLayers(&odd1->layerSequence[i], &odd2->layerSequence[i], &layer);
-        odd->layerSequence[i] = layer;
-        if(layer.width > odd->width) {
-            odd->width = layer.width;
+        intersectionLayers(&odd1->layerSequence[i], &odd2->layerSequence[i], &odd->layerSequence[i]);
+        if(odd->layerSequence[i].width > odd->width) {
+            odd->width = odd->layerSequence[i].width;
         }
     }
 }
