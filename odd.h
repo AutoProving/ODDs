@@ -164,20 +164,20 @@ bool strMembership(ODD* odd, char** strSeq); // returns 1 if the sequence of sym
 
 //Union (Functions implemented in file union.c)
 
-void unionLayers(Layer* layer1, Layer* layer2, Layer* result);
-void uniontODDs(ODD* odd1, ODD* odd2, ODD* odd);
+Layer* unionLayers(Layer* layer1, Layer* layer2);
+ODD* uniontODDs(ODD* odd1, ODD* odd2);
 
 //Intersection (Functions implemented in file intersection.c)
 
 
-void intersectionLayers(Layer* layer1, Layer* layer2, Layer* result);
-void intersectionODD(ODD* odd1, ODD* odd2, ODD* odd);
+Layer* intersectionLayers(Layer* layer1, Layer* layer2);
+ODD* intersectionODD(ODD* odd1, ODD* odd2);
 
 //tensorProduct (Functions implemented in file tensorProduct.c)
 
 
-void tensorLayers(Layer* layer1, Layer* layer2, Layer* result);
-void tensorODD(ODD* odd1, ODD* odd2, ODD* odd);
+Layer* tensorLayers(Layer* layer1, Layer* layer2);
+ODD* tensorODD(ODD* odd1, ODD* odd2);
 
 //test deterministic (Functions implemented in file deterministic.c)
 
@@ -195,8 +195,8 @@ bool isCompleteODD(ODD* odd);
 //Negation (Functions implemented in file negation.c)
 
 
-void negationLayer(Layer* layer, Layer* result);
-void negationODD(ODD* odd, ODD* result);
+Layer* negationLayer(Layer* layer);
+ODD* negationODD(ODD* odd);
 
 
 //Power Set (Functions implemented in file powerSet.c)
@@ -204,25 +204,25 @@ void negationODD(ODD* odd, ODD* result);
 
 int orderSet(int* S, Layer* layer); // maps subsets of integers to numbers. S has layer.width positions. S[i]=1 indicates that i belongs to S
 int* next(int* S, NumSymbol a, Layer* layer); // Returns the set obtained by reading symbol a from some state in set S.
-void powerSetLayer (Layer* layer, Layer* result);
-void powerSetODD(ODD* odd, ODD* result);
+Layer* powerSetLayer (Layer* layer);
+ODD* powerSetODD(ODD* odd);
 
 //Completion (Functions implemented in file completion.c)
 
 
-void makeCompleteLayer(Layer* layer, Layer* result);
-void makeCompleteODD(ODD* odd, ODD* result);
+Layer* makeCompleteLayer(Layer* layer);
+ODD* makeCompleteODD(ODD* odd);
 
 
 //Memorization (Functions implemented in file memorization.c)
 
 
-void memorizeLayer(Layer* layer, Layer* result);
-void memorizeODD(ODD* odd, ODD* result);
+Layer* memorizeLayer(Layer* layer);
+ODD* memorizeODD(ODD* odd);
 
 //minimization (Functions implemented in file minimization.c)
 
 
-void minimizeODD(ODD* odd, ODD* result);
+ODD* minimizeODD(ODD* odd);
 
 #endif
