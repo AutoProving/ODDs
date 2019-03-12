@@ -7,25 +7,26 @@
 #include <assert.h>
 #include <string.h>
 
-void intersectionLayers(Layer* layer1, Layer* layer2, Layer* result);
-void intersectionODD(ODD* odd1, ODD* odd2, ODD* odd);
+Layer* intersectionLayers(Layer* layer1, Layer* layer2);
+ODD* intersectionODD(ODD* odd1, ODD* odd2);
 
-int countIntersectionTransitions(Layer* layer1, Layer* layer2);
 void intersectionTransitions(Layer* layer1, Layer* layer2, Layer* result);
-void intersectionStates(StateContainer* s1, StateContainer* s2, StateContainer* result, int l2Width);
+void intersectionStates(StateContainer* s1, StateContainer* s2, StateContainer* result);
 
 /*
  * Adds the cartesian product of layer1 and layer2 stats to result state using:
  * (a,b) = a * b.width + b
  */
-void intersectionStates(StateContainer* s1, StateContainer* s2, StateContainer* result, int l2Width) {
+void intersectionStates(StateContainer* s1, StateContainer* s2, StateContainer* result) {
     result->nStates = s1->nStates * s2->nStates;
     result->set = (State*) malloc(sizeof(State) * result->nStates);
+
+    int maxLength = s1->set[s1->nStates-1] > s2->set[s2->nStates-1] ? s1->set[s1->nStates-1] : s2->set[s2->nStates-1];
 
     int index = 0;
     for(int i = 0; i < s1->nStates; i++) {
         for(int i1 = 0; i1 < s2->nStates; i1++) {
-            result->set[index++] = s1->set[i] * l2Width + s2->set[i1];
+            result->set[index++] = s1->set[i] * maxLength + s2->set[i1]; // TODO: fix coordinate
         }
     }
 }
@@ -53,11 +54,12 @@ void intersectionTransitions(Layer* layer1, Layer* layer2, Layer* result) {
     assert(result->transitions.set != NULL);
 }
 
-void intersectionLayers(Layer* layer1, Layer* layer2, Layer* result) {
-    intersectionStates(&layer1->leftStates, &layer2->leftStates, &result->leftStates, layer2->width);
-    intersectionStates(&layer1->rightStates, &layer2->rightStates, &result->rightStates, layer2->width);
-    intersectionStates(&layer1->initialStates, &layer2->initialStates, &result->initialStates, layer2->width);
-    intersectionStates(&layer1->finalStates, &layer2->finalStates, &result->finalStates, layer2->width);
+Layer* intersectionLayers(Layer* layer1, Layer* layer2) {
+    Layer* result = malloc(sizeof(Layer));
+    intersectionStates(&layer1->leftStates, &layer2->leftStates, &result->leftStates);
+    intersectionStates(&layer1->rightStates, &layer2->rightStates, &result->rightStates);
+    intersectionStates(&layer1->initialStates, &layer2->initialStates, &result->initialStates);
+    intersectionStates(&layer1->finalStates, &layer2->finalStates, &result->finalStates);
     intersectionTransitions(layer1, layer2, result);
 
     assert(layer1->initialFlag == layer2->initialFlag);
@@ -66,17 +68,20 @@ void intersectionLayers(Layer* layer1, Layer* layer2, Layer* result) {
     result->finalFlag = layer1->finalFlag;
     memcpy(&result->map, &layer1->map, sizeof(AlphabetMap));
     result->width = result->leftStates.nStates > result->rightStates.nStates ? result->leftStates.nStates : result->rightStates.nStates;
+    return result;
 }
 
-void intersectionODD(ODD* odd1, ODD* odd2, ODD* odd) {
+ODD* intersectionODD(ODD* odd1, ODD* odd2) {
     assert(odd1->nLayers == odd2->nLayers);
+    ODD* odd = malloc(sizeof(ODD));
     odd->nLayers = odd1->nLayers;
     odd->width = 0;
     odd->layerSequence = (Layer*) malloc(sizeof(Layer) * odd->nLayers);
     for(int i = 0; i < odd->nLayers; i++) {
-        intersectionLayers(&odd1->layerSequence[i], &odd2->layerSequence[i], &odd->layerSequence[i]);
+        odd->layerSequence[i] = *intersectionLayers(&odd1->layerSequence[i], &odd2->layerSequence[i]);
         if(odd->layerSequence[i].width > odd->width) {
             odd->width = odd->layerSequence[i].width;
         }
     }
+    return odd;
 }
