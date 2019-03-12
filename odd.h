@@ -93,8 +93,8 @@ typedef struct{
 	// This is useful when dealing with large alphabets.
 } AlphabetMap;
 
-void symbolName(NumSymbol a); // returns N2S[a]
-void numberSymbol(char* name); // returns the number of the the symbol named name.
+char* symbolName(NumSymbol a); // returns N2S[a]
+int numberSymbol(char* name); // returns the number of the the symbol named name.
 
 
 
@@ -182,14 +182,14 @@ void tensorODD(ODD* odd1, ODD* odd2, ODD* odd);
 //test deterministic (Functions implemented in file deterministic.c)
 
 
-void isDeterministicLayer(Layer* layer);
-void isDeterministicODD(ODD* odd);
+bool isDeterministicLayer(Layer* layer);
+bool isDeterministicODD(ODD* odd);
 
 //test complete (Functions implemented in file complete.c)
 
 
-void isCompleteLayer(Layer* layer);
-void isCompleteODD(ODD* odd);
+bool isCompleteLayer(Layer* layer);
+bool isCompleteODD(ODD* odd);
 
 
 //Negation (Functions implemented in file negation.c)
