@@ -44,8 +44,6 @@ void mergesort(TransitionContainer* transitions, int lo, int hi, bool sortLeft)
 
 void merge(TransitionContainer* transitions, int leftLo, int leftHi, int rightLo, int rightHi, bool sortLeft)
 {	
-    printf("%d\n", rightHi);
-
 	TransitionContainer* leftArr;
     TransitionContainer* rightArr;
     leftArr = malloc(sizeof(TransitionContainer));
@@ -83,4 +81,7 @@ void merge(TransitionContainer* transitions, int leftLo, int leftHi, int rightLo
 	{
 		transitions->set[index++] = rightArr->set[secondArrPointer++];
 	}
+
+    free(leftArr);
+    free(rightArr);
 }
