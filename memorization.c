@@ -1,5 +1,5 @@
 // Copyright 2019 Andreas Ommundsen
-// This file is licensed under MIT License, as specified in the file LISENSE located at the root folder of this repository.
+// This file is licensed under MIT License, as specified in the file LICENSE located at the root folder of this repository.
 
 #include "odd.h"
 #include <stdlib.h>
@@ -43,7 +43,7 @@ void updateInitialFinal(StateContainer *states, int alphaSize);
  */
 void updateTransitions(TransitionContainer *transitions, int alphaSize);
 
-void memorizeLayer(Layer *layer, Layer *result) {
+Layer *memorizeLayer(Layer *layer) {
 
     Layer clonedLayer = *layer;
     Layer *cP = &clonedLayer;
@@ -68,13 +68,12 @@ void memorizeLayer(Layer *layer, Layer *result) {
 
     updateTransitions(&clonedLayer.transitions, alphaSize);
 
-    free(result);
-    *result = *cP;
+    return cP;
 }
 
 
-void memorizeODD(ODD *odd, ODD *result) {
-
+ODD *memorizeODD(ODD *odd) {
+    // THIS WHOLE FUNCTION MUST BE UPDATED
     ODD clonedODD = *odd;
     ODD *cP = &clonedODD;
 
@@ -84,15 +83,14 @@ void memorizeODD(ODD *odd, ODD *result) {
         Layer *inputLayer = &odd->layerSequence[i];
         Layer *resultLayer = malloc(sizeof(Layer));
 
-        memorizeLayer(inputLayer, resultLayer);
+        memorizeLayer(inputLayer);
 
 //        free(inputLayer); // TODO CAUSES SIGSEGV, FIGURE IT OUT
         maxWidth = (resultLayer->width > maxWidth) ? resultLayer->width : maxWidth;
         *inputLayer = *resultLayer;
     }
     clonedODD.width = maxWidth;
-    free(result);
-    *result = *cP;
+    return cP; // TODO FIX SHALLOW CLONING ERROR
 }
 
 
