@@ -5,10 +5,6 @@
 
 int main(){
     // printf() displays the string inside quotation
-    ODD odd;
-    readODD("ODD-Example.txt", &odd);
-    printODD("test.txt", &odd);
-
-    isDeterministicODD(&odd);
+    printf("Hello, World!");
     return 0;
 }
