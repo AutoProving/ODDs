@@ -1,4 +1,4 @@
-// Copyright 2019 Andre Berge
+// Copyright 2019 Andre Berge, Ole Magnus Lie
 // This file is licensed under MIT License, as specified in the file LISENSE located at the root folder of this repository.
 
 #include <stdio.h>
