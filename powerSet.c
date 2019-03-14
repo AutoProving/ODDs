@@ -16,8 +16,9 @@ void showStates(StateContainer states);
 void testPowerSetODD(ODD odd, ODD powerODD);
 // End helper functions
 
-void powerSetODD(ODD *odd, ODD *result)
+ODD* powerSetODD(ODD *odd)
 {
+    ODD* result = malloc(sizeof(ODD));
     result->nLayers = odd->nLayers;
     result->layerSequence = malloc(odd->nLayers * sizeof(Layer));
     result->width = 0;
@@ -25,7 +26,7 @@ void powerSetODD(ODD *odd, ODD *result)
     for (int i = 0; i < odd->nLayers; i++)
     {
         // Layer powerlayer;
-        powerSetLayer(&odd->layerSequence[i], &result->layerSequence[i]);
+        result->layerSequence[i] = *powerSetLayer(&odd->layerSequence[i]);
 
         // result->layerSequence[i] = powerlayer;
 
@@ -34,10 +35,13 @@ void powerSetODD(ODD *odd, ODD *result)
             result->width = result->layerSequence[i].width;
         }
     }
+    
+    return result;
 }
 
-void powerSetLayer(Layer *layer, Layer *result)
+Layer* powerSetLayer(Layer *layer)
 {
+    Layer* result = malloc(sizeof(Layer));
     //SET FLAGS
     result->initialFlag = layer->initialFlag;
     result->finalFlag = layer->finalFlag;
@@ -135,6 +139,8 @@ void powerSetLayer(Layer *layer, Layer *result)
 
     free(initialS);
     result->width = fmax(result->leftStates.nStates, result->rightStates.nStates);
+
+    return result;
 }
 
 // maps subsets of integers to numbers. S has layer.width positions. S[i]=1 indicates that i belongs to S
