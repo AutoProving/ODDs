@@ -1,23 +1,10 @@
-// Copyright 2019 YOUR NAME
+// Copyright 2019 Andre Berge
 // This file is licensed under MIT License, as specified in the file LISENSE located at the root folder of this repository.
 
 #include "odd.h"
 #include <stdio.h>
 #include <stdlib.h>
 
-/**
-	Will print a number n and its corresponding string N2S[n].
-*/
-/*
-void printSymbol(FILE *f, NumSymbol s)
-{
-	
-}
-*/
-
-/**
-	Calls printSymbol for each element in the map.
-*/
 void printAlphabetMap(FILE *f, AlphabetMap* map)
 {
 	for(int i = 0; i < map->sizeAlphabet; i++) 
