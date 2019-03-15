@@ -3,7 +3,7 @@
 #include "odd.h"
 #include <string.h>
 #include <stdlib.h>
-#include <omp.h>
+
 void tensorStates(StateContainer* stateContainer1, StateContainer* stateContainer2, StateContainer* result){
 
 		int nStates = (stateContainer1->nStates)*(stateContainer2->nStates);
@@ -65,7 +65,8 @@ void tensorEdgeStates(StateContainer* states1, StateContainer* edgeStates1, Stat
 
 }
 
-void tensorLayer(Layer* layer1, Layer* layer2, Layer* result){
+Layer* tensorLayers(Layer* layer1, Layer* layer2) {
+	Layer* result = malloc(sizeof(Layer));
 	int newAlphabetSize = layer1->map.sizeAlphabet*layer2->map.sizeAlphabet;
 	AlphabetMap map = {newAlphabetSize,malloc(sizeof(char*)*newAlphabetSize),malloc(sizeof(int)*newAlphabetSize)};
 	for(int i = 0; i < layer1->map.sizeAlphabet; ++i){
@@ -129,18 +130,24 @@ void tensorLayer(Layer* layer1, Layer* layer2, Layer* result){
 	result->transitions.set = set;
 	result->transitions.nTransitions = nTransitions;
 
+	return result;
+
 }
-void tensorODD(ODD* odd1, ODD* odd2, ODD* odd){
+ODD* tensorODD(ODD* odd1, ODD* odd2){
+	ODD *odd = malloc(sizeof(ODD));
 	int nLayers = odd1->nLayers;
 	Layer* layerSequence = malloc(sizeof(Layer)*nLayers);
 	int width = 0;
 	#pragma omp parallel for
 	for (int i = 0; i < nLayers; ++i) {
-		tensorLayer(&odd1->layerSequence[i],&odd2->layerSequence[i], &layerSequence[i]);
+		Layer* temp =  tensorLayers(&odd1->layerSequence[i],&odd2->layerSequence[i]);
+		layerSequence[i] = *temp;
+		free(temp);
 		width = layerSequence[i].width > width ? layerSequence[i].width : width;
 	}
 	odd->nLayers=nLayers;
 	odd->layerSequence = layerSequence;
 	odd->width = width;
+	return odd;
 }
 
