@@ -3,6 +3,7 @@
 #include "odd.h"
 #include <string.h>
 #include <stdlib.h>
+#include <omp.h>
 
 void tensorStates(StateContainer* stateContainer1, StateContainer* stateContainer2, StateContainer* result){
 
