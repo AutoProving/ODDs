@@ -7,7 +7,7 @@
 #include "odd.h"
 
 /**
- * @param input The ODD to be cloned using deep copy.
+ * @param input The ODD to be cloned with a deep copy.
  * @return The cloned ODD whose internal state is distinct in memory from the input.
  */
 ODD *cloneODD(ODD *input);

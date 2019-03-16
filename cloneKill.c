@@ -1,5 +1,7 @@
+// Copyright 2019 Andreas Ommundsen
+// This file is licensed under MIT License, as specified in the file LICENSE located at the root folder of this repository.
+
 #include <stdlib.h>
-#include <string.h>
 #include "cloneKill.h"
 #include "odd.h"
 

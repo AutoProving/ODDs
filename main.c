@@ -12,17 +12,17 @@ int main() {
     ODD *odd = malloc(sizeof(ODD));
     readODD(filename, odd);
 
-//    ODD *clone = cloneODD(odd);
+    ODD *clone = cloneODD(odd);
 //    Layer *inputLayer = &odd->layerSequence[3];
 //    Layer *resultLayer = malloc(sizeof(Layer));
 
 
-    printf("\n\nBEFORE MEMO\n\n");
+    printf("\n\nBEFORE MEMO (original)\n\n");
     showODD(odd);
 //    showLayer(&odd->layerSequence[1]);
 //    odd->layerSequence[1] = *memorizeLayer(&odd->layerSequence[1]);
-    ODD* memorized = memorizeODD(odd);
-    printf("\n\nAFTER MEMO\n\n");
+    ODD* memorized = memorizeODD(clone);
+    printf("\n\nAFTER MEMO (clone)\n\n");
 //    showLayer(&odd->layerSequence[1]);
     showODD(memorized);
 
@@ -31,8 +31,8 @@ int main() {
 
 //    showODD(clone);
 
-//    printf("*odd: %p\n"
-//           "*clone: %p\n"
-//           "Equal: %s\n", odd, clone, (odd == clone) ? "YES" : "NO");
+    printf("*odd: %p\n"
+           "*clone: %p\n"
+           "Equal: %s\n", odd, clone, (odd == clone) ? "YES" : "NO");
     return 0;
 }

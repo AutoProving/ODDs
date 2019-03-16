@@ -5,31 +5,45 @@
 #include "cloneKill.h"
 #include <stdlib.h>
 
-/*
- * Input:
- *      *states : The StateContainer to be updated.
- *      newSize : The new size of the state set.
- * Effect:
- *      Memory of *states is freed and then a new array holding states [0 ... newSize-1] is set to that memory.
+/**
+ * @param states The StateContainer to be updated.
+ * @param alphaSize The layer.map.sizeAlphabet belonging to the same layer as the *states.
+ * @Effect Memory of *states is freed and then a new array holding states [0 ... newSize-1] is set to that memory.
  */
 void updateStateContainer(StateContainer *states, int alphaSize);
 
-/*
- * Input:
- *      *transitions: The layer.transitions TransitionsContainer that we wish to update.
- *      alphaSize : The layer.map.sizeAlphabet.
- * Effect:
- *      *transitions should be updated to show the mappings from the expanded left states to the expanded right states.
+/**
+ * @param transitions The layer.transitions TransitionsContainer that we wish to update.
+ * @param alphaSize The layer.map.sizeAlphabet belonging to the same layer as the *transitions.
+ * @Effect *transitions are updated to show the mappings from the expanded left states to the expanded right states.
  */
 void updateTransitions(TransitionContainer *transitions, int alphaSize);
+
+ODD *memorizeODD(ODD *odd) {
+
+    ODD *clonedODD = cloneODD(odd);
+
+    int maxWidth = 0;
+    for (int i = 0; i < clonedODD->nLayers; ++i) {
+
+        // TODO memleak? The old layer.
+        clonedODD->layerSequence[i] = *memorizeLayer(&clonedODD->layerSequence[i]);
+
+        maxWidth =
+                (clonedODD->layerSequence[i].width > maxWidth)
+                ? clonedODD->layerSequence[i].width : maxWidth;
+    }
+    clonedODD->width = maxWidth;
+    return clonedODD;
+}
 
 Layer *memorizeLayer(Layer *layer) {
 
     Layer *clonedLayer = cloneLayer(layer);
 
     int alphaSize = clonedLayer->map.sizeAlphabet;
-    int newLeftSize = clonedLayer->leftStates.nStates * alphaSize; // expandedSetSize(layer, true);
-    int newRightSize = clonedLayer->rightStates.nStates * alphaSize; // expandedSetSize(layer, false);
+    int newLeftSize = clonedLayer->leftStates.nStates * alphaSize;
+    int newRightSize = clonedLayer->rightStates.nStates * alphaSize;
 
     clonedLayer->width = (newLeftSize > newRightSize) ? newLeftSize : newRightSize;
 
@@ -46,23 +60,6 @@ Layer *memorizeLayer(Layer *layer) {
     updateTransitions(&clonedLayer->transitions, alphaSize);
 
     return clonedLayer;
-}
-
-ODD *memorizeODD(ODD *odd) {
-
-    ODD *clonedODD = cloneODD(odd);
-
-    int maxWidth = 0;
-    for (int i = 0; i < odd->nLayers; ++i) {
-
-        clonedODD->layerSequence[i] = *memorizeLayer(&odd->layerSequence[i]);
-
-        maxWidth =
-                (clonedODD->layerSequence[i].width > maxWidth)
-                ? clonedODD->layerSequence[i].width : maxWidth;
-    }
-    clonedODD->width = maxWidth;
-    return clonedODD;
 }
 
 
