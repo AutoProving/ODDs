@@ -1,57 +1,112 @@
-// Copyright 2019 Christian Stafset, Daniel Lansdaal, Konstantin _
+// Copyright 2019 Christian Stafset, Daniel Lansdaal, Konstantin Rygol
 // This file is licensed under MIT License, as specified in the file LISENSE located at the root folder of this repository.
 #include <stdio.h>
 #include <stdlib.h>
 #include "odd.h"
 
-void deleteDeadStates(Layer* layer, int* livingCount, int* livingStates) {
-    //can compress these variable declarations
-    StateContainer cont = layer->rightStates;
-    State* states = cont.set;
-    TransitionContainer transCont = layer->transitions;
-    Transition* trans = transCont.set;
-    int numTransitions = transCont.nTransitions;
-    int numStates = cont.nStates;
+Layer deleteDeadStatesLeft(Layer* layer, int* livingCount, int* livingStates, Layer l) {
+    Transition* transitions = layer->transitions.set;
+    int numTransitions = layer->transitions.nTransitions;
+    int numStates = layer->leftStates.nStates;
+    State * states = layer->leftStates.set;
     *livingCount = 0;
     //can make faster by running through only transitions
     //go through all transitions and add states on the right into new array make sure you dont double up
     //if you can ensure transitions come from a valid left state (which should be the case as we deleted dead states from the left)
+
+    //good idea but how do we avoid getting double ups?
+
+    
     for (int i = 0; i < numStates; i++) {
         for (int j = 0; j < numTransitions; j++) {
-            if (trans[j].s2 == states[i]) {
+            if (transitions[j].s2 == states[i]) {
                 livingStates[*livingCount] = states[i];
                 *livingCount++;
                 break;
             }
         }
     }
+
+    l.leftStates.set = livingStates;
+    l.leftStates.nStates = livingCount;
+    return l;
+    
 }
 
-void deleteDeadTransitions(Layer* layer, int* livingCount, int* livingStates, int* livingTransCount, Transition* livingTransitions) {
-    //compress variable declarations
-    TransitionContainer transCont = layer->transitions;
-    Transition* trans = transCont.set;
-    int transCount = transCont.nTransitions;
+Layer deleteDeadTransitionsLeft(Layer* layer, int livingCount, int* livingStates, int* livingTransCount, Transition* livingTransitions, Layer l) {
+    Transition* transitions = layer->transitions.set;
+    int transCount = layer->transitions.nTransitions;
     *livingTransCount = 0;
-    //can do in logn time because sorted
+    //can do in n*logn time because sorted
     //binary search??
-    for (int i = 0; i < livingCount[0]; i++) {
+    for (int i = 0; i < livingCount; i++) {
         for (int j = 0; j < transCount; j++) {
-            if (trans[j].s1 == livingStates[i]) {
-                livingTransitions[*livingTransCount] = trans[j];
+            if (transitions[j].s1 == livingStates[i]) {
+                livingTransitions[*livingTransCount] = transitions[j];
                 *livingTransCount++;
             }
         }
     }
+
+    l.leftStates.set = livingTransitions;
+    l.transitions.nTransitions = livingTransCount;
+}
+
+Layer deleteDeadStatesRight(Layer* layer, int* livingCount, int* livingStates, Layer l) {
+    Transition* transitions = layer->transitions.set;
+    int numTransitions = layer->transitions.nTransitions;
+    int numStates = layer->rightStates.nStates;
+    State * states = layer->rightStates.set;
+    *livingCount = 0;
+    //can make faster by running through only transitions
+    //go through all transitions and add states on the right into new array make sure you dont double up
+    //if you can ensure transitions come from a valid left state (which should be the case as we deleted dead states from the left)
+
+    //good idea but how do we avoid getting double ups?
+
+    
+    for (int i = 0; i < numStates; i++) {
+        for (int j = 0; j < numTransitions; j++) {
+            if (transitions[j].s2 == states[i]) {
+                livingStates[*livingCount] = states[i];
+                *livingCount++;
+                break;
+            }
+        }
+    }
+
+    l.rightStates.set = livingStates;
+    l.rightStates.nStates = livingCount;
+    return l;
+    
+}
+
+Layer deleteDeadTransitionsRight(Layer* layer, int livingCount, int* livingStates, int* livingTransCount, Transition* livingTransitions, Layer l) {
+    Transition* transitions = layer->transitions.set;
+    int transCount = layer->transitions.nTransitions;
+    *livingTransCount = 0;
+    //can do in n*logn time because sorted
+    //binary search??
+    for (int i = 0; i < livingCount; i++) {
+        for (int j = 0; j < transCount; j++) {
+            if (transitions[j].s1 == livingStates[i]) {
+                livingTransitions[*livingTransCount] = transitions[j];
+                *livingTransCount++;
+            }
+        }
+    }
+
+    l.transitions.set = livingTransitions;
+    l.transitions.nTransitions = livingTransCount;
 }
 
 //need to go twice, forwards and backwards to remove states which have nothing from the left and nothing from the right
 
 ODD* minimize (ODD* odd) {
 
-    //create copy of ODD, I guess this is how we copy anything we need to 
-    ODD* p = &odd;
-    ODD newODD = *p;
+    // //create copy of ODD, I guess this is how we copy anything we need to 
+    // ODD* p = &odd;
+    // ODD newODD = *p;
 
     //maybe this is better to define new ODD
     ODD o;
@@ -66,30 +121,36 @@ ODD* minimize (ODD* odd) {
     //create new layer then we need to free the old one before replacing it with the new one we created
     Layer l;
     //change things in the layer using '.' e.g.
-    l.width = newODD.layerSequence[0].width;
+    l.width = odd->layerSequence[0].width;
 
-    Layer* newLayer = &(odd->layerSequence[0]);
-    int* livingStates = newLayer->leftStates.set;
-    Transition* livingTransitions = newLayer->transitions.set;
+    Layer currLayer = odd->layerSequence[0];
 
-    int livingCount = newLayer->leftStates.nStates;
-    int livingTransCount = newLayer->transitions.nTransitions;
+    State* livingStates = currLayer.leftStates.set;
+    int livingCount = currLayer.leftStates.nStates;
+
+    Transition* livingTransitions =  currLayer.transitions.set;
+    int livingTransCount = currLayer.transitions.nTransitions;
 
     for (int i = 0; i < numLayers; i++) {
-        newLayer = &(odd->layerSequence[i]);
-        newLayer->leftStates.set = livingStates;
-        newLayer->leftStates.nStates = livingCount;
-        deleteDeadTransitions(newLayer, &livingCount, livingStates, &livingTransCount, livingTransitions);
-        deleteDeadStates(newLayer, &livingCount, livingStates);
-        newLayer->rightStates.set = livingStates;
-        newLayer->rightStates.nStates = livingCount;
+        l.leftStates.set = livingStates;
+        l.leftStates.nStates = livingCount;
+        l = deleteDeadTransitionsRight(&currLayer, &livingCount, livingStates, &livingTransCount, livingTransitions, l);
+        l = deleteDeadStatesRight(&currLayer, &livingCount, livingStates, l);
 
-        //memory leak don't free OLD transitions before setting the pointer to the NEW transitions
-        newLayer->transitions.set = livingTransitions;
-        newLayer->transitions.nTransitions = livingTransCount;
+        l.width = l.leftStates.nStates > l.rightStates.nStates ? l.leftStates.nStates : l.rightStates.nStates;
 
-        newLayer->width = newLayer->leftStates.nStates > newLayer->rightStates.nStates ? newLayer->leftStates.nStates : newLayer->rightStates.nStates;
+        o.layerSequence[i] = l;
+    }
 
+    for (int i = numLayers-1; i >= 0; i--) {
+        l.rightStates.set = livingStates;
+        l.rightStates.nStates = livingCount;
+        l = deleteDeadTransitionsLeft(&currLayer, &livingCount, livingStates, &livingTransCount, livingTransitions, l);
+        l = deleteDeadStatesLeft(&currLayer, &livingCount, livingStates, l);
+
+        l.width = l.leftStates.nStates > l.rightStates.nStates ? l.leftStates.nStates : l.rightStates.nStates;
+
+        o.layerSequence[i] = l;
     }
 
     for(int i = 0; i < odd->nLayers; i++) {
