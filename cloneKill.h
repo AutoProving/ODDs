@@ -18,4 +18,14 @@ ODD *cloneODD(ODD *input);
  */
 Layer *cloneLayer(Layer *input);
 
+/**
+ * @param target The ODD whose internal state is to be freed.
+ */
+void killODD(ODD *target);
+
+/**
+ * @param target The Layer whose internal state is to be freed.
+ */
+void killLayer(Layer *target);
+
 #endif //ODDS_CLONEKILL_H

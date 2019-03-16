@@ -105,3 +105,13 @@ Layer *cloneLayer(Layer *input) {
 
     return clone;
 }
+
+void killODD(ODD *target) {
+    fprintf(stderr, "%s() IS NOT IMPLEMENTED YET!\n", __func__);
+    exit(EXIT_FAILURE);
+}
+
+void killLayer(Layer *target) {
+    fprintf(stderr, "%s() IS NOT IMPLEMENTED YET!\n", __func__);
+    exit(EXIT_FAILURE);
+}

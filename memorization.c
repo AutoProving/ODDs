@@ -5,6 +5,12 @@
 #include "cloneKill.h"
 #include <stdlib.h>
 
+#ifdef _OPENMP
+
+#include <omp.h>
+
+#endif
+
 /**
  * @param states The StateContainer to be updated.
  * @param alphaSize The layer.map.sizeAlphabet belonging to the same layer as the *states.
@@ -24,9 +30,13 @@ ODD *memorizeODD(ODD *odd) {
     ODD *clonedODD = cloneODD(odd);
 
     int maxWidth = 0;
+
+#ifdef _OPENMP
+# pragma omp parallel // num_threads(threadCount)
+#   pragma omp for
+#endif
     for (int i = 0; i < clonedODD->nLayers; ++i) {
 
-        // TODO memleak? The old layer.
         clonedODD->layerSequence[i] = *memorizeLayer(&clonedODD->layerSequence[i]);
 
         maxWidth =
