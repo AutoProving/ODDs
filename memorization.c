@@ -6,21 +6,19 @@
 #include <stdlib.h>
 
 #ifdef _OPENMP
-
-#include <omp.h>
-
+#   include <omp.h>
 #endif
 
 /**
- * @param states The StateContainer to be updated.
- * @param alphaSize The layer.map.sizeAlphabet belonging to the same layer as the *states.
- * @Effect Memory of *states is freed and then a new array holding states [0 ... newSize-1] is set to that memory.
+ * @param states The StateContainer that we wish to update.
+ * @param alphaSize The layer.map.sizeAlphabet belonging to the same layer as the input *states.
+ * @Effect *states are updated to show their post-memorization expansion values with regard to the size of the alphabet.
  */
 void updateStateContainer(StateContainer *states, int alphaSize);
 
 /**
  * @param transitions The layer.transitions TransitionsContainer that we wish to update.
- * @param alphaSize The layer.map.sizeAlphabet belonging to the same layer as the *transitions.
+ * @param alphaSize The layer.map.sizeAlphabet belonging to the same layer as the input *transitions.
  * @Effect *transitions are updated to show the mappings from the expanded left states to the expanded right states.
  */
 void updateTransitions(TransitionContainer *transitions, int alphaSize);
@@ -31,13 +29,15 @@ ODD *memorizeODD(ODD *odd) {
 
     int maxWidth = 0;
 
-#ifdef _OPENMP
+#ifdef _OPENMP // Do I need these guards outside of including headers?
 # pragma omp parallel // num_threads(threadCount)
 #   pragma omp for
 #endif
     for (int i = 0; i < clonedODD->nLayers; ++i) {
 
-        clonedODD->layerSequence[i] = *memorizeLayer(&clonedODD->layerSequence[i]);
+        Layer* temp = memorizeLayer(&clonedODD->layerSequence[i]);
+        clonedODD->layerSequence[i] = *temp;
+        free(temp);
 
 # pragma omp critical
         maxWidth =

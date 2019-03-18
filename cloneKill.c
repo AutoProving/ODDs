@@ -13,7 +13,9 @@ ODD *cloneODD(ODD *input) {
     clone->nLayers = input->nLayers;
     clone->layerSequence = malloc(clone->nLayers * sizeof(Layer)); // FREE ME
     for (int i = 0; i < clone->nLayers; ++i) {
-        clone->layerSequence[i] = *cloneLayer(&input->layerSequence[i]);
+        Layer* temp = cloneLayer(&input->layerSequence[i]);
+        clone->layerSequence[i] = *temp;
+        free(temp);
     }
     return clone;
 }
