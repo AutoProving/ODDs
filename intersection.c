@@ -15,18 +15,16 @@ void intersectionStates(StateContainer* s1, StateContainer* s2, StateContainer* 
 
 /*
  * Adds the cartesian product of layer1 and layer2 stats to result state using:
- * (a,b) = a * b.width + b
+ * (a,b) = a * (max(s2.set) + 1) + b
  */
 void intersectionStates(StateContainer* s1, StateContainer* s2, StateContainer* result) {
     result->nStates = s1->nStates * s2->nStates;
     result->set = (State*) malloc(sizeof(State) * result->nStates);
 
-    int maxLength = s1->set[s1->nStates-1] > s2->set[s2->nStates-1] ? s1->set[s1->nStates-1] : s2->set[s2->nStates-1];
-
     int index = 0;
     for(int i = 0; i < s1->nStates; i++) {
         for(int i1 = 0; i1 < s2->nStates; i1++) {
-            result->set[index++] = s1->set[i] * maxLength + s2->set[i1]; // TODO: fix coordinate
+            result->set[index++] = s1->set[i] * (s2->set[s2->nStates-1] + 1) + s2->set[i1];
         }
     }
 }
@@ -42,16 +40,22 @@ void intersectionTransitions(Layer* layer1, Layer* layer2, Layer* result) {
     for(int i = 0; i < layer1->transitions.nTransitions; i++ ) {
         for(int i1 = 0; i1 < layer2->transitions.nTransitions; i1++) {
             if(layer1->transitions.set[i].a == layer2->transitions.set[i].a) {
-                result->transitions.set[index].s1 = layer1->transitions.set[i].s1 * layer2->width + layer2->transitions.set[i1].s1; // TODO: fix coordinate
-                result->transitions.set[index].s2 = layer1->transitions.set[i].s2 * layer2->width + layer2->transitions.set[i1].s2; // TODO: fix coordinate
+                result->transitions.set[index].s1 = layer1->transitions.set[i].s1
+                        * (layer2->leftStates.set[layer2->leftStates.nStates-1] + 1)
+                        + layer2->transitions.set[i1].s1;
+
                 result->transitions.set[index++].a = layer1->transitions.set[i].a;
+
+                result->transitions.set[index].s2 = layer1->transitions.set[i].s2
+                        * (layer2->rightStates.set[layer2->rightStates.nStates-1] + 1)
+                        + layer2->transitions.set[i1].s2;
             }
         }
     }
     result->transitions.nTransitions = index;
-    //TODO: Is this the right way to reallocate memory?
+    //TODO: Ask if it is the right way to reallocate memory
     result->transitions.set = (Transition*) realloc(result->transitions.set, result->transitions.nTransitions * sizeof(Transition));
-    assert(result->transitions.set != NULL);
+    assert(result->transitions.set != NULL); // Ensure the reallocation succeeded
 }
 
 Layer* intersectionLayers(Layer* layer1, Layer* layer2) {
