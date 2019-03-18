@@ -39,6 +39,7 @@ ODD *memorizeODD(ODD *odd) {
 
         clonedODD->layerSequence[i] = *memorizeLayer(&clonedODD->layerSequence[i]);
 
+# pragma omp critical
         maxWidth =
                 (clonedODD->layerSequence[i].width > maxWidth)
                 ? clonedODD->layerSequence[i].width : maxWidth;
