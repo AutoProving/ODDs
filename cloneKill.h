@@ -7,16 +7,16 @@
 #include "odd.h"
 
 /**
- * @param input The ODD to be cloned with a deep copy.
+ * @param original The ODD to be cloned with a deep copy.
  * @return The cloned ODD whose internal state is distinct in memory from the input.
  */
-ODD *cloneODD(ODD *input);
+ODD *cloneODD(ODD *original);
 
 /**
- * @param input The Layer to be cloned with a deep copy.
+ * @param original The Layer to be cloned with a deep copy.
  * @return The cloned Layer whose internal state is distinct in memory from the input.
  */
-Layer *cloneLayer(Layer *input);
+Layer *cloneLayer(Layer *original);
 
 /**
  * @param target The ODD whose internal state is to be freed.

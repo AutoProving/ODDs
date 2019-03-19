@@ -5,32 +5,33 @@
 #include "cloneKill.h"
 #include "odd.h"
 
-ODD *cloneODD(ODD *input) {
+ODD *cloneODD(ODD *original) {
 
     ODD *clone = malloc(sizeof(ODD)); // FREE ME
 
-    clone->width = input->width;
-    clone->nLayers = input->nLayers;
+    clone->width = original->width;
+    clone->nLayers = original->nLayers;
     clone->layerSequence = malloc(clone->nLayers * sizeof(Layer)); // FREE ME
     for (int i = 0; i < clone->nLayers; ++i) {
-        Layer* temp = cloneLayer(&input->layerSequence[i]);
+        Layer* temp = cloneLayer(&original->layerSequence[i]);
         clone->layerSequence[i] = *temp;
+        killLayer(temp);
         free(temp);
     }
     return clone;
 }
 
-Layer *cloneLayer(Layer *input) {
+Layer *cloneLayer(Layer *original) {
 
     Layer *clone = malloc(sizeof(Layer)); // FREE ME
 
     // Layer Info
-    clone->width = input->width;
-    clone->initialFlag = input->initialFlag;
-    clone->finalFlag = input->finalFlag;
+    clone->width = original->width;
+    clone->initialFlag = original->initialFlag;
+    clone->finalFlag = original->finalFlag;
 
     // Layer AlphabetMap
-    clone->map.sizeAlphabet = input->map.sizeAlphabet;
+    clone->map.sizeAlphabet = original->map.sizeAlphabet;
 
     clone->map.N2S =
             malloc( // FREE ME
@@ -38,7 +39,7 @@ Layer *cloneLayer(Layer *input) {
                     sizeof(char *)
             );
     for (int j = 0; j < clone->map.sizeAlphabet; ++j) {
-        clone->map.N2S[j] = input->map.N2S[j];
+        clone->map.N2S[j] = original->map.N2S[j];
     }
 
     clone->map.S2N =
@@ -47,73 +48,82 @@ Layer *cloneLayer(Layer *input) {
                     sizeof(int)
             );
     for (int k = 0; k < clone->map.sizeAlphabet; ++k) {
-        clone->map.N2S[k] = input->map.N2S[k];
+        clone->map.N2S[k] = original->map.N2S[k];
     }
 
     // Layer leftStates
-    clone->leftStates.nStates = input->leftStates.nStates;
+    clone->leftStates.nStates = original->leftStates.nStates;
     clone->leftStates.set =
             malloc( // FREE ME
                     clone->leftStates.nStates *
                     sizeof(State)
             );
     for (int l = 0; l < clone->leftStates.nStates; ++l) {
-        clone->leftStates.set[l] = input->leftStates.set[l];
+        clone->leftStates.set[l] = original->leftStates.set[l];
     }
 
     // Layer initialStates.
-    clone->initialStates.nStates = input->initialStates.nStates;
+    clone->initialStates.nStates = original->initialStates.nStates;
     clone->initialStates.set =
             malloc( // FREE ME
                     clone->initialStates.nStates *
                     sizeof(State)
             );
     for (int m = 0; m < clone->initialStates.nStates; ++m) {
-        clone->initialStates.set[m] = input->initialStates.set[m];
+        clone->initialStates.set[m] = original->initialStates.set[m];
     }
 
     // Layer rightStates.
-    clone->rightStates.nStates = input->rightStates.nStates;
+    clone->rightStates.nStates = original->rightStates.nStates;
     clone->rightStates.set =
             malloc( // FREE ME
                     clone->rightStates.nStates *
                     sizeof(State)
             );
     for (int n = 0; n < clone->rightStates.nStates; ++n) {
-        clone->rightStates.set[n] = input->rightStates.set[n];
+        clone->rightStates.set[n] = original->rightStates.set[n];
     }
 
     // Layer finalStates.
-    clone->finalStates.nStates = input->finalStates.nStates;
+    clone->finalStates.nStates = original->finalStates.nStates;
     clone->finalStates.set =
             malloc( // FREE ME
                     clone->finalStates.nStates *
                     sizeof(State)
             );
     for (int o = 0; o < clone->finalStates.nStates; ++o) {
-        clone->finalStates.set[o] = input->finalStates.set[o];
+        clone->finalStates.set[o] = original->finalStates.set[o];
     }
 
     // Layer transitions
-    clone->transitions.nTransitions = input->transitions.nTransitions;
+    clone->transitions.nTransitions = original->transitions.nTransitions;
     clone->transitions.set =
             malloc( // FREE ME
                     clone->transitions.nTransitions *
                     sizeof(Transition)
             );
     for (int p = 0; p < clone->transitions.nTransitions; ++p) {
-        clone->transitions.set[p] = input->transitions.set[p];
+        clone->transitions.set[p] = original->transitions.set[p];
     }
 
     return clone;
 }
 
 void killODD(ODD *target) {
-    fprintf(stderr, "%s() IS NOT IMPLEMENTED YET!\n", __func__);
-    exit(EXIT_FAILURE);
+
+    for (int i = 0; i < target->nLayers; ++i)
+        killLayer(&target->layerSequence[i]);
+    free(target->layerSequence);
+    free(target);
 }
 
 void killLayer(Layer *target) {
-    fprintf(stderr, "%s() IS NOT IMPLEMENTED YET!\n", __func__);
-    exit(EXIT_FAILURE);
+
+    free(target->transitions.set);
+    free(target->finalStates.set);
+    free(target->rightStates.set);
+    free(target->initialStates.set);
+    free(target->leftStates.set);
+    free(target->map.S2N);
+    free(target->map.N2S);
 }

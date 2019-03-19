@@ -36,8 +36,11 @@ int main() {
     printf("*odd: %p\n"
            "*clone: %p\n"
            "Equal: %s\n", odd, clone, (odd == clone) ? "YES" : "NO");
+    killODD(odd);
     free(odd);
+    killODD(clone);
     free(clone);
+    killODD(memorized);
     free(memorized);
     return 0;
 }

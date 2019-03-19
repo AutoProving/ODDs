@@ -37,6 +37,7 @@ ODD *memorizeODD(ODD *odd) {
 
         Layer* temp = memorizeLayer(&clonedODD->layerSequence[i]);
         clonedODD->layerSequence[i] = *temp;
+        killLayer(temp);
         free(temp);
 
 # pragma omp critical
