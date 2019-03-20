@@ -1,9 +1,9 @@
 // Copyright 2019 Andreas Ommundsen
 // This file is licensed under MIT License, as specified in the file LICENSE located at the root folder of this repository.
 
-#include "odd.h"
-#include "cloneKill.h"
 #include <stdlib.h>
+#include "cloneKill.h"
+#include "odd.h"
 
 #ifdef _OPENMP
 #   include <omp.h>
@@ -29,18 +29,15 @@ ODD *memorizeODD(ODD *odd) {
 
     int maxWidth = 0;
 
-#ifdef _OPENMP // Do I need these guards outside of including headers?
 # pragma omp parallel // num_threads(threadCount)
 #   pragma omp for
-#endif
     for (int i = 0; i < clonedODD->nLayers; ++i) {
-
-        Layer* temp = memorizeLayer(&clonedODD->layerSequence[i]);
+        Layer *temp = memorizeLayer(&clonedODD->layerSequence[i]);
+        killLayer(&clonedODD->layerSequence[i]);
         clonedODD->layerSequence[i] = *temp;
-        killLayer(temp);
         free(temp);
 
-# pragma omp critical
+#       pragma omp critical
         maxWidth =
                 (clonedODD->layerSequence[i].width > maxWidth)
                 ? clonedODD->layerSequence[i].width : maxWidth;

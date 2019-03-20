@@ -15,7 +15,6 @@ ODD *cloneODD(ODD *original) {
     for (int i = 0; i < clone->nLayers; ++i) {
         Layer* temp = cloneLayer(&original->layerSequence[i]);
         clone->layerSequence[i] = *temp;
-        killLayer(temp);
         free(temp);
     }
     return clone;
