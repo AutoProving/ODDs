@@ -22,14 +22,15 @@ State* findState(StateContainer* states, State* s){
 
 bool tryPath(ODD* odd, int* numSeq, State* state, Layer* layer, int seq){
 
-    Transition* t;
+   
     int result = 0;
 
     #pragma omp parallel for
+    
     //TODO Replace for loop with parallelized calls to tryPath
     for(int i=0; i < layer->transitions.nTransitions; i++){
 
-        t = &(layer->transitions.set[i]);
+        Transition* t = &(layer->transitions.set[i]);
 
         if(t->s1 == *state && t->a == numSeq[seq]){
             if(layer->finalFlag){
@@ -79,7 +80,7 @@ bool tryStringPath(ODD* odd, char** strSeq, State* state, Layer* layer, int seq)
     int partition;
     int lowerBound;
     int upperBound;
-    Transition* t;
+    
 
     lowerBound = 0;
     upperBound = layer->map.sizeAlphabet;
@@ -110,10 +111,11 @@ bool tryStringPath(ODD* odd, char** strSeq, State* state, Layer* layer, int seq)
 
     int result = 0;
     #pragma omp parallel for
+
     //TODO Replace for loop with parallelized calls to tryPath
     for(int i=0; i < layer->transitions.nTransitions; i++){
 
-        t = &(layer->transitions.set[i]);
+        Transition* t = &(layer->transitions.set[i]);
 
         if(t->s1 == *state && t->a == currentInt){
             if(layer->finalFlag){
