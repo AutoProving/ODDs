@@ -44,18 +44,16 @@ void intersectionTransitions(Layer* layer1, Layer* layer2, Layer* result) {
                         * (layer2->leftStates.set[layer2->leftStates.nStates-1] + 1)
                         + layer2->transitions.set[i1].s1;
 
-                result->transitions.set[index++].a = layer1->transitions.set[i].a;
+                result->transitions.set[index].a = layer1->transitions.set[i].a;
 
-                result->transitions.set[index].s2 = layer1->transitions.set[i].s2
+                result->transitions.set[index++].s2 = layer1->transitions.set[i].s2
                         * (layer2->rightStates.set[layer2->rightStates.nStates-1] + 1)
                         + layer2->transitions.set[i1].s2;
             }
         }
     }
     result->transitions.nTransitions = index;
-    //TODO: Ask if it is the right way to reallocate memory
     result->transitions.set = (Transition*) realloc(result->transitions.set, result->transitions.nTransitions * sizeof(Transition));
-    assert(result->transitions.set != NULL); // Ensure the reallocation succeeded
 }
 
 Layer* intersectionLayers(Layer* layer1, Layer* layer2) {
