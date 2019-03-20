@@ -8,6 +8,8 @@
 #include <string.h>
 #include <omp.h>
 
+
+
 State* findState(StateContainer* states, State* s){
     for(int i=0; i<states->nStates;i++){
         if (states->set[i]==*s){
@@ -54,12 +56,11 @@ bool numMembership(ODD* odd, int* numSeq){
 
     Layer* initial = &(odd -> layerSequence[0]);
     //TODO Replace for loop with parallelized calls to tryPath
-    OMP_SET_NUM_THREADS(initial->initialStates . nStates);
+    omp_set_num_threads(initial->initialStates . nStates);
     int result = 0;
     #pragma omp parallel
     {
-        int myID = OMP_GET_THREAD_NUM();
-        printf("hello from %d \n", myID);
+        int myID = omp_get_thread_num();
         bool b = tryPath(odd, numSeq, &(initial->initialStates.set[myID]), initial, 0);
         if(b){
             #pragma omp critical
@@ -139,11 +140,11 @@ bool strMembership(ODD* odd, char** strSeq){
     Layer* initial = &(odd -> layerSequence[0]);
 
     //TODO Replace for loop with parallelized calls to tryPath
-    OMP_SET_NUM_THREADS(initial->initialStates . nStates);
+    omp_set_num_threads(initial->initialStates . nStates);
     int result = 0;
     #pragma omp parallel
     {
-        int myID = OMP_GET_THREAD_NUM();
+        int myID = omp_get_thread_num();
         bool b = tryStringPath(odd, strSeq, &(initial->initialStates.set[myID]), initial, 0);
         if(b){
             #pragma omp critical
