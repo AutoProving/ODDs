@@ -26,11 +26,8 @@ ODD* powerSetODD(ODD *odd)
 #pragma omp parallel for
     for (int i = 0; i < odd->nLayers; i++)
     {
-        // Layer powerlayer;
-        printf("My id: %d\n", omp_get_thread_num());
         result->layerSequence[i] = *powerSetLayer(&odd->layerSequence[i]);
 
-        // result->layerSequence[i] = powerlayer;
 #pragma omp critical
         if (result->layerSequence[i].width > result->width)
         {
