@@ -6,6 +6,49 @@
 #include "debugTools.h"
 #include <omp.h> //also add -fopenmp to compile path
 
+
+/*
+
+int main() {
+    usefulLeft = initial states of first layer
+    for i = 0 ... nTransitions-1 {
+        Layer l = cleanRight(odd_layers[i], usefulLeft, usefulRight)
+    }
+}
+
+void cleanRight (Layer* l, State* usefulLeft (assume ordered), State* usefulRight) {
+    layer->left = usefulLeft;
+    int usefulTransitions = 0;
+    int stateCounter = 0;
+    for (i = 0...N transitions-1) {
+        if (layer.transitions.set[i].s1 belongs to useful left) {
+            add layer.transitions[i].right to useful right
+            usefulTransitions++
+        }
+    }
+    layer.rightstates = usefulright;
+    Transition* aux
+    allocate space for n useful transitions in array aux
+    int transitioncounter = 0;
+    for i = 0 ... ntransitions-1 {
+        if layertransitions[i].left belongs to useful left {
+            aux[transitioncounter] = transition
+        }
+    }
+}
+
+
+
+
+
+
+*/
+
+
+
+
+
+
 Layer removeTransitions(Layer l);
 
 Layer setUpInitialLayer(Layer l) {
@@ -318,5 +361,5 @@ ODD* minimize (ODD* odd) {
     //free original ODD?
     free(odd);
 
-    return &o;
+    return o;
 }
