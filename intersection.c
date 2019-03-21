@@ -39,7 +39,7 @@ void intersectionTransitions(Layer* layer1, Layer* layer2, Layer* result) {
     int index = 0;
     for(int i = 0; i < layer1->transitions.nTransitions; i++ ) {
         for(int i1 = 0; i1 < layer2->transitions.nTransitions; i1++) {
-            if(layer1->transitions.set[i].a == layer2->transitions.set[i].a) {
+            if(layer1->transitions.set[i].a == layer2->transitions.set[i1].a) {
                 result->transitions.set[index].s1 = layer1->transitions.set[i].s1
                         * (layer2->leftStates.set[layer2->leftStates.nStates-1] + 1)
                         + layer2->transitions.set[i1].s1;
