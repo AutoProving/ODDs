@@ -5,60 +5,76 @@
 #include "odd.h"
 #include <stdlib.h>
 
-void sortAllLeftTransitions(ODD* odd)
+void sortAllLeftTransitionsParallel(ODD* odd)
 {
-    for (int i = 0; i < odd->nLayers; i++)
+    # pragma omp parallel
     {
-        sortLeftTransitions(&(odd->layerSequence[i].transitions));
+        # pragma omp for
+        for (int i = 0; i < odd->nLayers; i++)
+        {
+            sortLeftTransitionsParallel(&(odd->layerSequence[i].transitions));
+        }
     }
 }
 //Parrallell
-void sortAllRightTransitions(ODD* odd)
+void sortAllRightTransitionsParallel(ODD* odd)
 {
-    for (int i = 0; i < odd->nLayers; i++)
+    # pragma omp parallel
     {
-        sortRightTransitions(&(odd->layerSequence[i].transitions));
+        # pragma omp for
+        for (int i = 0; i < odd->nLayers; i++)
+        {
+            sortRightTransitionsParallel(&(odd->layerSequence[i].transitions));
+        }
     }
 }
 
 
-void sortLeftTransitions(TransitionContainer* transitions)
-{
-    mergesortTransitions(transitions, 0, transitions->nTransitions - 1, true);
+void sortLeftTransitionsParallel(TransitionContainer* transitions)
+{   
+    # pragma omp single
+    mergesortTransitionsParallel(transitions, 0, transitions->nTransitions - 1, true);
 }
 
-void sortRightTransitions(TransitionContainer* transitions)
+void sortRightTransitionsParallel(TransitionContainer* transitions)
 {
-    mergesortTransitions(transitions, 0, transitions->nTransitions - 1, false);
+    # pragma omp single
+    mergesortTransitionsParallel(transitions, 0, transitions->nTransitions - 1, false);
 }
-//parallel her også
-void mergesortTransitions(TransitionContainer* transitions, int lo, int hi, bool sortLeft)
+
+void mergesortTransitionsParallel(TransitionContainer* transitions, int lo, int hi, bool sortLeft)
 {
     if (lo >= hi) return;
     int mid =(lo + (hi-lo)/2); 
-    mergesortTransitions(transitions, lo, mid, sortLeft);
-    mergesortTransitions(transitions, mid+1, hi, sortLeft);
     
-    mergeTransitions(transitions, lo, mid, mid+1, hi, sortLeft);
+    #pragma omp parallel sections num_threads(2)
+    {
+        #pragma omp section
+        {
+            mergesortTransitionsParallel(transitions, lo, mid, sortLeft);
+        }
+        #pragma omp section
+        {
+            mergesortTransitionsParallel(transitions, mid+1, hi, sortLeft);
+        }
+    }
+
+    mergeTransitionsParallel(transitions, lo, mid, mid+1, hi, sortLeft);
 }
 
-void mergeTransitions(TransitionContainer* transitions, int leftLo, int leftHi, int rightLo, int rightHi, bool sortLeft)
+void mergeTransitionsParallel(TransitionContainer* transitions, int leftLo, int leftHi, int rightLo, int rightHi, bool sortLeft)
 {   
-    TransitionContainer* leftArr;
-    //Should not be a pointer!
-    //memcpy
-    TransitionContainer* rightArr;
-    leftArr = malloc(sizeof(TransitionContainer));
-    rightArr = malloc(sizeof(TransitionContainer));
-    leftArr->nTransitions = ((leftHi - leftLo) + 1);
-    leftArr->set = (Transition *)malloc(leftArr->nTransitions * sizeof(Transition));
-    rightArr->nTransitions = ((rightHi - rightLo) + 1);
-    rightArr->set = (Transition *)malloc(rightArr->nTransitions * sizeof(Transition));
+    TransitionContainer leftArr;
+    TransitionContainer rightArr;
+    leftArr.nTransitions = ((leftHi - leftLo) + 1);
+    leftArr.set = (Transition *)malloc(leftArr.nTransitions * sizeof(Transition));
+    rightArr.nTransitions = ((rightHi - rightLo) + 1);
+    rightArr.set = (Transition *)malloc(rightArr.nTransitions * sizeof(Transition));
     
     int index = 0;
-    for (int i = leftLo; i <= leftHi; i++) leftArr->set[index++] = transitions->set[i]; 
+    for (int i = leftLo; i <= leftHi; i++) leftArr.set[index++] = transitions->set[i]; 
     index = 0;
-    for (int i = rightLo; i <= rightHi; i++) rightArr->set[index++] = transitions->set[i]; 
+    for (int i = rightLo; i <= rightHi; i++) rightArr.set[index++] = transitions->set[i]; 
 
     int firstArrPointer = 0;
     int secondArrPointer = 0;
@@ -67,25 +83,25 @@ void mergeTransitions(TransitionContainer* transitions, int leftLo, int leftHi, 
     while (firstArrPointer <= leftHi && secondArrPointer <= rightHi - rightLo && index <= rightHi)
     {   
         int comparison;
-        if (sortLeft) comparison = leftArr->set[firstArrPointer].s1 - rightArr->set[secondArrPointer].s1;
-        else comparison = leftArr->set[firstArrPointer].s2 - rightArr->set[secondArrPointer].s2;
-        if (comparison == 0) comparison = leftArr->set[firstArrPointer].a - rightArr->set[secondArrPointer].a;  
+        if (sortLeft) comparison = leftArr.set[firstArrPointer].s1 - rightArr.set[secondArrPointer].s1;
+        else comparison = leftArr.set[firstArrPointer].s2 - rightArr.set[secondArrPointer].s2;
+        if (comparison == 0) comparison = leftArr.set[firstArrPointer].a - rightArr.set[secondArrPointer].a;  
 
 
-        if (comparison <= 0) transitions->set[index++] = leftArr->set[firstArrPointer++];
-        else transitions->set[index++] = rightArr->set[secondArrPointer++];
+        if (comparison <= 0) transitions->set[index++] = leftArr.set[firstArrPointer++];
+        else transitions->set[index++] = rightArr.set[secondArrPointer++];
     }
     while (firstArrPointer <= leftHi && index <= rightHi)
     {
-        transitions->set[index++] = leftArr->set[firstArrPointer++]; 
+        transitions->set[index++] = leftArr.set[firstArrPointer++]; 
     }
     while (secondArrPointer <= rightHi - rightLo && index <= rightHi)
     {
-        transitions->set[index++] = rightArr->set[secondArrPointer++];
+        transitions->set[index++] = rightArr.set[secondArrPointer++];
     }
 
-    free(leftArr);
-    free(rightArr);
+    free(leftArr.set);
+    free(rightArr.set);
 }
 
 /* SORT STATES */
