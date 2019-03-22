@@ -31,7 +31,7 @@ void sortRightTransitions(TransitionContainer* transitions)
 {
     mergesortTransitions(transitions, 0, transitions->nTransitions - 1, false);
 }
-
+//parallel her også
 void mergesortTransitions(TransitionContainer* transitions, int lo, int hi, bool sortLeft)
 {
     if (lo >= hi) return;
