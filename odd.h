@@ -135,6 +135,11 @@ void sortAllRightStates(ODD* odd);
 void sortStates(StateContainer* states); // Sorts states.set lexicographically
 void mergesortStates(StateContainer* states, int lo, int hi);
 void mergeStates(StateContainer* states, int leftLo, int leftHi, int rightLo, int rightHi);
+void sortAllLeftStatesParallel(ODD* odd);
+void sortAllRightStatesParallel(ODD* odd);
+void sortStatesParallel(StateContainer* states); // Sorts states.set lexicographically
+void mergesortStatesParallel(StateContainer* states, int lo, int hi);
+void mergeStatesParallel(StateContainer* states, int leftLo, int leftHi, int rightLo, int rightHi);
 
 
 

@@ -90,38 +90,57 @@ void mergeTransitions(TransitionContainer* transitions, int leftLo, int leftHi, 
 
 /* SORT STATES */
 
-void sortAllLeftStates(ODD *odd)
+void sortAllLeftStatesParallel(ODD *odd)
 {
-    for (int i = 0; i < odd->nLayers; i++)
+    # pragma omp parallel
     {
-        sortStates(&(odd->layerSequence[i].leftStates));
+        # pragma omp for
+        for (int i = 0; i < odd->nLayers; i++)
+        {
+            sortStatesParallel(&(odd->layerSequence[i].leftStates));
+        }
     }  
 }
 
-void sortAllRightStates(ODD *odd)
+void sortAllRightStatesParallel(ODD *odd)
 {
-    for (int i = 0; i < odd->nLayers; i++)
+    # pragma omp parallel
     {
-        sortStates(&(odd->layerSequence[i].rightStates));
+        # pragma omp for
+        for (int i = 0; i < odd->nLayers; i++)
+        {
+            sortStatesParallel(&(odd->layerSequence[i].rightStates));
+        }
     }  
 }
 
-void sortStates(StateContainer *states)
+void sortStatesParallel(StateContainer *states)
 {
-    mergesortStates(states, 0, states->nStates - 1);
+    #pragma omp single
+    mergesortStatesParallel(states, 0, states->nStates - 1);
 }
 
-void mergesortStates(StateContainer *states, int lo, int hi)
+void mergesortStatesParallel(StateContainer *states, int lo, int hi)
 {
     if (lo >= hi) return;
     int mid =(lo + (hi-lo)/2); 
-    mergesortStates(states, lo, mid);
-    mergesortStates(states, mid+1, hi);
-    
-    mergeStates(states, lo, mid, mid+1, hi);
+    #pragma omp parallel sections num_threads(2)
+    {
+        #pragma omp section
+        { 
+        mergesortStatesParallel(states, lo, mid);
+        }
+
+        #pragma omp section
+        {
+        mergesortStatesParallel(states, mid+1, hi);
+        }
+    }
+
+    mergeStatesParallel(states, lo, mid, mid+1, hi);
 }
 
-void mergeStates(StateContainer* states, int leftLo, int leftHi, int rightLo, int rightHi)
+void mergeStatesParallel(StateContainer* states, int leftLo, int leftHi, int rightLo, int rightHi)
 {   
     StateContainer* leftArr;
     StateContainer* rightArr;
