@@ -8,7 +8,7 @@
 bool negation_layer(Layer B, Layer noB);
 void negation_odd(odd D, odd ,noD);
 
-bool negation_layer(Layer B, Layer noB){
+Layer* negationLayer(Layer B, Layer noB){
     
     bool conditions[2];
     
@@ -28,7 +28,7 @@ bool negation_layer(Layer B, Layer noB){
         noB->initalFlag = B->initalFlag;
         noB->finalFlag = (B->rightStates - B->leftStates);
         
-        return TRUE;
+        return noB;
     }
     
     else{
@@ -41,11 +41,11 @@ bool negation_layer(Layer B, Layer noB){
         noB->initalFlag = B->initalFlag;
         noB->finalFlag = B->finalFlag;
         
-        return FALSE;
+        return noB;
     }
 }
 
-void negation_odd(odd D, odd noD){
+ODD* negationOdd(odd D, odd noD){
     int i = 0;
     bool lay[D->nLayers];
     
@@ -53,5 +53,5 @@ void negation_odd(odd D, odd noD){
         lay[i] = negation_layer(D->layerSequence[i], noD->layerSequence[i]);
     }
     
-    return;
+    return noD;
 }
