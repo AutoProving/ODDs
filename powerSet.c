@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <math.h>
+#include <omp.h>
 #include "odd.h"
 
 // Some helper functions
@@ -22,14 +23,15 @@ ODD* powerSetODD(ODD *odd)
     result->nLayers = odd->nLayers;
     result->layerSequence = malloc(odd->nLayers * sizeof(Layer));
     result->width = 0;
-
+#pragma omp parallel for
     for (int i = 0; i < odd->nLayers; i++)
     {
-        // Layer powerlayer;
         result->layerSequence[i] = *powerSetLayer(&odd->layerSequence[i]);
+    }
 
-        // result->layerSequence[i] = powerlayer;
-
+    // Find max width of the layers
+    for(int i = 0; i < odd->nLayers; i++)
+    {
         if (result->layerSequence[i].width > result->width)
         {
             result->width = result->layerSequence[i].width;
