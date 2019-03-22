@@ -61,8 +61,6 @@ typedef struct{
 // Use function findState(states,s) if you want to determine if a state s belongs to states
 State* findState(StateContainer* states, State* s); // returns address of state t or NULL if t is not there
 
-void sortStates(StateContainer* states); // Sorts states.set lexicographically
-
 
 /////////////////////////////////////////////////////////////////////////////////
 
@@ -130,8 +128,14 @@ void sortAllLeftTransitions(ODD* odd);
 void sortAllRightTransitions(ODD* odd);
 void sortLeftTransitions(TransitionContainer* transitions); // Sorts transitions.set lexicographically
 void sortRightTransitions(TransitionContainer* transitions); // Sorts transitions.set lexicographically
-void mergesort(TransitionContainer* transitions, int lo, int hi, bool sortLeft);
-void merge(TransitionContainer* transitions, int leftLo, int leftHi, int rightLo, int rightHi, bool sortLeft);
+void mergesortTransitions(TransitionContainer* transitions, int lo, int hi, bool sortLeft);
+void mergeTransitions(TransitionContainer* transitions, int leftLo, int leftHi, int rightLo, int rightHi, bool sortLeft);
+void sortAllLeftStates(ODD* odd);
+void sortAllRightStates(ODD* odd);
+void sortStates(StateContainer* states); // Sorts states.set lexicographically
+void mergesortStates(StateContainer* states, int lo, int hi);
+void mergeStates(StateContainer* states, int leftLo, int leftHi, int rightLo, int rightHi);
+
 
 
 //Read from file. (Functions implemented in file reading.c)
