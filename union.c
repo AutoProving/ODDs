@@ -2,48 +2,32 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <assert.h>
+#include <omp.h>  
+#include <string.h>
+ //bruk denne i parallellkoden
 // Copyright 2019 Nora Hobæk Hovland
 // This file is licensed under MIT License, as specified in the file LISENSE located at the root folder of this repository.
 
 //Union (Functions implemented in file union.c)
 
 
-void unionStates(StateContainer* state1, StateContainer* state2, StateContainer* result, int l2wth){
-    int length1=state1->nStates;
-    int length2=state2->nStates;
-
-    //check if one of the layers has 0 states(mostly because of the initial states, but check anyway)
+StateContainer* unionStates(StateContainer* state1, StateContainer* state2){
     
-    if(length1==0 && length2!=0){                       //state1 has no states
-        result->nStates=length2;
-        result->set=malloc(sizeof(State)*length2);
-        for(int i=0;i<length2;i++){
-            result->set= &(state2->set[i]);
+    int width=state2->set[state2->nStates-1]+1;
+    StateContainer* result=malloc(sizeof(StateContainer));
+
+    result->nStates=state1->nStates*state2->nStates;
+    result->set=malloc(sizeof(State)*result->nStates);
+
+    int index=0;
+    for(int i=0; i<state1->nStates; i++){
+        for(int j=0; j<state2->nStates; j++){
+            result->set[index++] = state1->set[i]*width + state2->set[j];
         }
     }
 
-    else if(length2==0 && length1!=0){                  //state2 has no states
-        result->nStates=length1;
-        result->set=malloc(sizeof(State)*length1);
-        for(int i=0;i<length1;i++){
-            result->set= &(state1->set[i]);
-        }
-    }
-
-    else if(length1==0 && length2==0){                  // both are empty
-        result=state1;    
-    }
-    
-    else{
-        result->nStates = state1->nStates*state2->nStates;
-        result->set = malloc(sizeof(State)*result->nStates);    //both statecontainers has states
-        int index=0;
-        for(int i=0; i<state1->nStates; i++){
-            for(int j=0; j<state2->nStates; j++){
-                result->set[index++] = state1->set[i]*l2wth + state2->set[j];
-            }
-        }
-    }
+    return result;
 }
 
 
@@ -59,14 +43,15 @@ int countTrans(Layer* layer1, Layer* layer2){
     return count;
 }
 
-void unionTransitions(Layer* layer1, Layer* layer2, Layer* result){
+Layer* unionTransitions(Layer* layer1, Layer* layer2){
     TransitionContainer* transStates1=&(layer1->transitions);
     TransitionContainer* transStates2=&(layer2->transitions);
-
-    int n1=transStates1->nTransitions;
-    int n2=transStates2->nTransitions;
+    int width1=layer2->leftStates.set[layer2->leftStates.nStates-1]+1;
+    int width2=layer2->rightStates.set[layer2->rightStates.nStates-1]+1;
+    
     int transCount=countTrans(layer1, layer2);
-   
+    Layer* result=malloc(sizeof(Layer));   
+
     result->transitions.set=malloc(sizeof(Transition)*transCount);
     result->transitions.nTransitions=transCount;
 
@@ -76,8 +61,8 @@ void unionTransitions(Layer* layer1, Layer* layer2, Layer* result){
             if(transStates1->set[i].a==transStates2->set[j].a){
              
                 Transition newTrans;
-                newTrans.s1=((transStates1->set[i].s1)) * (layer2->width)+(transStates2->set[j].s1);
-                newTrans.s2=((transStates1->set[i].s2))*(layer2->width)+(transStates2->set[j].s2);
+                newTrans.s1=((transStates1->set[i].s1)) * width1+(transStates2->set[j].s1);
+                newTrans.s2=((transStates1->set[i].s2))*width2+(transStates2->set[j].s2);
                 newTrans.a=transStates1->set[i].a;
                 
                 result->transitions.set[index++]=newTrans;
@@ -85,29 +70,37 @@ void unionTransitions(Layer* layer1, Layer* layer2, Layer* result){
             }
         }
     }
+    return result;
 }
 
 
 
-void unionLayers(Layer* layer1, Layer* layer2, Layer* result){
+Layer* unionLayers(Layer* layer1, Layer* layer2){
+
+    Layer* result=malloc(sizeof(Layer));
+
     //left states
     StateContainer* leftStates1=&(layer1->leftStates);   
     StateContainer* leftStates2=&(layer2->leftStates);    
-    unionStates(leftStates1,leftStates2, &result->leftStates, layer2->width);
+    unionStates(leftStates1,leftStates2);
    
     //right states
     StateContainer* rightStates1=&(layer1->rightStates);
     StateContainer* rightStates2=&(layer2->rightStates);
-    unionStates(rightStates1,rightStates2, &result->rightStates, layer2->width);
+    unionStates(rightStates1,rightStates2);
    
     //initial states
     StateContainer* initialStates1=&(layer1->initialStates);
     StateContainer* initialStates2=&(layer2->initialStates);
-    unionStates(initialStates1, initialStates2, &result->initialStates, layer2->width);
+    unionStates(initialStates1, initialStates2);
     
-    result->initialFlag=layer1->initialFlag;
+    assert(layer1->initialFlag==layer2->initialFlag);
+    assert(layer1->finalFlag==layer2->finalFlag);
+
+    result->initialFlag=layer1->initialFlag;   //bare fiks final og initial hvis true
     result->finalFlag=layer1->finalFlag;
-    result->map=layer1->map;
+  
+    memcpy(&result->map,&layer1->map, sizeof(AlphabetMap));  //?????
 
     //width
     if(result->leftStates.nStates > result->rightStates.nStates){
@@ -117,38 +110,48 @@ void unionLayers(Layer* layer1, Layer* layer2, Layer* result){
         result->width=result->rightStates.nStates;
     }
 
-                  
+    if(result->finalFlag){
+        //final states ??????
+        int width=layer2->rightStates.set[layer2->rightStates.nStates-1]+1;//right eller final??
+        int index=0;      
+        for(int s1=0;s1<layer1->rightStates.nStates;s1++){
+            for(int s2=0;s2<layer2->rightStates.nStates;s2++){
+                State* state1=findState(&layer1->finalStates, &rightStates1->set[s1]);
+                State* state2=findState(&layer2->finalStates, &rightStates2->set[s2]);
+                if(layer1->rightStates.set[s1]==*state1 || layer2->rightStates.set[s2]==*state2){
+                    result->finalStates.set[index++]=layer1->rightStates.set[s1]*width + layer2->rightStates.set[s2];
+                }
+            }
+        }
+    }
 
-   //final states  , don't know if this works as it should
-    StateContainer* finalStates1=&(layer1->finalStates);
-    StateContainer* finalStates2=&(layer2->finalStates);
-
-    if(finalStates1->nStates==0){
-        unionStates(leftStates1, finalStates2, &result->finalStates, layer2->width);
-    }
-    else if(finalStates2->nStates==0){
-        unionStates(leftStates2, finalStates1, &result->finalStates, layer2->width);
-    }
-    else{
-        unionStates(finalStates1, finalStates2, &result->finalStates, layer2->width);
-    }
 
     //transitions
-    unionTransitions(layer1, layer2, result);
-    result->finalStates=layer1->finalStates;
+    unionTransitions(layer1, layer2);
+   // result->finalStates=layer1->finalStates;
+
+
+   return result;
 }
 
 
-void unionODDs(ODD* odd1, ODD* odd2, ODD* odd){
+ODD* unionODDs(ODD* odd1, ODD* odd2){
+    ODD* odd=malloc(sizeof(ODD));
+    //assert(isCompleteODD(odd1));
+    //assert(isCompleteODD(odd2));
+    assert(odd1->nLayers==odd2->nLayers);
+  
     odd->nLayers=odd1->nLayers;
     odd->layerSequence=malloc(sizeof(Layer)*odd->nLayers);
     odd->width=0;
     for(int i=0;i<odd->nLayers;i++){
-        Layer result;
-        unionLayers(&odd1->layerSequence[i], &odd2->layerSequence[i], &result);
-        odd->layerSequence[i]=result;
-        if(odd->width < result.width){
-            odd->width=result.width;
+        Layer* result=unionLayers(&odd1->layerSequence[i], &odd2->layerSequence[i]);
+        odd->layerSequence[i]=*result;
+        if(odd->width < result->width){
+            odd->width=result->width;
         }
+        free(result);
     }
+
+    return odd;
 }
