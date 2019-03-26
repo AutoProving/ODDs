@@ -13,38 +13,54 @@
 //use binary search 
 
 ODD * collapseODD(ODD * odd){
-    //the new ODD
-    ODD o;
-    //we keep the numbe of Layers constant
-    o.nLayers = odd -> nLayers;
-    o.layerSequence = malloc(o.nLayers * sizeof(Layer));
+    
 
     //create a new ODD and add layers to it
     int numLayers = odd->nLayers;
 
     //create new layer then free old one 
     Layer currLayer = odd->layerSequence[0];
-    //local
-    //For performance reasons we need an array that points always to the first transition of a 
-    //state. 
-    int * indexTransitions = malloc((odd -> width)*sizeof(int)); 
-    //go backwards through ODD
+
+    
+    //minimize final layer sort final layer after right states should be 
+
+    //sort after the left states 
+    
+    //go backwards through ODD    
     for(int i = numLayers-1; i <= 0; i--)
     {
-        minimizeLayer(odd->layerSequence[i],indexTransitions);
+        minimizeLayer(odd->layerSequence[i]);
     }
+
+
     //update right states accoarding to leftstates of layer+1, final state 
     //will not be updated
     for(int i = 0; i < numLayers-1; i++)
     {
-        #pragma omp parallel for
+       // #pragma omp parallel for
         for(int j = 0; j < odd->layerSequence[i].rightStates.nStates; j++)
         {
             odd->layerSequence[i].rightStates.set[j] = odd->layerSequence[i+1].leftStates.set[j]; 
         }
     }
-    //reroute the transitions that point to the delted right states to the states they collapsed to
+    //reroute the transitions that point to the deleted right states to the states they collapsed to
+    for(int i = numLayers-1; i >= 0; i--)
+    {
+        Layer layer= odd->layerSequence[i];
+        //if state is negative reroute to the abs() of negative number
+        for(int j = 0; j < layer.transitions.nTransitions; j++)
+        {
+            if(layer.transitions.set[j].s2 < 0){
+                layer.transitions.set[j].s2 = -layer.transitions.set[j].s2; 
+            }
+        }
+    }
     //build new ODD
+    ODD o;
+    //we keep the numbe of Layers constant
+    o.nLayers = odd -> nLayers;
+    o.layerSequence = malloc(o.nLayers * sizeof(Layer));
+
     Layer l;
     //copy only states that are != -1 and their transitions
     for(int i = 0; i < numLayers; i++)
@@ -73,7 +89,7 @@ void livingStateLeft(Layer * layer, StateContainer * livingStateLeft){
     int count = 0;
     for(int i = 0; i < layer->leftStates.nStates; i++)
     {
-        if(layer->leftStates.set[i] != -1){
+        if(layer->leftStates.set[i] >= 0){
             livingStateLeft->set[count] = layer->leftStates.set[i];
             count++;
         }
@@ -85,7 +101,7 @@ void livingStateRight(Layer * layer, StateContainer * livingStateRight){
     int count = 0;
     for(int i = 0; i < layer->rightStates.nStates; i++)
     {
-        if(layer->rightStates.set[i] != -1){
+        if(layer->rightStates.set[i] >= 0){
             livingStateRight->set[count] = layer->rightStates.set[i];
             count ++;
         }
@@ -106,37 +122,20 @@ void livingTransition(Layer * layer, TransitionContainer * livingTransition){
 
 }
 
-void CalculateIndexTransitions(TransitionContainer TransitionCon,int * indexTransitions){
-    //array that points always to the first transition of a state. Assume sorted transitions 
-    indexTransitions[0] = 0;
-    int counter = 0;
-    int index = 1;
-
-    for(int i = 1; i < TransitionCon.nTransitions; i++)
-    {
-        if (TransitionCon.set[i-1].s1 != TransitionCon.set[i].s1){
-            indexTransitions[index] += counter;
-            counter = 0;
-            index++;
-        }
-    counter++;
-    }
-}
-
-Layer minimizeLayer(Layer layer,int * indexTransitions){  
+Layer minimizeLayer(Layer layer){  
     //we minimize the left states and then return the new layer l  
     //we start with rightmost layer 
     //deletes unnecessary states and reroutes transitions
     //#pragma omp parallel for
     for(int j = 0; j < layer.leftStates.nStates;j++){  //assume states are sorted   
         State state_j = layer.leftStates.set[j];
-        if (state_j != -1){
-            for(int k = j; k < layer.leftStates.nStates;j++){ //not sure about that ??
+        if (state_j >= 0){
+            for(int k = j; k < layer.leftStates.nStates;j++){ 
                 State state_k = layer.leftStates.set[k];
                 //if two states have only transitions that have the  same keys and right 
                 //states collapse   
-                if (checkTypeLeft(layer,state_j,state_k,indexTransitions)){
-                    collapseLeft(layer,state_j,state_k,indexTransitions);   //where do we put right collapse ?  
+                if (checkTypeLeft(layer,state_j,state_k)){
+                    collapseLeft(layer,state_j,state_k);    
                 }
             } 
         }
@@ -145,80 +144,136 @@ Layer minimizeLayer(Layer layer,int * indexTransitions){
     return layer;
 }
 
-//takes tranitions not states as we also need NumSymbol
-bool checkTypeLeft(Layer layer,State state_j,State state_k,int * indexTransitions){
-    //j < k is implied if states are sorted
-    for(int i = 0; i < indexTransitions[state_j+1]-indexTransitions[state_j]; i++)
+Layer minimizeFinalLayer(Layer layer){
+    //we minimze the final layer no need to collapse transitions 
+    for(int i = 0; i < layer.rightStates.nStates; i++)
     {
-        NumSymbol key_j = layer.transitions.set[state_j].a;
-        State state_right_j = layer.transitions.set[state_j].s2;
-        for(int j = 0; j < indexTransitions[state_k+1]-indexTransitions[state_k]; j++)
+        State state_j = layer.rightStates.set[i];
+        for(int  j = 0; j < layer.rightStates.nStates; j++)
         {
-            NumSymbol key_k = layer.transitions.set[state_k].a;
-            State state_right_k = layer.transitions.set[state_k].s2;
-            //if at least one kartesian product of key and right state is not equal 
-            //then do not collapse
-            if(key_j != key_k && state_right_j != state_right_k){
-                return 0; //not collapse
-
+            State state_k = layer.rightStates.set[j];
+            if (checkTypeRight(layer,state_j,state_k)){
+                collapseRight(layer,state_j,state_k);
             }
-            
-        }        
+
+        }
+        
+    }
+    
+}
+
+bool checkTypeLeft(Layer layer,State state_j,State state_k){
+    //j < k is implied if states are sorted
+    int start_j = findTransitionLeft(layer.transitions,state_j );
+    int start_k = findTransitionLeft(layer.transitions,state_k );
+    int i = 0;
+    //for(int i = 0; i < indexTransitions[state_j+1]-indexTransitions[state_j]; i++)
+    //{
+    //while left state stays the same = ntrans for a state
+    while (layer.transitions.set[start_j].s1 == layer.transitions.set[start_j+i+1].s1)
+    { 
+        NumSymbol key_j = layer.transitions.set[start_j+i].a;
+        State state_right_j = layer.transitions.set[start_j+i].s2;
+        
+        NumSymbol key_k = layer.transitions.set[start_k+i].a;
+        State state_right_k = layer.transitions.set[start_k+i].s2;
+        
+        //if at least of the pairs of key and right state is not equal 
+        //then do not collapse
+        if(key_j != key_k || state_right_j != state_right_k){
+            return 0; //not collapse
+        }
+        i++;                
     }
     return 1;
 }
-    
-void collapseLeft(Layer layer, State state_i, State state_j, int * indexTransitions){
-    //sets the deleted state to -1 and reroutes the Transitions to the lower state
+
+bool checkTypeRight(Layer layer,State state_j,State state_k){
+    //j < k is implied if states are sorted
+    int start_j = findTransitionLeft(layer.transitions,state_j);
+    int start_k = findTransitionLeft(layer.transitions,state_k);
+    int i = 0;
+    //for(int i = 0; i < indexTransitions[state_j+1]-indexTransitions[state_j]; i++)
+    //{
+    //while left state stays the same = ntrans for a state
+    while( layer.transitions.set[start_j].s2 == layer.transitions.set[start_j+i+1].s2)
+    { 
+        NumSymbol key_j = layer.transitions.set[start_j+i].a;
+        State state_left_j = layer.transitions.set[start_j+i].s1;
+        
+        NumSymbol key_k = layer.transitions.set[start_k+i].a;
+        State state_left_k = layer.transitions.set[start_k+i].s1;
+        
+        //if at least of the pairs of key and right state is not equal 
+        //then do not collapse
+        if(key_j != key_k || state_left_j != state_left_k){
+            return 0; //not collapse
+        }
+        i++;                
+    }
+    return 1;
+}
+
+void collapseRight(Layer layer, State state_i, State state_j){
+    //sets the deleted state to -1 and deletes the transitions to the lower state
     if(state_i < state_j){ //to ensure that state_i < state_j 
         State tmp =  state_i;
         state_i = state_j;
         state_j = tmp;
         }
-    //delete state j 
-    layer.leftStates.set[state_j] = -1;
+    //delete state j and say where it get rerouted to 
+    layer.leftStates.set[state_j] = -state_i; 
     //collapse all transitions that start in state_j to the state_i
     //both have the same number of Transitions so we could also take state_j
     //we set the transition of the to be deleted state to -1
-    for(int i = 0; i <  indexTransitions[state_i+1]-indexTransitions[state_i] ; i++)
+    int i = 0;
+    int start_j = findTransitionLeft(layer.transitions,state_j);
+    while(layer.transitions.set[start_j].s2 == layer.transitions.set[start_j+i].s2)
+    //ntrans of that state
+    //for(int i = 0; i <  indexTransitions[state_i+1]-indexTransitions[state_i] ; i++)
     {
-        layer.transitions.set [indexTransitions[state_j]+i].s1 
-            = -1;
+        layer.transitions.set[start_j+i].s2 = -1;
+        i++;
     }
        
 }
 
-/*
-//original version after matheus pseudo code
-void collapseLeft(Layer layer, State state_i, State state_j, int * indexTransitions){
-    //sets the deleted state to -1 and reroutes the Transitions to the lower state
+void collapseLeft(Layer layer, State state_i, State state_j){
+    //sets the deleted state to -1 and deletes the transitions to the lower state
     if(state_i < state_j){ //to ensure that state_i < state_j 
         State tmp =  state_i;
         state_i = state_j;
         state_j = tmp;
         }
-    //delete state j 
-    layer.leftStates.set[state_j] = -1;
+    //delete state j and say where it get rerouted to 
+    layer.leftStates.set[state_j] = -state_i; 
     //collapse all transitions that start in state_j to the state_i
     //both have the same number of Transitions so we could also take state_j
-    //why do we do this ??? should it not be the same transition ?? 
-    for(int i = 0; i <  indexTransitions[state_i+1]-indexTransitions[state_i] ; i++)
+    //we set the transition of the to be deleted state to -1
+    int i = 0;
+    int start_j = findTransitionLeft(layer.transitions,state_j);
+    while(layer.transitions.set[start_j].s1 == layer.transitions.set[start_j+i].s1)
+    //ntrans of that state
+    //for(int i = 0; i <  indexTransitions[state_i+1]-indexTransitions[state_i] ; i++)
     {
-        layer.transitions.set.s1[indexTransitions[state_j]+i] 
-            = layer.transitions.set.s1[indexTransitions[state_i]+i];
+        layer.transitions.set[start_j+i].s1 = -1;
+        i++;
     }
        
 }
-*/
-//returns the first transition of a state 
 
-Transition findTransitionLeft(TransitionContainer transitions, State state){
-    //finds the first occurence of a state in the sorted transitions list
+
+//returns the first transition of a state 
+int findTransitionLeft(TransitionContainer transitions, State state){
+    //Transition * findTransitionLeft(TransitionContainer transitions, State state){
+    //finds the index of first occurence of a state in the sorted transitions list
+    //returns then addres of this transition
     int left = -1;
     int right = transitions.nTransitions;
 
-    while (right < left +1){
+    while (right > left +1){
         int middle = (left+right)/2;
+        //cout << "middle" << middle << endl;
         if (transitions.set[middle].s1 >= state){
             right = middle;
         }
@@ -227,13 +282,40 @@ Transition findTransitionLeft(TransitionContainer transitions, State state){
         }
     }
     if (right < transitions.nTransitions && transitions.set[right].s1 == state){
-        return transitions.set[right];
+        return &(transitions.set[right]);
     }
     else{
         printf("state is not part of transition list \n");
-        return transitions.set[right];
+        return &(transitions.set[right]);
     }
 
+}
+
+//returns the first transition of a state 
+int findTransitionRight(TransitionContainer transitions, State state){
+    //Transition * findTransitionLeft(TransitionContainer transitions, State state){
+    //finds the index of first occurence of a state in the sorted transitions list
+    //returns then addres of this transition
+    int left = -1;
+    int right = transitions.nTransitions;
+
+    while (right > left +1){
+        int middle = (left+right)/2;
+        //cout << "middle" << middle << endl;
+        if (transitions.set[middle].s2 >= state){
+            right = middle;
+        }
+        else{
+            left = middle;
+        }
+    }
+    if (right < transitions.nTransitions && transitions.set[right].s2 == state){
+        return &(transitions.set[right]);
+    }
+    else{
+        printf("state is not part of transition list \n");
+        return &(transitions.set[right]);
+    }
 
 }
 
