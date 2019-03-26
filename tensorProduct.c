@@ -33,18 +33,25 @@ void tensorStates(StateContainer* stateContainer1, StateContainer* stateContaine
 }
 
 void tensorEdgeStates(StateContainer* states1, StateContainer* edgeStates1, StateContainer* states2, StateContainer* edgeStates2, StateContainer* result){
-	int fullStateSize = max(states1->set, states1->nStates)*max(states2->set, states2->nStates);
+	int a = max(states1->set, states1->nStates);
+	int b =  max(states2->set, states2->nStates);
+	if (a>b){
+		int temp = a;
+		a = b;
+		b= temp;
+	}
+	int fullStateSize = cantorPairing(a,b)+1;
 	int* countSortSet = malloc(sizeof(int)*fullStateSize);
 	for (int i = 0; i <fullStateSize; ++i) {
 		countSortSet[i] = 0;
 	}
-
 	int nStates = 0;
 
 	for (int i = 0; i < edgeStates1->nStates; ++i) {
 		for (int j = 0; j < states2->nStates; ++j) {
 			int index = cantorPairing(edgeStates1->set[i],states2->set[j]);
 			if (countSortSet[index]==0){
+				countSortSet[index]+=1;
 				nStates+=1;
 			}
 		}
@@ -54,6 +61,7 @@ void tensorEdgeStates(StateContainer* states1, StateContainer* edgeStates1, Stat
 		for (int i = 0; i < states1->nStates; ++i) {
 			int index = cantorPairing(states1->set[i],edgeStates2->set[j]);
 			if (countSortSet[index]==0){
+				countSortSet[index]+=1;
 				nStates+=1;
 			}
 		}
@@ -68,7 +76,8 @@ void tensorEdgeStates(StateContainer* states1, StateContainer* edgeStates1, Stat
 			setIndex+= 1;
 		}
 	}
-
+	
+	free(countSortSet);
 	result->nStates = nStates;
 	result->set = set;
 
@@ -87,7 +96,7 @@ Layer* tensorLayers(Layer* layer1, Layer* layer2) {
 			int length = l1Length+l2Length;
 			char* newSymbol = malloc(sizeof(char)*(length+2));
 			strncpy(newSymbol,l1Symbol,l1Length);
-			newSymbol[l1Length] ="|";
+			newSymbol[l1Length] ='|';
 			strncpy(&newSymbol[l1Length+1],l2Symbol,l2Length+1);
 			map.N2S[i*layer2->map.sizeAlphabet+j]=newSymbol;
 			map.S2N[i*layer2->map.sizeAlphabet+j]=i*layer2->map.sizeAlphabet+j;
@@ -112,7 +121,7 @@ Layer* tensorLayers(Layer* layer1, Layer* layer2) {
 		result->initialStates.nStates = 0;
 		result->initialStates.set = NULL;
 	}
-	if(result->width) {
+	if(result->finalFlag) {
 		tensorEdgeStates(&layer1->rightStates, &layer1->finalStates,
 						 &layer2->rightStates, &layer2->finalStates,
 						 &result->finalStates);
@@ -122,8 +131,6 @@ Layer* tensorLayers(Layer* layer1, Layer* layer2) {
 	}
 
 
-
-	//use fancy new function
 
 	int nTransitions = layer1->transitions.nTransitions*layer2->transitions.nTransitions;
 	Transition* set = malloc(sizeof(Transition)*nTransitions);
