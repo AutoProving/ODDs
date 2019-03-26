@@ -23,6 +23,16 @@ void updateStateContainer(StateContainer *states, int alphaSize);
  */
 void updateTransitions(TransitionContainer *transitions, int alphaSize);
 
+void leftMemo(Layer *layer);
+
+void rightMemo(Layer *layer);
+
+void leftTransitions(TransitionContainer *transitions, int alphaSize);
+
+void rightTransitions(TransitionContainer *transitions, int alphaSize);
+
+void localMemo(ODD *odd, int i);
+
 ODD *memorizeODD(ODD *odd) {
 
     ODD *clonedODD = cloneODD(odd);
@@ -114,4 +124,63 @@ void updateTransitions(TransitionContainer *transitions, int alphaSize) {
     transitions->nTransitions = newTransSize;
     free(transitions->set);
     transitions->set = newTrans;
+}
+
+void rightMemo(Layer *layer) {
+
+    int alphaSize = layer->map.sizeAlphabet;
+    int newRightSize = layer->rightStates.nStates * alphaSize;
+
+    layer->width = (newRightSize > layer->width) ? newRightSize : layer->width;
+
+    updateStateContainer(&layer->rightStates, alphaSize);
+
+    if (layer->finalFlag)
+        updateStateContainer(&layer->finalStates, alphaSize);
+
+    rightTransitions(&layer->transitions, alphaSize);
+}
+
+void leftMemo(Layer *layer) {
+
+    int alphaSize = layer->map.sizeAlphabet;
+    int newLeftSize = layer->leftStates.nStates * alphaSize;
+
+    layer->width = (newLeftSize > layer->width) ? newLeftSize : layer->width;
+
+    updateStateContainer(&layer->leftStates, alphaSize);
+
+    if (layer->initialFlag)
+        updateStateContainer(&layer->initialStates, alphaSize);
+
+    leftTransitions(&layer->transitions, alphaSize);
+}
+
+void leftTransitions(TransitionContainer *transitions, int alphaSize) {
+
+    for (int i = 0; i < transitions->nTransitions; ++i) {
+        transitions->set[i].s1 *= alphaSize;
+        transitions->set[i].s1 += transitions->set[i].a;
+    }
+}
+
+void rightTransitions(TransitionContainer *transitions, int alphaSize) {
+
+    for (int i = 0; i < transitions->nTransitions; ++i) {
+        transitions->set[i].s2 *= alphaSize;
+        transitions->set[i].s2 += transitions->set[i].a;
+    }
+}
+
+void localMemo(ODD *odd, int i) {
+
+    if (i > odd->nLayers - 2 || i < 0) { // -2 because we have to consider the i+1 layer.
+        fprintf(stderr, "ODD index Out of Bounds @ localMemo()\n");
+        exit(EXIT_FAILURE);
+    }
+
+    rightMemo(&odd->layerSequence[i]);
+    leftMemo(&odd->layerSequence[i + 1]);
+    // TODO Remember to update the ODD width in whatever loop that iterates over the
+    //  ODD using this function.
 }
