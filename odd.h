@@ -169,7 +169,7 @@ bool strMembership(ODD* odd, char** strSeq); // returns 1 if the sequence of sym
 //Union (Functions implemented in file union.c)
 
 Layer* unionLayers(Layer* layer1, Layer* layer2);
-ODD* uniontODDs(ODD* odd1, ODD* odd2);
+ODD* unionODDs(ODD* odd1, ODD* odd2);
 
 //Intersection (Functions implemented in file intersection.c)
 
