@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <math.h>
+#include <omp.h>
 #include "odd.h"
 
 // Some helper functions
@@ -14,30 +15,36 @@ int isSubSet(int *subS, int *S, int sz);
 void showTransitions(TransitionContainer transitions);
 void showStates(StateContainer states);
 void testPowerSetODD(ODD odd, ODD powerODD);
+void intToBitArray(int num, int *S, int sz);
 // End helper functions
 
-void powerSetODD(ODD *odd, ODD *result)
+ODD* powerSetODD(ODD *odd)
 {
+    ODD* result = malloc(sizeof(ODD));
     result->nLayers = odd->nLayers;
     result->layerSequence = malloc(odd->nLayers * sizeof(Layer));
     result->width = 0;
-
+#pragma omp parallel for
     for (int i = 0; i < odd->nLayers; i++)
     {
-        // Layer powerlayer;
-        powerSetLayer(&odd->layerSequence[i], &result->layerSequence[i]);
+        result->layerSequence[i] = *powerSetLayer(&odd->layerSequence[i]);
+    }
 
-        // result->layerSequence[i] = powerlayer;
-
+    // Find max width of the layers
+    for(int i = 0; i < odd->nLayers; i++)
+    {
         if (result->layerSequence[i].width > result->width)
         {
             result->width = result->layerSequence[i].width;
         }
     }
+    
+    return result;
 }
 
-void powerSetLayer(Layer *layer, Layer *result)
+Layer* powerSetLayer(Layer *layer)
 {
+    Layer* result = malloc(sizeof(Layer));
     //SET FLAGS
     result->initialFlag = layer->initialFlag;
     result->finalFlag = layer->finalFlag;
@@ -69,7 +76,6 @@ void powerSetLayer(Layer *layer, Layer *result)
     result->transitions.nTransitions = 0;
     result->transitions.set = malloc(maxsz * layer->map.sizeAlphabet * sizeof(Transition));
 
-    int *S = calloc(layer->width, sizeof(int));
     int *initialS = calloc(layer->width, sizeof(int));
     for (int i = 0; i < layer->initialStates.nStates; i++)
     {
@@ -84,11 +90,11 @@ void powerSetLayer(Layer *layer, Layer *result)
         }
     }
 
+    int *S = calloc(layer->width, sizeof(int));
     for (int i = 0; i < maxsz; i++)
     {
-
         int order = orderSet(S, layer);
-
+        
         if (i < result->leftStates.nStates)
         {
             // Left states:
@@ -132,9 +138,11 @@ void powerSetLayer(Layer *layer, Layer *result)
         }
         bitshift(S, layer->width);
     }
-
+    free(S);
     free(initialS);
     result->width = fmax(result->leftStates.nStates, result->rightStates.nStates);
+
+    return result;
 }
 
 // maps subsets of integers to numbers. S has layer.width positions. S[i]=1 indicates that i belongs to S
@@ -172,6 +180,15 @@ int *next(int *S, NumSymbol a, Layer *layer)
 
 ///////////////////////////////////////
 //helper functions below
+
+void intToBitArray(int num, int *S, int sz) {
+    unsigned int mask = 1U << (sz-1);
+
+    for (int i = 0; i < sz; i++) {
+        S[i] = (num & mask) ? 1 : 0;
+        num <<= 1;
+    }
+}
 
 void setStateSize(StateContainer *oldstate, StateContainer *powerstate)
 {
