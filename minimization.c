@@ -92,6 +92,14 @@ int main(int argc, char** argv) {
 
     showLayer(&l);
 
+    free(l.transitions.set);
+    free(l.rightStates.set);
+    free(l.leftStates.set);
+    free(l.initialStates.set);
+    free(l.finalStates.set);
+    free(l.map.N2S);
+    free(l.map.S2N);
+
 }
 
 int findIndexTransition(TransitionContainer T, Transition t) {
@@ -165,6 +173,11 @@ void cleanRight(Layer* l, StateContainer usefulLeft, StateContainer usefulRight)
         }
     }
 
+    free(l->rightStates.set);
+    free(l->transitions.set);
+    free(auxStates.set);
+    free(usefulLeft.set);
+    free(usefulRight.set);
     l->rightStates = newRight;
     l->transitions = newTrans;
 
@@ -180,5 +193,6 @@ void minimize(ODD* o, ODD* result) {
     for (int i = 0; i < numLayers; i++) {
         cleanRight(&(o->layerSequence[i]), o->layerSequence[i].leftStates, o->layerSequence[i].rightStates);
     }
+
 
 }
