@@ -18,12 +18,6 @@ void testPowerSetODD(ODD odd, ODD powerODD);
 void intToBitArray(int num, int *S, int sz);
 // End helper functions
 
-// int main() {
-//     int S[4];
-//     intToBitArray(16, S, 4);
-//     printf("%d%d%d%d\n", S[0], S[1], S[2], S[3]);
-// }
-
 ODD* powerSetODD(ODD *odd)
 {
     ODD* result = malloc(sizeof(ODD));
