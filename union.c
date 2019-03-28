@@ -3,9 +3,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <assert.h>
-#include <omp.h>  
 #include <string.h>
- //bruk denne i parallellkoden
 // Copyright 2019 Nora Hobæk Hovland
 // This file is licensed under MIT License, as specified in the file LISENSE located at the root folder of this repository.
 
@@ -51,7 +49,6 @@ Layer* unionTransitions(Layer* layer1, Layer* layer2){
     
     int transCount=countTrans(layer1, layer2);
     Layer* result=malloc(sizeof(Layer));   
-
     result->transitions.set=malloc(sizeof(Transition)*transCount);
     result->transitions.nTransitions=transCount;
 
@@ -59,7 +56,6 @@ Layer* unionTransitions(Layer* layer1, Layer* layer2){
     for(int i=0; i<transStates1->nTransitions; i++){
         for(int j=0; j<transStates2->nTransitions; j++){
             if(transStates1->set[i].a==transStates2->set[j].a){
-             
                 Transition newTrans;
                 newTrans.s1=((transStates1->set[i].s1)) * width1+(transStates2->set[j].s1);
                 newTrans.s2=((transStates1->set[i].s2))*width2+(transStates2->set[j].s2);
@@ -76,31 +72,28 @@ Layer* unionTransitions(Layer* layer1, Layer* layer2){
 
 
 Layer* unionLayers(Layer* layer1, Layer* layer2){
-
     Layer* result=malloc(sizeof(Layer));
 
     //left states
     StateContainer* leftStates1=&(layer1->leftStates);   
     StateContainer* leftStates2=&(layer2->leftStates);    
-    unionStates(leftStates1,leftStates2);
-   
+    StateContainer* leftresult=unionStates(leftStates1,leftStates2);
+    result->leftStates=*leftresult;
+    free(leftresult);
+
     //right states
     StateContainer* rightStates1=&(layer1->rightStates);
     StateContainer* rightStates2=&(layer2->rightStates);
-    unionStates(rightStates1,rightStates2);
+    StateContainer* rightresult=unionStates(rightStates1,rightStates2);
+    result->rightStates=*rightresult;
+    free(rightresult);
    
-    //initial states
-    StateContainer* initialStates1=&(layer1->initialStates);
-    StateContainer* initialStates2=&(layer2->initialStates);
-    unionStates(initialStates1, initialStates2);
     
     assert(layer1->initialFlag==layer2->initialFlag);
     assert(layer1->finalFlag==layer2->finalFlag);
-
-    result->initialFlag=layer1->initialFlag;   //bare fiks final og initial hvis true
+    result->initialFlag=layer1->initialFlag;   
     result->finalFlag=layer1->finalFlag;
-  
-    memcpy(&result->map,&layer1->map, sizeof(AlphabetMap));  //?????
+    memcpy(&result->map,&layer1->map, sizeof(AlphabetMap));  
 
     //width
     if(result->leftStates.nStates > result->rightStates.nStates){
@@ -109,29 +102,47 @@ Layer* unionLayers(Layer* layer1, Layer* layer2){
     else{
         result->width=result->rightStates.nStates;
     }
-
-    if(result->finalFlag){
-        //final states ??????
-        int width=layer2->rightStates.set[layer2->rightStates.nStates-1]+1;//right eller final??
+    //final states
+    if(result->finalFlag){    
+        result->finalStates.set=malloc(sizeof(State)*layer1->rightStates.nStates*layer2->rightStates.nStates);
+        int width=layer2->rightStates.set[layer2->rightStates.nStates-1]+1;
         int index=0;      
         for(int s1=0;s1<layer1->rightStates.nStates;s1++){
             for(int s2=0;s2<layer2->rightStates.nStates;s2++){
                 State* state1=findState(&layer1->finalStates, &rightStates1->set[s1]);
                 State* state2=findState(&layer2->finalStates, &rightStates2->set[s2]);
-                if(layer1->rightStates.set[s1]==*state1 || layer2->rightStates.set[s2]==*state2){
+                if(state1!=NULL || state2!=NULL){
                     result->finalStates.set[index++]=layer1->rightStates.set[s1]*width + layer2->rightStates.set[s2];
                 }
             }
         }
+        result->finalStates.set=realloc(result->finalStates.set, index*sizeof(State));
+        result->finalStates.nStates=index;
+    }
+    //initial states
+    if(result->initialFlag){    
+        result->initialStates.set=malloc(sizeof(State)*layer1->leftStates.nStates*layer2->leftStates.nStates);
+        int width=layer2->leftStates.set[layer2->leftStates.nStates-1]+1;
+        int index=0;      
+        for(int s1=0;s1<layer1->leftStates.nStates;s1++){
+            for(int s2=0;s2<layer2->leftStates.nStates;s2++){
+                State* state1=findState(&layer1->initialStates, &leftStates1->set[s1]);
+                State* state2=findState(&layer2->initialStates, &leftStates2->set[s2]);
+                if(state1!=NULL || state2!=NULL){
+                    result->initialStates.set[index++]=layer1->leftStates.set[s1]*width + layer2->leftStates.set[s2];
+                }
+            }
+        }
+        result->initialStates.set=realloc(result->initialStates.set, index*sizeof(State));
+        result->initialStates.nStates=index;
     }
 
-
     //transitions
-    unionTransitions(layer1, layer2);
-   // result->finalStates=layer1->finalStates;
-
-
-   return result;
+    Layer* trans=unionTransitions(layer1, layer2);
+    result->transitions=trans->transitions;
+    free(trans);
+   
+    return result;
 }
 
 
@@ -152,6 +163,5 @@ ODD* unionODDs(ODD* odd1, ODD* odd2){
         }
         free(result);
     }
-
     return odd;
 }
