@@ -1,10 +1,8 @@
-// Copyright 2019 Ole Magnus Morken
-// This file is licensed under MIT License, as specified in the file LISENSE located at the root folder of this repository.
-
 #include "odd.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <omp.h>
 
 //Assumes set of transitions is sorted.
 bool isDeterministicLayer(Layer* layer) {
@@ -13,7 +11,8 @@ bool isDeterministicLayer(Layer* layer) {
     int num_transitions = trans.nTransitions;
     bool isDeterministic = true;
 
-    for(size_t i = 1; i < num_transitions; i++)
+#pragma omp parallel for
+    for(int i = 1; i < num_transitions; i++)
     {
         if (transition_set[i - 1].s1 == transition_set[i].s1) {
             if (transition_set[i - 1].a == transition_set[i].a) {
@@ -30,7 +29,8 @@ bool isDeterministicODD(ODD* odd) {
     Layer* layers = odd -> layerSequence;
     bool isDeterministic = true;
 
-    for(size_t i = 0; i < num_layers; i++)
+#pragma omp parallel for
+    for(int i = 0; i < num_layers; i++)
     {
         if (!isDeterministicLayer(&layers[i])) {
             isDeterministic = false;
