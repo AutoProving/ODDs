@@ -130,12 +130,25 @@ void sortLeftTransitions(TransitionContainer* transitions); // Sorts transitions
 void sortRightTransitions(TransitionContainer* transitions); // Sorts transitions.set lexicographically
 void mergesortTransitions(TransitionContainer* transitions, int lo, int hi, bool sortLeft);
 void mergeTransitions(TransitionContainer* transitions, int leftLo, int leftHi, int rightLo, int rightHi, bool sortLeft);
+// States-sorting
 void sortAllLeftStates(ODD* odd);
 void sortAllRightStates(ODD* odd);
 void sortStates(StateContainer* states); // Sorts states.set lexicographically
 void mergesortStates(StateContainer* states, int lo, int hi);
 void mergeStates(StateContainer* states, int leftLo, int leftHi, int rightLo, int rightHi);
-
+// States-sorting parallel
+void sortAllLeftStatesParallel(ODD* odd);
+void sortAllRightStatesParallel(ODD* odd);
+void sortStatesParallel(StateContainer* states); // Sorts states.set lexicographically
+void mergesortStatesParallel(StateContainer* states, int lo, int hi);
+void mergeStatesParallel(StateContainer* states, int leftLo, int leftHi, int rightLo, int rightHi);
+// Transition-sorting Parallel
+void sortAllLeftTransitionsParallel(ODD* odd);
+void sortAllRightTransitionsParallel(ODD* odd);
+void sortRightTransitionsParallel(TransitionContainer* states); // Sorts states.set lexicographically
+void sortLeftTransitionsParallel(TransitionContainer* states); // Sorts states.set lexicographically
+void mergesortTransitionsParallel(TransitionContainer* states, int lo, int hi, bool sortLeft);
+void mergeTransitionsParallel(TransitionContainer* states, int leftLo, int leftHi, int rightLo, int rightHi, bool sortLeft);
 
 
 //Read from file. (Functions implemented in file reading.c)

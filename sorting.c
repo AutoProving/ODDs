@@ -12,7 +12,7 @@ void sortAllLeftTransitions(ODD* odd)
         sortLeftTransitions(&(odd->layerSequence[i].transitions));
     }
 }
-
+//Parrallell
 void sortAllRightTransitions(ODD* odd)
 {
     for (int i = 0; i < odd->nLayers; i++)
@@ -31,7 +31,7 @@ void sortRightTransitions(TransitionContainer* transitions)
 {
     mergesortTransitions(transitions, 0, transitions->nTransitions - 1, false);
 }
-
+//parallel her også
 void mergesortTransitions(TransitionContainer* transitions, int lo, int hi, bool sortLeft)
 {
     if (lo >= hi) return;
@@ -45,6 +45,8 @@ void mergesortTransitions(TransitionContainer* transitions, int lo, int hi, bool
 void mergeTransitions(TransitionContainer* transitions, int leftLo, int leftHi, int rightLo, int rightHi, bool sortLeft)
 {   
     TransitionContainer* leftArr;
+    //Should not be a pointer!
+    //memcpy
     TransitionContainer* rightArr;
     leftArr = malloc(sizeof(TransitionContainer));
     rightArr = malloc(sizeof(TransitionContainer));
