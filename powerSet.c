@@ -6,6 +6,12 @@
 #include <omp.h>
 #include "odd.h"
 
+typedef struct LinkedList
+{
+    int *data;
+    struct LinkedList *next;
+} LinkedList;
+
 // Some helper functions
 void setStateSize(StateContainer *oldstate, StateContainer *powerstate);
 void bitshift(int *S, int sz);
@@ -16,11 +22,12 @@ void showTransitions(TransitionContainer transitions);
 void showStates(StateContainer states);
 void testPowerSetODD(ODD odd, ODD powerODD);
 void intToBitArray(int num, int *S, int sz);
+LinkedList *create_next_list(Layer *l, int **map, int w, int h, int* A_sz);
 // End helper functions
 
-ODD* powerSetODD(ODD *odd)
+ODD *powerSetODD(ODD *odd)
 {
-    ODD* result = malloc(sizeof(ODD));
+    ODD *result = malloc(sizeof(ODD));
     result->nLayers = odd->nLayers;
     result->layerSequence = malloc(odd->nLayers * sizeof(Layer));
     result->width = 0;
@@ -31,20 +38,20 @@ ODD* powerSetODD(ODD *odd)
     }
 
     // Find max width of the layers
-    for(int i = 0; i < odd->nLayers; i++)
+    for (int i = 0; i < odd->nLayers; i++)
     {
         if (result->layerSequence[i].width > result->width)
         {
             result->width = result->layerSequence[i].width;
         }
     }
-    
+
     return result;
 }
 
-Layer* powerSetLayer(Layer *layer)
+Layer *powerSetLayer(Layer *layer)
 {
-    Layer* result = malloc(sizeof(Layer));
+    Layer *result = malloc(sizeof(Layer));
     //SET FLAGS
     result->initialFlag = layer->initialFlag;
     result->finalFlag = layer->finalFlag;
@@ -94,7 +101,7 @@ Layer* powerSetLayer(Layer *layer)
     for (int i = 0; i < maxsz; i++)
     {
         int order = orderSet(S, layer);
-        
+
         if (i < result->leftStates.nStates)
         {
             // Left states:
@@ -178,13 +185,118 @@ int *next(int *S, NumSymbol a, Layer *layer)
     return sout;
 }
 
+State number(int *next, LinkedList *A, Layer *l, int a_sz) {
+    int next_order = orderSet(next, l);
+    LinkedList *B = A;
+    for(int i = 0; i < a_sz && B != NULL; i++)
+    {
+        if (next_order == orderSet(B->data, l)) {
+            return i;
+        }
+        
+        B = B->next;
+    }
+    
+    exit(-1);
+}
+
+Layer *lazy_power(Layer *l, int **map, int w, int h)
+{
+    int A_sz = 0;
+    LinkedList *A = create_next_list(l, map, w, h, &A_sz);
+    Layer *L = malloc(sizeof(Layer));
+    L->leftStates.nStates = h;
+    L->rightStates.nStates = A_sz;
+    L->map = l->map;
+    L->initialFlag = l->initialFlag;
+    L->finalFlag = l->finalFlag;
+
+    L->leftStates.set = malloc(h * sizeof(int));
+    for(int i = 0; i < h; i++)
+    {
+        L->leftStates.set[i] = i;
+    }
+
+    L->rightStates.set = malloc(A_sz * sizeof(int));
+    for(int j = 0; j < A_sz; j++)
+    {
+        L->rightStates.set[j] = j;
+    }
+    
+    L->transitions.nTransitions = 0;
+    L->transitions.set = malloc(h * l->map.sizeAlphabet * (sizeof(Transition)));
+    for(int k = 0; k < h; k++)
+    {
+        for(int ix = 0; ix < l->map.sizeAlphabet; ix++)
+        {
+            l->transitions.set[L->transitions.nTransitions].s1 = k;
+            l->transitions.set[L->transitions.nTransitions].a = l->map.S2N[ix];
+            l->transitions.set[L->transitions.nTransitions].s2 = number(next(map[k], l->map.S2N[ix], l), A, l, A_sz);
+            l->transitions.nTransitions++;
+        }
+        
+    }
+    
+    return L;
+}
+
+LinkedList *create_next_list(Layer *l, int **map, int w, int h, int* A_sz)
+{
+    struct LinkedList *A = (struct LinkedList*)malloc(sizeof(struct LinkedList));
+    struct LinkedList *last = A;
+    A->next = NULL;
+    int asz = 0;
+    bool isEmpty = true;
+    for (int i = 0; i < h; i++)
+    {
+        for (int alphi = 0; alphi < l->map.sizeAlphabet; alphi++)
+        {
+            int *S = next(map[i], l->map.S2N[alphi], l);
+            bool isInA = false;
+            int ordS = orderSet(S, l);
+            struct LinkedList *it = A;
+            if (isEmpty)
+            {
+                A->data = S;
+                isEmpty = false;
+            }
+            else
+            {
+                while (it != NULL && !isInA)
+                {
+                    if (ordS == orderSet(it->data, l))
+                    {
+                        isInA = true;
+                    }
+                    it = it->next;
+                }
+
+                if (!isInA)
+                {
+                    struct LinkedList *l = (struct LinkedList*)malloc(sizeof(struct LinkedList));
+                    last->next = l;
+                    last = l;
+                    last->data = S;
+                    last->next = NULL;
+                    asz++;
+                }
+            }
+        }
+    }
+    *A_sz = asz;
+    return A;
+}
+
 ///////////////////////////////////////
 //helper functions below
 
-void intToBitArray(int num, int *S, int sz) {
-    unsigned int mask = 1U << (sz-1);
 
-    for (int i = 0; i < sz; i++) {
+void intToBitArray(int num, int *S, int sz)
+{
+    unsigned int mask = 1U << (sz - 1);
+
+    for (int i = 0; i < sz; i++)
+    {
         S[i] = (num & mask) ? 1 : 0;
         num <<= 1;
     }
