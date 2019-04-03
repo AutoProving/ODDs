@@ -21,7 +21,7 @@ FINAL_STATES 0 // There is no final state
 TRANSITIONS 3 // There are 2 transitions
 0 0 0
 0 1 1
-0 2 2
+0 2 3
 INITIAL_FLAG 1 // Initial flag is set to 1 since this is the first layer
 FINAL_FLAG 0 // Final flag is set to 0 since this is not the last layer
 
