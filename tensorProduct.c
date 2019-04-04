@@ -33,8 +33,8 @@ void tensorStates(StateContainer* stateContainer1, StateContainer* stateContaine
 }
 
 void tensorEdgeStates(StateContainer* states1, StateContainer* edgeStates1, StateContainer* states2, StateContainer* edgeStates2, StateContainer* result){
-	int a = max(states1->set, states1->nStates);
-	int b =  max(states2->set, states2->nStates);
+	int a = max(edgeStates1->set, edgeStates1->nStates);
+	int b =  max(edgeStates2->set, edgeStates2->nStates);
 	if (a>b){
 		int temp = a;
 		a = b;
@@ -48,18 +48,8 @@ void tensorEdgeStates(StateContainer* states1, StateContainer* edgeStates1, Stat
 	int nStates = 0;
 
 	for (int i = 0; i < edgeStates1->nStates; ++i) {
-		for (int j = 0; j < states2->nStates; ++j) {
-			int index = cantorPairing(edgeStates1->set[i],states2->set[j]);
-			if (countSortSet[index]==0){
-				countSortSet[index]+=1;
-				nStates+=1;
-			}
-		}
-	}
-
-	for (int j = 0; j < edgeStates2->nStates; ++j) {
-		for (int i = 0; i < states1->nStates; ++i) {
-			int index = cantorPairing(states1->set[i],edgeStates2->set[j]);
+		for (int j = 0; j < edgeStates2->nStates; ++j) {
+			int index = cantorPairing(edgeStates1->set[i],edgeStates2->set[j]);
 			if (countSortSet[index]==0){
 				countSortSet[index]+=1;
 				nStates+=1;
