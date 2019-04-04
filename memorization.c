@@ -181,6 +181,12 @@ void localMemo(ODD *odd, int i) {
 
     rightMemo(&odd->layerSequence[i]);
     leftMemo(&odd->layerSequence[i + 1]);
-    // TODO Remember to update the ODD width in whatever loop that iterates over the
-    //  ODD using this function.
+
+    int widest =
+            (odd->layerSequence[i].width > odd->layerSequence[i + 1].width) ?
+            odd->layerSequence[i].width : odd->layerSequence[i + 1].width;
+
+    odd->width =
+            (odd->width > widest) ?
+            odd->width : widest;
 }
