@@ -30,7 +30,7 @@ void collapseRight(Layer layer, State state_i, State state_j);
 
 void collapseLeft(Layer layer, State state_i, State state_j);
 
-int findTransitionLeft(TransitionContainer transitions, State state);
+Transition * findTransitionLeft(TransitionContainer transitions, State state);
 
 int findTransitionRight(TransitionContainer transitions, State state);
 
@@ -210,24 +210,24 @@ void minimizeFinalLayer(Layer layer){
 
 bool checkTypeLeft(Layer layer,State state_j,State state_k){
     //j < k is implied if states are sorted
-    int start_j = 0;//findTransitionLeft(layer.transitions,state_j );
-    int start_k = 2;//findTransitionLeft(layer.transitions,state_k );
+    Transition * trans_j = findTransitionLeft(layer.transitions,state_j);
+    Transition * trans_k = findTransitionLeft(layer.transitions,state_k);
     int i = 0;
     
-    fprintf(stderr,"Entered checkTypeLeft with start_j %d, start_k %d \n",start_j,start_k);
+   // fprintf(stderr,"Entered checkTypeLeft with start_j %d, start_k %d \n",start_j,start_k);
 
     //while left state stays the same = ntrans for a state
-    while (layer.transitions.set[start_j].s1 == layer.transitions.set[start_j+i+1].s1)
+    while ((trans_j+i)->s1 == (trans_j+i+1)->s1)
     { 
-        NumSymbol key_j = layer.transitions.set[start_j+i].a;
-        State state_right_j = layer.transitions.set[start_j+i].s2;
+        NumSymbol key_j = (trans_j+i)->a;
+        State state_right_j = (trans_j+i)->s2;
         
-        NumSymbol key_k = layer.transitions.set[start_k+i].a;
-        State state_right_k = layer.transitions.set[start_k+i].s2;
+        NumSymbol key_k = (trans_k+i)->a;
+        State state_right_k = (trans_k+i)->s2;
      
-        fprintf(stderr,"start_j: %d , start_k: %d, i: %d",start_j,start_k,i);
-        fprintf(stderr,"key_j %d, state_r_j %d, key_k %d, state_r_k %d \n",
-                key_j,state_right_j,key_k,state_right_k);  
+        //fprintf(stderr,"start_j: %d , start_k: %d, i: %d",start_j,start_k,i);
+        //fprintf(stderr,"key_j %d, state_r_j %d, key_k %d, state_r_k %d \n",
+        //        key_j,state_right_j,key_k,state_right_k);  
         //if at least of the pairs of key and right state is not equal 
         //then do not collapse
         if(key_j != key_k || state_right_j != state_right_k){
@@ -235,7 +235,7 @@ bool checkTypeLeft(Layer layer,State state_j,State state_k){
         }
         i++;                
     }
-    return 1;
+    return 1; //collapse
 }
 
 bool checkTypeRight(Layer layer,State state_j,State state_k){
@@ -283,15 +283,14 @@ void collapseLeft(Layer layer, State state_i, State state_j){
     //both have the same number of Transitions so we could also take state_j
     //we set the transition of the to be deleted state to -1
     int i = 0;
-    int start_j = 2;//findTransitionLeft(layer.transitions,state_j);
+    Transition * trans_j = findTransitionLeft(layer.transitions,state_j);
     //buffer the left state that is to be overwritten
-    int buff = layer.transitions.set[start_j].s1;
-    int buff_incr = layer.transitions.set[start_j+i].s1;
+    int buff = trans_j->s1;
+    int buff_incr = (trans_j+i)->s1;
     while(buff == buff_incr)
     {
-
-        buff_incr = layer.transitions.set[start_j+i].s1;
-        layer.transitions.set[start_j+i].s1 = -1;
+        buff_incr = (trans_j+i)->s1;
+        (trans_j+i)->s1 = -1;
         i++;
     }
        
@@ -321,7 +320,7 @@ void collapseRight(Layer layer, State state_i, State state_j){
          
 }
 //returns the first transition of a state 
-int findTransitionLeft(TransitionContainer transitions, State state){
+Transition * findTransitionLeft(TransitionContainer transitions, State state){
     //Transition * findTransitionLeft(TransitionContainer transitions, State state){
     //finds the index of first occurence of a state in the sorted transitions list
     int left = -1;
@@ -338,11 +337,11 @@ int findTransitionLeft(TransitionContainer transitions, State state){
         }
     }
     if (right < transitions.nTransitions && transitions.set[right].s1 == state){
-        return transitions.set[right].s1;
+        return &(transitions.set[right]);
     }
     else{
         printf("state is not part of transition list \n");
-        return transitions.set[right].s1;
+        return &(transitions.set[right]);
     }
 
 }
