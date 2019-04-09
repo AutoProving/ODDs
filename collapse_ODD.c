@@ -57,14 +57,13 @@ ODD * collapseODD(ODD * odd){
     //minimize final layer sort final layer after right states should be 
     fprintf(stderr,"Before final layer \n");
 
-    sortAllLeftTransitions(odd);
-    //sortRightTransitions(&(odd->layerSequence[numLayers-1].transitions));
+    sortRightTransitions(&(odd->layerSequence[numLayers-1].transitions));
     //showLayer(&(odd->layerSequence[numLayers-1]));
     //printODD("ODD-Mysave_before.txt",odd);
-    //minimizeFinalLayer(odd->layerSequence[numLayers-1]);
+    minimizeFinalLayer(odd->layerSequence[numLayers-1]);
     //printODD("ODD-Mysave_after.txt",odd);
     //showLayer(&(odd->layerSequence[numLayers-1]));
-    //fprintf(stderr,"Minimzed final layer \n");
+    fprintf(stderr,"Minimzed final layer \n");
     //sort after the left states 
     void sortAllLeftTransitions(ODD* odd);
     
@@ -243,18 +242,22 @@ bool checkTypeRight(Layer layer,State state_j,State state_k){
     Transition * trans_j = findTransitionRight(layer.transitions,state_j);
     Transition * trans_k = findTransitionRight(layer.transitions,state_k);
     
+    fprintf(stderr, "trans_j %d %d %d \n", trans_j->s1, trans_j->a, trans_j->s2);
+    fprintf(stderr, "trans_k %d %d %d \n", trans_k->s1, trans_k->a, trans_k->s2);
+    showLayer(&layer);
     int i = 0;
-    //fprintf(stderr,"start_j %d, start_k %d \n",start_j,start_k);
     //while right state stays the same = ntrans for a state
     
      while ((trans_j+i)->s2 == (trans_j+i+1)->s2)
     { 
         NumSymbol key_j = (trans_j+i)->a;
-        State state_right_j = (trans_j+i)->s1;
+        State state_right_j = (trans_j+i)->s2;
         
         NumSymbol key_k = (trans_k+i)->a;
-        State state_right_k = (trans_k+i)->s1;
-     
+        State state_right_k = (trans_k+i)->s2;
+        fprintf(stderr,"i: %d , key_j %d, state_r_j %d, key_k %d, state_r_k %d \n",
+                i,key_j,state_right_j,key_k,state_right_k);  
+        
         //if at least of the pairs of key and right state is not equal 
         //then do not collapse
         if(key_j != key_k || state_right_j != state_right_k){
@@ -263,7 +266,7 @@ bool checkTypeRight(Layer layer,State state_j,State state_k){
         i++;                
     }
     
-    fprintf(stderr,"Have collapsed set of Final states\n");
+    fprintf(stderr,"Will collapse set of Final states\n");
     return 1;
 }
 
@@ -319,6 +322,7 @@ void collapseRight(Layer layer, State state_i, State state_j){
     }     
     
 }
+
 //returns the first transition of a state 
 Transition * findTransitionLeft(TransitionContainer transitions, State state){
     //Transition * findTransitionLeft(TransitionContainer transitions, State state){
