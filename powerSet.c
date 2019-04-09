@@ -23,8 +23,9 @@ void showTransitions(TransitionContainer transitions);
 void showStates(StateContainer states);
 void testPowerSetODD(ODD odd, ODD powerODD);
 void intToBitArray(int num, int *S, int sz);
-LinkedList *create_next_list(Layer *l, int **map, int w, int h, int *A_sz);
+LinkedList *create_next_list(Layer *l, LinkedList *map, int w, int h, int *A_sz);
 State number(int *next, LinkedList *A, Layer *l, int a_sz);
+Layer *lazy_power(Layer *l, LinkedList *map, int w, int h, LinkedList *right_map, int *asz);
 // End helper functions
 
 ODD *powerSetODD(ODD *odd)
@@ -193,7 +194,7 @@ State number(int *next, LinkedList *A, Layer *l, int a_sz)
     LinkedList *B = A;
     for (int i = 0; i < a_sz && B != NULL; i++)
     {
-        if (next_order == B->order, l)
+        if (next_order == B->order)
         {
             return i;
         }
@@ -201,10 +202,56 @@ State number(int *next, LinkedList *A, Layer *l, int a_sz)
         B = B->next;
     }
 
-    exit(-1);
+    return -1;
 }
 
-Layer *lazy_power(Layer *l, int **map, int w, int h)
+ODD *lazy_power_ODD(ODD *odd)
+{
+    ODD *res = (ODD*)malloc(sizeof(ODD));
+    struct LinkedList *right_map = NULL;
+
+    // Creating the initial left_map
+    struct LinkedList *left_map = (struct LinkedList *)malloc(sizeof(struct LinkedList));
+    struct LinkedList *last = left_map;
+    for (int i = 0; i < odd->layerSequence[0].initialStates.nStates; i++)
+    {
+        if (i != 0) {
+            struct LinkedList *l = (struct LinkedList *)malloc(sizeof(struct LinkedList));
+            last->next = l;
+            last = l;
+        }
+        last->data = calloc(odd->width, sizeof(int));
+        last->data[findStateIndex(&odd->layerSequence[0], odd->layerSequence[0].initialStates.set[i], i)] = 1;
+        last->order = orderSet(last->data, &odd->layerSequence[0]);
+        last->next = NULL;
+        
+    }
+
+    int h = odd->layerSequence[0].initialStates.nStates;
+    res->layerSequence = malloc(odd->nLayers);
+    res->nLayers = odd->nLayers;
+    for (int i = 0; i < odd->nLayers; i++)
+    {
+        int asz = 0;
+        res->layerSequence[i] = *lazy_power(&odd->layerSequence[i], left_map, odd->width, h, right_map, &asz);
+        left_map = right_map;
+        h = asz;
+    }
+    
+    // Find the max width
+    res->width = 0;
+    for (int i = 0; i < res->nLayers; i++)
+    {
+        if (res->layerSequence[i].width > res->width)
+        {
+            res->width = res->layerSequence[i].width;
+        }
+    }
+
+    return res;
+}
+
+Layer *lazy_power(Layer *l, LinkedList *map, int w, int h, LinkedList *right_map, int *asz)
 {
     int A_sz = 0;
     LinkedList *A = create_next_list(l, map, w, h, &A_sz);
@@ -214,6 +261,29 @@ Layer *lazy_power(Layer *l, int **map, int w, int h)
     L->map = l->map;
     L->initialFlag = l->initialFlag;
     L->finalFlag = l->finalFlag;
+
+    //TODO
+    if (L->initialFlag) {
+        L->initialStates.nStates = l->initialStates.nStates;
+        L->initialStates.set = l->initialStates.set;
+    } 
+    else
+    {
+        L->initialStates.nStates = 0;
+    }
+
+    // TODO
+    if (L->finalFlag) {
+        L->finalStates.nStates = l->finalStates.nStates;
+        L->finalStates.set = l->finalStates.set;
+    }
+    else
+    {
+        L->finalStates.nStates = 0;
+    }
+    
+    
+    
 
     L->leftStates.set = malloc(h * sizeof(int));
     for (int i = 0; i < h; i++)
@@ -229,33 +299,38 @@ Layer *lazy_power(Layer *l, int **map, int w, int h)
 
     L->transitions.nTransitions = 0;
     L->transitions.set = malloc(h * l->map.sizeAlphabet * (sizeof(Transition)));
-    for (int k = 0; k < h; k++)
+    LinkedList *temp = map;
+    for (int k = 0; k < h && temp != NULL; k++)
     {
         for (int ix = 0; ix < l->map.sizeAlphabet; ix++)
         {
-            l->transitions.set[L->transitions.nTransitions].s1 = k;
-            l->transitions.set[L->transitions.nTransitions].a = l->map.S2N[ix];
-            l->transitions.set[L->transitions.nTransitions].s2 = number(next(map[k], l->map.S2N[ix], l), A, l, A_sz);
-            l->transitions.nTransitions++;
+            L->transitions.set[L->transitions.nTransitions].s1 = k;
+            L->transitions.set[L->transitions.nTransitions].a = l->map.S2N[ix];
+            L->transitions.set[L->transitions.nTransitions].s2 = number(next(temp->data, l->map.S2N[ix], l), A, l, A_sz);
+            L->transitions.nTransitions++;
         }
+        temp = temp->next;
     }
 
-    free(A);
+    L->width = fmax(L->leftStates.nStates, L->rightStates.nStates);
+    right_map = A;
+    *asz = A_sz;
     return L;
 }
 
-LinkedList *create_next_list(Layer *l, int **map, int w, int h, int *A_sz)
+LinkedList *create_next_list(Layer *l, LinkedList *map, int w, int h, int *A_sz)
 {
     struct LinkedList *A = (struct LinkedList *)malloc(sizeof(struct LinkedList));
     struct LinkedList *last = A;
     A->next = NULL;
     int asz = 0;
     bool isEmpty = true;
-    for (int i = 0; i < h; i++)
+    struct LinkedList *temp = map;
+    for (int i = 0; i < h && temp != NULL; i++)
     {
         for (int alphi = 0; alphi < l->map.sizeAlphabet; alphi++)
         {
-            int *S = next(map[i], l->map.S2N[alphi], l);
+            int *S = next(temp->data, l->map.S2N[alphi], l);
             bool isInA = false;
             int ordS = orderSet(S, l);
             struct LinkedList *it = A;
@@ -289,19 +364,9 @@ LinkedList *create_next_list(Layer *l, int **map, int w, int h, int *A_sz)
 
                     it = it->next;
                 }
-
-                // if (!isInA)
-                // {
-                //     struct LinkedList *l = (struct LinkedList *)malloc(sizeof(struct LinkedList));
-                //     last->next = l;
-                //     last = l;
-                //     last->data = S;
-                //     last->order = ordS;
-                //     last->next = NULL;
-                //     asz++;
-                // }
             }
         }
+        temp = temp->next;
     }
 
     *A_sz = asz;
