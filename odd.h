@@ -190,6 +190,10 @@ ODD* unionODDs(ODD* odd1, ODD* odd2);
 Layer* intersectionLayers(Layer* layer1, Layer* layer2);
 ODD* intersectionODD(ODD* odd1, ODD* odd2);
 
+//Intersection in Parallel (Functions inplementednin file intersectionParallel.c)
+Layer* intersectionLayersParallel(Layer* layer1, Layer* layer2);
+ODD* intersectionODDParallel(ODD* odd1, ODD* odd2);
+
 //tensorProduct (Functions implemented in file tensorProduct.c)
 
 
