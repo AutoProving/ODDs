@@ -43,7 +43,7 @@ int main(int argc,char **argv){
     //printf("Before collapsing ODD \n");   
     ODD * new_odd = collapseODD(&odd);
     fprintf(stderr,"collapsing is done\n");
-    printODD("ODD-Mysave.txt",&odd);
+    printODD("ODD-Mysave.txt",new_odd);
     showODD(new_odd);
     return 0; 
 }
@@ -57,15 +57,11 @@ ODD * collapseODD(ODD * odd){
     //minimize final layer sort final layer after right states should be 
     fprintf(stderr,"Before final layer \n");
 
-    sortRightTransitions(&(odd->layerSequence[numLayers-1].transitions));
-    //showLayer(&(odd->layerSequence[numLayers-1]));
-    //printODD("ODD-Mysave_before.txt",odd);
+    void sortAllLeftTransitions(ODD* odd);
     minimizeFinalLayer(odd->layerSequence[numLayers-1]);
-    //printODD("ODD-Mysave_after.txt",odd);
     //showLayer(&(odd->layerSequence[numLayers-1]));
     fprintf(stderr,"Minimzed final layer \n");
     //sort after the left states 
-    void sortAllLeftTransitions(ODD* odd);
     
     //go backwards through ODD    
     for(int i = numLayers-1; i >= 0; i--)
@@ -86,21 +82,22 @@ ODD * collapseODD(ODD * odd){
             }
         }
         
-       // fprintf(stderr,"minimized right states in layer: %d \n",i);
-        //reroute the transitions that point to the deleted right states to the states they collapsed to
-        //if state is negative reroute to the abs() of negative number
+        //reroute the transitions that point to the deleted right states 
+        //to the states they collapsed to
+        //if state is negative reroute to the abs() of negative number and shift by 1 
         //maybe the transitions should be sorted after right states ?? 
-        /*
+
+        
         for(int j = 0; j < odd->layerSequence[i].transitions.nTransitions; j++)
         {
             //we need the state to a transition or sorted transitions after the right states
             if(odd->layerSequence[i].rightStates.set[j] < 0)
             {
                 odd->layerSequence[i].transitions.set[j].s2 
-                    = -(odd->layerSequence[i].transitions.set[j].s2+1); 
+                    = -(odd->layerSequence[i].transitions.set[j].s2-1); 
             }
         }
-        */
+        
         fprintf(stderr,"Rerouted Transitions in layer: %d \n",i);
     //    fprintf(stderr,"Minimzed layer %d \n",i);
     }
@@ -137,7 +134,14 @@ ODD * collapseODD(ODD * odd){
         l.finalFlag = odd->layerSequence[i].finalFlag;
         l.initialStates.nStates = odd->layerSequence[i].initialStates.nStates;
         l.finalStates.nStates = odd->layerSequence[i].finalStates.nStates;
-        
+
+        if (i == numLayers-1){
+            l.finalStates.set = l.rightStates.set;
+        }
+        if (i == 0){
+            l.initialStates.set = l.leftStates.set;
+        }
+
         //add the new layer to the new odd
         o->layerSequence[i] = l;
     }
@@ -239,8 +243,8 @@ bool checkTypeLeft(Layer layer,State state_j,State state_k){
 
 bool checkTypeRight(Layer layer,State state_j,State state_k){
     //j < k is implied if states are sorted
-    Transition * trans_j = findTransitionRight(layer.transitions,state_j);
-    Transition * trans_k = findTransitionRight(layer.transitions,state_k);
+    Transition * trans_j = findTransitionLeft(layer.transitions,state_j);
+    Transition * trans_k = findTransitionLeft(layer.transitions,state_k);
     
     fprintf(stderr, "trans_j %d %d %d \n", trans_j->s1, trans_j->a, trans_j->s2);
     fprintf(stderr, "trans_k %d %d %d \n", trans_k->s1, trans_k->a, trans_k->s2);
@@ -248,7 +252,7 @@ bool checkTypeRight(Layer layer,State state_j,State state_k){
     int i = 0;
     //while right state stays the same = ntrans for a state
     
-     while ((trans_j+i)->s2 == (trans_j+i+1)->s2)
+    while ((trans_j+i)->s1 == (trans_j+i+1)->s1)
     { 
         NumSymbol key_j = (trans_j+i)->a;
         State state_right_j = (trans_j+i)->s2;
@@ -317,7 +321,8 @@ void collapseRight(Layer layer, State state_i, State state_j){
     while(buff == buff_incr)
     {
         buff_incr = (trans_j+i)->s2;
-        (trans_j+i)->s2 = -1;
+        //maybe we do not have to collapse transitions ? 
+        //(trans_j+i)->s1 = -1;
         i++;
     }     
     

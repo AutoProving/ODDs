@@ -2,7 +2,7 @@
 // EVERYTHING IN A LINE AFTER TWO BARS IS A COMMENT
 // This ODD accepts all odd-weight strings of length 4
 
-ODD 3 //Number of layers is 4
+ODD 3 //Number of layers is 3
 LAYER //First layer 
 ALPHABET_MAP 2 // 2 is the size of the alphabet
 0 a  // Symbol 0 is mapped to string a
@@ -52,11 +52,11 @@ RIGHT_STATES 2 // There are two right states
 0
 1
 INITIAL_STATES 0 // There is no initial state 
-FINAL_STATES 0 // There is no final state
+FINAL_STATES 2 // There is no final state
 TRANSITIONS 4 // There are 4 transitions
 0 0 0
 0 1 1
 1 0 0
 1 1 1
 INITIAL_FLAG 0 // Initial flag is set to 0 since this is not the first layer
-FINAL_FLAG 0 // Final flag is set to 0 since this is not the last layer
+FINAL_FLAG 1 // Final flag is set to 0 since this is not the last layer
