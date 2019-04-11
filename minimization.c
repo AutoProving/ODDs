@@ -29,8 +29,10 @@ int findIndexState(StateContainer* v, State s) {
     return index;
 }
 
+void cleanLeft(Layer* l);
 void cleanRight(Layer* l);
 void cleanTransitions(Layer* l);
+void cleanTransitionsRight(Layer* l);
 void copyStates(StateContainer* l1, StateContainer* l2);
 
 int main(int argc, char** argv) {
@@ -64,6 +66,40 @@ int countUsefulStates(StateContainer s) {
     return n;
 }
 
+void cleanTransitionsRight(Layer* l) {
+
+	StateContainer* leftStates = &(l->leftStates);
+	StateContainer* rightStates = &(l->rightStates);
+	TransitionContainer* transitions = &(l->transitions);
+
+	TransitionContainer auxTransitions;
+	auxTransitions.set = malloc(transitions->nTransitions * sizeof(Transition));
+	auxTransitions.nTransitions = transitions->nTransitions;
+	for (int i = transitions->nTransitions - 1; i >= 0; i--) {
+		auxTransitions.set[i].s2 = -1;
+	}
+
+	int i = 0;
+	int curTransition = 0;
+	int usefulTransitions = 0;
+
+	for (int i = rightStates->nStates - 1; i >= 0; i--) {
+
+		while (transitions->set[curTransition].s2 <= rightStates->set[i] && curTransition < transitions->nTransitions) {
+			if (transitions->set[curTransition].s2 == rightStates->set[i]) {
+				transitions->set[usefulTransitions] = transitions->set[curTransition];
+				usefulTransitions++;
+			}
+			curTransition++;
+		}
+	}
+
+	transitions->nTransitions = usefulTransitions;
+	transitions->set = realloc(transitions->set, usefulTransitions * sizeof(Transition));
+
+ //	for (int i = numLayers - 1; i >= 0; i--)
+}
+
 void cleanTransitions(Layer* l) {
 
     StateContainer* leftStates = &(l->leftStates);
@@ -95,7 +131,52 @@ void cleanTransitions(Layer* l) {
     transitions->set = realloc(transitions->set, usefulTransitions * sizeof(Transition));
 
 }
-    
+
+void cleanLeft(Layer* l) {
+
+	StateContainer* usefulRight = &(l->rightStates);
+	StateContainer* usefulLeft = &(l->leftStates);
+
+	//fprintf(stderr, "accomplished, %i\n", usefulLeft->nStates);
+
+	StateContainer auxStates;
+	auxStates.set = malloc(usefulLeft->nStates * sizeof(State));
+	auxStates.nStates = usefulLeft->nStates;
+	for (int i = 0; i < usefulLeft->nStates; i++) {
+		auxStates.set[i] = -1;
+	}
+
+	int transitionIndex = 0;
+	int i = 0;
+	//for each useful right state
+	while (i < usefulRight->nStates) {
+		while (l->transitions.set[transitionIndex].s2 <= usefulRight->set[i] && transitionIndex < l->transitions.nTransitions) {
+			if (l->transitions.set[transitionIndex].s2 == usefulRight->set[i]) {
+				// If useful, change value in aux state from -1
+				State* s = &l->transitions.set[transitionIndex].s2;
+				int index = findIndexState(usefulLeft, *s);
+				auxStates.set[findIndexState(usefulLeft, *s)] = *s;
+			}
+			// check next transition
+			transitionIndex++;
+		}
+		// go to next state
+		i++;
+	}
+	int n = countUsefulStates(auxStates);
+
+	usefulLeft->set = realloc(usefulLeft->set, n * sizeof(State));
+	usefulLeft->nStates = n;
+	int index = 0;
+
+	for (int i = 0; i < auxStates.nStates; i++) {
+		if (auxStates.set[i] != -1) {
+			usefulLeft->set[index] = auxStates.set[i];
+			index++;
+		}
+	}
+}
+
 void cleanRight(Layer* l) {
 
     StateContainer* usefulLeft = &(l->leftStates);
@@ -159,7 +240,15 @@ void minimize(ODD* o, ODD* result) {
         if (i < numLayers - 1) {
             copyStates(&(o->layerSequence[i].rightStates), &(o->layerSequence[i+1].leftStates));
         }
+        
     }
+    	fprintf(stderr, "BEGIN RtL:\n\n");
+	for (int i = numLayers - 1; i >= 0; i--){
+		cleanTransitionsRight(&(o->layerSequence[i]));
+		cleanLeft(&(o->layerSequence[i]));
 
-
+		if (i > 0) {
+			copyStates(&(o->layerSequence[i].leftStates), &(o->layerSequence[i-1].rightStates));
+		}
+	}
 }
