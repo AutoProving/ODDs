@@ -242,6 +242,7 @@ void minimize(ODD* o, ODD* result) {
         }
         
     }
+	void sortAllRightTransitions(ODD* o);
     	fprintf(stderr, "BEGIN RtL:\n\n");
 	for (int i = numLayers - 1; i >= 0; i--){
 		cleanTransitionsRight(&(o->layerSequence[i]));
