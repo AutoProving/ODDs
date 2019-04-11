@@ -274,8 +274,6 @@ bool checkTypeRight(Layer layer,State state_j,State state_k){
     return 1;
 }
 
-
-
 void collapseLeft(Layer layer, State state_i, State state_j){
     //sets the deleted state to -(upperstate+1) the transitions to the lower state will be deleted
     if(state_i > state_j){ //to ensure that state_i < state_j 
