@@ -136,11 +136,8 @@ void mergesortTransitionsParallel(TransitionContainer *states, int lo, int hi, b
 void mergeTransitionsParallel(TransitionContainer *states, int leftLo, int leftHi, int rightLo, int rightHi, bool sortLeft);
 
 //Read from file. (Functions implemented in file reading.c)
-void readSymbol(FILE *reader, NumSymbol *symbol);					  // Reads a string representing the name of a symbol
 void readAlphabetMap(FILE *reader, AlphabetMap *map);				  // Reads nSymbols
-void readState(FILE *reader, State *state);							  // Reads a state (represented by an int)
-void readStates(FILE *reader, StateContainer *states);				  // Reads nStates
-void readTransition(FILE *reader, Transition *transition);			  // reads a transition represented by a triple of integers
+void readStates(FILE *reader, char *keyword, StateContainer *states); // Reads nStates
 void readTransitions(FILE *reader, TransitionContainer *transitions); // Reads nTransitions transitions
 void readLayer(FILE *reader, Layer *layer);							  // Reads a layer
 void readODD(char *filename, ODD *odd);								  // Reads a sequence of layers
