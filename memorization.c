@@ -1,119 +1,88 @@
 // Copyright 2019 Andreas Ommundsen
-// This file is licensed under MIT License, as specified in the file LISENSE located at the root folder of this repository.
+// This file is licensed under MIT License, as specified in the file LICENSE located at the root folder of this repository.
 
-#include "odd.h"
 #include <stdlib.h>
+#include "cloneKill.h"
+#include "odd.h"
 
-/*
- * Input:
- *      *layer : The layer whose number of states we are interested in.
- *      left : True for the left side StateContainer of the layer, false for the right side StateContainer.
- * Returns:
- *      The the new size of the given stateContainer = i.side * |S|
- * Where:
- *      i.side : the number of states on the given side.
- *      |S| : The size of the layer's alphabet.
+#ifdef _OPENMP
+#   include <omp.h>
+#endif
+
+/**
+ * @param states The StateContainer that we wish to update.
+ * @param alphaSize The layer.map.sizeAlphabet belonging to the same layer as the input *states.
+ * @Effect *states are updated to show their post-memorization expansion values with regard to the size of the alphabet.
  */
-int expandedSetSize(Layer *layer, bool left);
+void updateStateContainer(StateContainer *states, int alphaSize);
 
-/*
- * Input:
- *      *states : The StateContainer to be updated.
- *      newSize : The new size of the state set.
- * Effect:
- *      Memory of *states is freed and then a new array holding states [0 ... newSize-1] is set to that memory.
- */
-void updateStateContainer(StateContainer *states, int newSize);
-
-/*
- * Input:
- *      *states : Either the layer.initialStates or layer.finalStates to be updated.
- *      alphaSize : The layer.map.sizeAlphabet.
- * Effect:
- *      *states should be updated to match the expanded state numbers.
- */
-void updateInitialFinal(StateContainer *states, int alphaSize);
-
-/*
- * Input:
- *      *transitions: The layer.transitions TransitionsContainer that we wish to update.
- *      alphaSize : The layer.map.sizeAlphabet.
- * Effect:
- *      *transitions should be updated to show the mappings from the expanded left states to the expanded right states.
+/**
+ * @param transitions The layer.transitions TransitionsContainer that we wish to update.
+ * @param alphaSize The layer.map.sizeAlphabet belonging to the same layer as the input *transitions.
+ * @Effect *transitions are updated to show the mappings from the expanded left states to the expanded right states.
  */
 void updateTransitions(TransitionContainer *transitions, int alphaSize);
 
-void memorizeLayer(Layer *layer, Layer *result) {
+void leftMemo(Layer *layer);
 
-    Layer clonedLayer = *layer;
-    Layer *cP = &clonedLayer;
+void rightMemo(Layer *layer);
 
-    int newLeftSize = expandedSetSize(layer, true);
-    int newRightSize = expandedSetSize(layer, false);
-    int alphaSize = clonedLayer.map.sizeAlphabet;
+void leftTransitions(TransitionContainer *transitions, int alphaSize);
 
-    clonedLayer.width = (newLeftSize > newRightSize) ? newLeftSize : newRightSize;
+void rightTransitions(TransitionContainer *transitions, int alphaSize);
 
-    clonedLayer.leftStates.nStates = newLeftSize;
-    updateStateContainer(&clonedLayer.leftStates, newLeftSize);
+void localMemo(ODD *odd, int i);
 
-    clonedLayer.rightStates.nStates = newRightSize;
-    updateStateContainer(&clonedLayer.rightStates, newRightSize);
+ODD *memorizeODD(ODD *odd) {
 
-    if (clonedLayer.initialFlag)
-        updateInitialFinal(&clonedLayer.initialStates, alphaSize);
-
-    if (clonedLayer.finalFlag)
-        updateInitialFinal(&clonedLayer.finalStates, alphaSize);
-
-    updateTransitions(&clonedLayer.transitions, alphaSize);
-
-    free(result);
-    *result = *cP;
-}
-
-
-void memorizeODD(ODD *odd, ODD *result) {
-
-    ODD clonedODD = *odd;
-    ODD *cP = &clonedODD;
+    ODD *clonedODD = cloneODD(odd);
 
     int maxWidth = 0;
-    for (int i = 0; i < odd->nLayers; ++i) {
 
-        Layer *inputLayer = &odd->layerSequence[i];
-        Layer *resultLayer = malloc(sizeof(Layer));
+# pragma omp parallel // num_threads(threadCount)
+#   pragma omp for
+    for (int i = 0; i < clonedODD->nLayers; ++i) {
+        Layer *temp = memorizeLayer(&clonedODD->layerSequence[i]);
+        killLayer(&clonedODD->layerSequence[i]);
+        clonedODD->layerSequence[i] = *temp;
+        free(temp);
 
-        memorizeLayer(inputLayer, resultLayer);
-
-//        free(inputLayer); // TODO CAUSES SIGSEGV, FIGURE IT OUT
-        maxWidth = (resultLayer->width > maxWidth) ? resultLayer->width : maxWidth;
-        *inputLayer = *resultLayer;
+#       pragma omp critical
+        maxWidth =
+                (clonedODD->layerSequence[i].width > maxWidth)
+                ? clonedODD->layerSequence[i].width : maxWidth;
     }
-    clonedODD.width = maxWidth;
-    free(result);
-    *result = *cP;
+    clonedODD->width = maxWidth;
+    return clonedODD;
+}
+
+Layer *memorizeLayer(Layer *layer) {
+
+    Layer *clonedLayer = cloneLayer(layer);
+
+    int alphaSize = clonedLayer->map.sizeAlphabet;
+    int newLeftSize = clonedLayer->leftStates.nStates * alphaSize;
+    int newRightSize = clonedLayer->rightStates.nStates * alphaSize;
+
+    clonedLayer->width = (newLeftSize > newRightSize) ? newLeftSize : newRightSize;
+
+    updateStateContainer(&clonedLayer->leftStates, alphaSize);
+
+    updateStateContainer(&clonedLayer->rightStates, alphaSize);
+
+    if (clonedLayer->initialFlag)
+        updateStateContainer(&clonedLayer->initialStates, alphaSize);
+
+    if (clonedLayer->finalFlag)
+        updateStateContainer(&clonedLayer->finalStates, alphaSize);
+
+    updateTransitions(&clonedLayer->transitions, alphaSize);
+
+    return clonedLayer;
 }
 
 
-int expandedSetSize(Layer *layer, bool left) {
-
-    int stateSize = left ? layer->leftStates.nStates : layer->rightStates.nStates;
-    int alphaSize = layer->map.sizeAlphabet;
-    int expandedSize = stateSize * alphaSize;
-    return expandedSize;
-}
-
-void updateStateContainer(StateContainer *states, int newSize) {
-
-    free(states->set);
-    states->set = malloc(newSize * sizeof(State));
-    for (int i = 0; i < newSize; ++i) {
-        states->set[i] = i;
-    }
-}
-
-void updateInitialFinal(StateContainer *states, int alphaSize) {
+void updateStateContainer(StateContainer *states, int alphaSize) {
 
     int oldSetSize = states->nStates;
     int newSetSize = states->nStates * alphaSize;
@@ -155,4 +124,69 @@ void updateTransitions(TransitionContainer *transitions, int alphaSize) {
     transitions->nTransitions = newTransSize;
     free(transitions->set);
     transitions->set = newTrans;
+}
+
+void rightMemo(Layer *layer) {
+
+    int alphaSize = layer->map.sizeAlphabet;
+    int newRightSize = layer->rightStates.nStates * alphaSize;
+
+    layer->width = (newRightSize > layer->width) ? newRightSize : layer->width;
+
+    updateStateContainer(&layer->rightStates, alphaSize);
+
+    if (layer->finalFlag)
+        updateStateContainer(&layer->finalStates, alphaSize);
+
+    rightTransitions(&layer->transitions, alphaSize);
+}
+
+void leftMemo(Layer *layer) {
+
+    int alphaSize = layer->map.sizeAlphabet;
+    int newLeftSize = layer->leftStates.nStates * alphaSize;
+
+    layer->width = (newLeftSize > layer->width) ? newLeftSize : layer->width;
+
+    updateStateContainer(&layer->leftStates, alphaSize);
+
+    if (layer->initialFlag)
+        updateStateContainer(&layer->initialStates, alphaSize);
+
+    leftTransitions(&layer->transitions, alphaSize);
+}
+
+void leftTransitions(TransitionContainer *transitions, int alphaSize) {
+
+    for (int i = 0; i < transitions->nTransitions; ++i) {
+        transitions->set[i].s1 *= alphaSize;
+        transitions->set[i].s1 += transitions->set[i].a;
+    }
+}
+
+void rightTransitions(TransitionContainer *transitions, int alphaSize) {
+
+    for (int i = 0; i < transitions->nTransitions; ++i) {
+        transitions->set[i].s2 *= alphaSize;
+        transitions->set[i].s2 += transitions->set[i].a;
+    }
+}
+
+void localMemo(ODD *odd, int i) {
+
+    if (i > odd->nLayers - 2 || i < 0) { // -2 because we have to consider the i+1 layer.
+        fprintf(stderr, "ODD index Out of Bounds @ localMemo()\n");
+        exit(EXIT_FAILURE);
+    }
+
+    rightMemo(&odd->layerSequence[i]);
+    leftMemo(&odd->layerSequence[i + 1]);
+
+    int widest =
+            (odd->layerSequence[i].width > odd->layerSequence[i + 1].width) ?
+            odd->layerSequence[i].width : odd->layerSequence[i + 1].width;
+
+    odd->width =
+            (odd->width > widest) ?
+            odd->width : widest;
 }

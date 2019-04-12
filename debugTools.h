@@ -1,18 +1,20 @@
 // Copyright 2019 Andreas Ommundsen
-// This file is licensed under MIT License, as specified in the file LISENSE located at the root folder of this repository.
+// This file is licensed under MIT License, as specified in the file LICENSE located at the root folder of this repository.
 
 #ifndef ODDS_DEBUGTOOLS_H
 #define ODDS_DEBUGTOOLS_H
 
 #include "odd.h"
 
-/*
- * Prints the all the layers and their respective states of the parameter ODD to stdout.
+/**
+ * @param odd The input *odd, eg: &odd.
+ * @Effect Prints the ODD info along with each layer's state to stdout.
  */
 void showODD(ODD *odd);
 
-/*
- * Prints any given layer and its respective state to stdout.
+/**
+ * @param layer The input *layer, eg: &odd.layerSequence[i].
+ * @Effect Prints the input layer's state to stdout.
  */
 void showLayer(Layer *layer);
 

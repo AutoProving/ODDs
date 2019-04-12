@@ -5,44 +5,64 @@
 #include "odd.h"
 #include <stdlib.h>
 
-void sortAllLeftTransitions(ODD* odd)
+void sortAllLeftTransitionsParallel(ODD* odd)
 {
-    for (int i = 0; i < odd->nLayers; i++)
+    # pragma omp parallel
     {
-        sortLeftTransitions(&(odd->layerSequence[i].transitions));
+        # pragma omp for
+        for (int i = 0; i < odd->nLayers; i++)
+        {
+            sortLeftTransitionsParallel(&(odd->layerSequence[i].transitions));
+        }
     }
 }
 //Parrallell
-void sortAllRightTransitions(ODD* odd)
+void sortAllRightTransitionsParallel(ODD* odd)
 {
-    for (int i = 0; i < odd->nLayers; i++)
+    # pragma omp parallel
     {
-        sortRightTransitions(&(odd->layerSequence[i].transitions));
+        # pragma omp for
+        for (int i = 0; i < odd->nLayers; i++)
+        {
+            sortRightTransitionsParallel(&(odd->layerSequence[i].transitions));
+        }
     }
 }
 
 
-void sortLeftTransitions(TransitionContainer* transitions)
-{
-    mergesortTransitions(transitions, 0, transitions->nTransitions - 1, true);
+void sortLeftTransitionsParallel(TransitionContainer* transitions)
+{   
+    # pragma omp single
+    mergesortTransitionsParallel(transitions, 0, transitions->nTransitions - 1, true);
 }
 
-void sortRightTransitions(TransitionContainer* transitions)
+void sortRightTransitionsParallel(TransitionContainer* transitions)
 {
-    mergesortTransitions(transitions, 0, transitions->nTransitions - 1, false);
+    # pragma omp single
+    mergesortTransitionsParallel(transitions, 0, transitions->nTransitions - 1, false);
 }
-//parallel her også
-void mergesortTransitions(TransitionContainer* transitions, int lo, int hi, bool sortLeft)
+
+void mergesortTransitionsParallel(TransitionContainer* transitions, int lo, int hi, bool sortLeft)
 {
     if (lo >= hi) return;
     int mid =(lo + (hi-lo)/2); 
-    mergesortTransitions(transitions, lo, mid, sortLeft);
-    mergesortTransitions(transitions, mid+1, hi, sortLeft);
     
-    mergeTransitions(transitions, lo, mid, mid+1, hi, sortLeft);
+    #pragma omp parallel sections num_threads(2)
+    {
+        #pragma omp section
+        {
+            mergesortTransitionsParallel(transitions, lo, mid, sortLeft);
+        }
+        #pragma omp section
+        {
+            mergesortTransitionsParallel(transitions, mid+1, hi, sortLeft);
+        }
+    }
+
+    mergeTransitionsParallel(transitions, lo, mid, mid+1, hi, sortLeft);
 }
 
-void mergeTransitions(TransitionContainer* transitions, int leftLo, int leftHi, int rightLo, int rightHi, bool sortLeft)
+void mergeTransitionsParallel(TransitionContainer* transitions, int leftLo, int leftHi, int rightLo, int rightHi, bool sortLeft)
 {   
     TransitionContainer leftArr;
     TransitionContainer rightArr;
@@ -60,7 +80,7 @@ void mergeTransitions(TransitionContainer* transitions, int leftLo, int leftHi, 
     int secondArrPointer = 0;
     index = leftLo;
     
-    while (firstArrPointer <= leftHi - leftLo && secondArrPointer <= rightHi - rightLo && index <= rightHi)
+    while (firstArrPointer <= leftHi && secondArrPointer <= rightHi - rightLo && index <= rightHi)
     {   
         int comparison;
         if (sortLeft) comparison = leftArr.set[firstArrPointer].s1 - rightArr.set[secondArrPointer].s1;
@@ -71,7 +91,7 @@ void mergeTransitions(TransitionContainer* transitions, int leftLo, int leftHi, 
         if (comparison <= 0) transitions->set[index++] = leftArr.set[firstArrPointer++];
         else transitions->set[index++] = rightArr.set[secondArrPointer++];
     }
-    while (firstArrPointer <= leftHi - leftLo && index <= rightHi)
+    while (firstArrPointer <= leftHi && index <= rightHi)
     {
         transitions->set[index++] = leftArr.set[firstArrPointer++]; 
     }
@@ -86,38 +106,57 @@ void mergeTransitions(TransitionContainer* transitions, int leftLo, int leftHi, 
 
 /* SORT STATES */
 
-void sortAllLeftStates(ODD *odd)
+void sortAllLeftStatesParallel(ODD *odd)
 {
-    for (int i = 0; i < odd->nLayers; i++)
+    # pragma omp parallel
     {
-        sortStates(&(odd->layerSequence[i].leftStates));
+        # pragma omp for
+        for (int i = 0; i < odd->nLayers; i++)
+        {
+            sortStatesParallel(&(odd->layerSequence[i].leftStates));
+        }
     }  
 }
 
-void sortAllRightStates(ODD *odd)
+void sortAllRightStatesParallel(ODD *odd)
 {
-    for (int i = 0; i < odd->nLayers; i++)
+    # pragma omp parallel
     {
-        sortStates(&(odd->layerSequence[i].rightStates));
+        # pragma omp for
+        for (int i = 0; i < odd->nLayers; i++)
+        {
+            sortStatesParallel(&(odd->layerSequence[i].rightStates));
+        }
     }  
 }
 
-void sortStates(StateContainer *states)
+void sortStatesParallel(StateContainer *states)
 {
-    mergesortStates(states, 0, states->nStates - 1);
+    #pragma omp single
+    mergesortStatesParallel(states, 0, states->nStates - 1);
 }
 
-void mergesortStates(StateContainer *states, int lo, int hi)
+void mergesortStatesParallel(StateContainer *states, int lo, int hi)
 {
     if (lo >= hi) return;
     int mid =(lo + (hi-lo)/2); 
-    mergesortStates(states, lo, mid);
-    mergesortStates(states, mid+1, hi);
-    
-    mergeStates(states, lo, mid, mid+1, hi);
+    #pragma omp parallel sections num_threads(2)
+    {
+        #pragma omp section
+        { 
+        mergesortStatesParallel(states, lo, mid);
+        }
+
+        #pragma omp section
+        {
+        mergesortStatesParallel(states, mid+1, hi);
+        }
+    }
+
+    mergeStatesParallel(states, lo, mid, mid+1, hi);
 }
 
-void mergeStates(StateContainer* states, int leftLo, int leftHi, int rightLo, int rightHi)
+void mergeStatesParallel(StateContainer* states, int leftLo, int leftHi, int rightLo, int rightHi)
 {   
     StateContainer* leftArr;
     StateContainer* rightArr;
