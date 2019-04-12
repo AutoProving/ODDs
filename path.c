@@ -1,3 +1,6 @@
+// Copyright 2019 Ole Magnus Lie
+// This file is licensed under MIT License, as specified in the file LISENSE located at the root folder of this repository.
+
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
