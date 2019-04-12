@@ -213,4 +213,8 @@ ODD *memorizeODD(ODD *odd);
 
 ODD *minimizeODD(ODD *odd);
 
+//path functions (Functions implemented in file path.c)
+NumSymbol *getPath(ODD *odd);
+bool isTherePath(ODD *odd);
+
 #endif
