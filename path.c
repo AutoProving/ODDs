@@ -32,3 +32,33 @@ NumSymbol *getPath(ODD *odd)
 
     return path;
 }
+
+bool isTherePath(ODD *odd)
+{
+    int numLayers = odd->nLayers - 1;
+    Layer finalLayer = odd->layerSequence[numLayers];
+    int lastState, numPathSymbols;
+
+    for (int finalstate = 0; finalstate < finalLayer.finalStates.nStates; finalstate++)
+    {
+        lastState = finalLayer.finalStates.set[finalstate];
+        numPathSymbols = 0;
+
+        for (int i = numLayers; i >= 0; i--)
+        {
+            Layer previousLayer = odd->layerSequence[i];
+            int numTransitions = previousLayer.transitions.nTransitions;
+            for (int j = 0; j < numTransitions; j++)
+            {
+                if (previousLayer.transitions.set[j].s2 == lastState)
+                {
+                    lastState = previousLayer.transitions.set[j].s1;
+                    numPathSymbols += 1;
+                    break;
+                }
+            }
+        }
+    }
+
+    return numPathSymbols == odd->nLayers;
+}
