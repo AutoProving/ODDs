@@ -83,7 +83,7 @@ void cleanTransitionsRight(Layer* l) {
 	int curTransition = 0;
 	int usefulTransitions = 0;
 
-	for (int i = rightStates->nStates - 1; i >= 0; i--) {
+	for (int i = 0; i < rightStates->nStates; i--) {
 
 		while (transitions->set[curTransition].s2 <= rightStates->set[i] && curTransition < transitions->nTransitions) {
 			if (transitions->set[curTransition].s2 == rightStates->set[i]) {
@@ -153,7 +153,7 @@ void cleanLeft(Layer* l) {
 		while (l->transitions.set[transitionIndex].s2 <= usefulRight->set[i] && transitionIndex < l->transitions.nTransitions) {
 			if (l->transitions.set[transitionIndex].s2 == usefulRight->set[i]) {
 				// If useful, change value in aux state from -1
-				State* s = &l->transitions.set[transitionIndex].s2;
+				State* s = &l->transitions.set[transitionIndex].s1;
 				int index = findIndexState(usefulLeft, *s);
 				auxStates.set[findIndexState(usefulLeft, *s)] = *s;
 			}
@@ -244,12 +244,14 @@ void minimize(ODD* o, ODD* result) {
     }
 	void sortAllRightTransitions(ODD* o);
     	fprintf(stderr, "BEGIN RtL:\n\n");
+        sortAllRightTransitions(o);
 	for (int i = numLayers - 1; i >= 0; i--){
-		cleanTransitionsRight(&(o->layerSequence[i]));
 		cleanLeft(&(o->layerSequence[i]));
+		cleanTransitionsRight(&(o->layerSequence[i]));
 
 		if (i > 0) {
 			copyStates(&(o->layerSequence[i].leftStates), &(o->layerSequence[i-1].rightStates));
 		}
 	}
+    sortAllLeftTransitions(o);
 }
