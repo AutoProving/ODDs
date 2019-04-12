@@ -22,22 +22,15 @@ void livingFinalState(Layer * layer, StateContainer * livingFinalStates);
 
 bool checkTypeLeft(Layer layer,State state_j,State state_k);
 
-bool checkTypeRight(Layer layer,State state_j,State state_k);
-
 bool isFinalState(Layer layer, State state);
 
 void minimizeLayer(Layer layer);
 
 void minimizeFinalLayer(Layer layer);
 
-void collapseRight(Layer layer, State state_i, State state_j);
-
 void collapseLeft(Layer layer, State state_i, State state_j);
 
 Transition * findTransitionLeft(TransitionContainer transitions, State state);
-
-Transition * findTransitionRight(TransitionContainer transitions, State state);
-
 
 int main(int argc,char **argv){
     ODD odd;
@@ -53,7 +46,6 @@ int main(int argc,char **argv){
     return 0; 
 }
 
-
 ODD * collapseODD(ODD * odd){
     fprintf(stderr,"start collapsing ODD \n");
     //printf("start collapsing ODD");
@@ -65,7 +57,7 @@ ODD * collapseODD(ODD * odd){
     void sortAllLeftTransitions(ODD* odd);
     minimizeFinalLayer(odd->layerSequence[numLayers-1]);
     fprintf(stderr,"#final states in layer %d \n", odd->layerSequence[numLayers-1].finalStates.nStates);
-    //showLayer(&(odd->layerSequence[numLayers-1]));
+    showLayer(&(odd->layerSequence[numLayers-1]));
     fprintf(stderr,"Minimzed final layer \n");
     //sort after the left states 
     
@@ -126,8 +118,6 @@ ODD * collapseODD(ODD * odd){
             l.leftStates.nStates : l.rightStates.nStates;
         printf("width of layer[%d] of %d: %d \n", i,numLayers,l.width);
         //coopy the other attributes from the old ODD
-     //   TransitionContainer test_container;
-    //test_container.set = (Transition *) malloc(10 * sizeof(Transition));
         l.map.N2S = malloc(sizeof(char*) * odd->layerSequence[i].map.sizeAlphabet); 
         l.map.S2N = malloc(sizeof(int) * odd->layerSequence[i].map.sizeAlphabet); 
 
@@ -138,6 +128,7 @@ ODD * collapseODD(ODD * odd){
         l.finalFlag = odd->layerSequence[i].finalFlag;
         l.initialStates.nStates = odd->layerSequence[i].initialStates.nStates;
 
+        
         l.finalStates=odd->layerSequence[i].finalStates;
         fprintf(stderr,"#final states in layer %d \n", odd->layerSequence[i].finalStates.nStates);
        //add the new layer to the new odd
@@ -156,7 +147,8 @@ ODD * collapseODD(ODD * odd){
     fprintf(stderr,"This is the minimized ODD \n");
     
     //showODD(&odd);
-    return odd;
+    //free(&odd);
+    return o;
 
 }
 
@@ -164,8 +156,7 @@ void minimizeLayer(Layer layer){
     //we minimize the left states and then return the new layer l  
     //we start with rightmost layer 
     //deletes unnecessary states and reroutes transitions
-    //#pragma omp parallel for
-  //  fprintf(stderr,"Number of left states %d \n",layer.leftStates.nStates);
+    //fprintf(stderr,"Number of left states %d \n",layer.leftStates.nStates);
     for(int j = 0; j < layer.leftStates.nStates;j++){  //assume states are sorted   
         State state_j = layer.leftStates.set[j];
         if (state_j >= 0){
@@ -184,8 +175,6 @@ void minimizeLayer(Layer layer){
             } 
         }
     }
-    //this layer has just the left states and the transitions altered
-    //return layer;
 }
 
 void minimizeFinalLayer(Layer layer){
@@ -230,26 +219,24 @@ void minimizeFinalLayer(Layer layer){
     }
     //The final living states are not entirely correct  
     layer.finalStates.nStates = 0; 
-        fprintf(stderr,"xxxxxxxxxxxxxoooooooooooooooxxxxxxxxxxxxxxxxxxxxxxxx\n");
     if (fin_key_i){
         layer.finalStates.set[0] = state_i;
         layer.finalStates.nStates = 1; 
-        fprintf(stderr,"xxxxxxxxxxxxxxxxxxxxxxxx\n");
     }
     if (fin_key_j){
         layer.finalStates.set[0] = state_j;
         layer.finalStates.nStates = 1; 
-        fprintf(stderr,"oooooooooooooooxxxxxxxxxxxxxxxxxxxxxxxx\n");
-        }
     }
+    fprintf(stderr,"#final states %d \n", layer.finalStates.nStates);
+    showLayer(&layer);
+}
+    
 
 bool checkTypeLeft(Layer layer,State state_j,State state_k){
     //j < k is implied if states are sorted
     Transition * trans_j = findTransitionLeft(layer.transitions,state_j);
     Transition * trans_k = findTransitionLeft(layer.transitions,state_k);
     int i = 0;
-    
-   // fprintf(stderr,"Entered checkTypeLeft with start_j %d, start_k %d \n",start_j,start_k);
 
     //while left state stays the same = ntrans for a state
     while ((trans_j+i)->s1 == (trans_j+i+1)->s1)
@@ -260,40 +247,13 @@ bool checkTypeLeft(Layer layer,State state_j,State state_k){
         NumSymbol key_k = (trans_k+i)->a;
         State state_right_k = (trans_k+i)->s2;
      
-        //fprintf(stderr,"start_j: %d , start_k: %d, i: %d",start_j,start_k,i);
-        //fprintf(stderr,"key_j %d, state_r_j %d, key_k %d, state_r_k %d \n",
-        //        key_j,state_right_j,key_k,state_right_k);  
-        //if at least of the pairs of key and right state is not equal 
-        //then do not collapse
+       //then do not collapse
         if(key_j != key_k || state_right_j != state_right_k){
             return 0; //not collapse
         }
         i++;                
     }
     return 1; //collapse
-}
-
-bool checkTypeRight(Layer layer,State state_j,State state_k){
-    //j < k is implied if states are sorted
-//    Transition * trans_j = findTransitionRight(layer.transitions,state_j);
- //   Transition * trans_k = findTransitionRight(layer.transitions,state_k);
-  //  fprintf(stderr,  "state_j %d, state_k %d \n", state_j,state_k);
-  //  fprintf(stderr, "trans_j %d %d %d \n", trans_j->s1, trans_j->a, trans_j->s2);
-  //  fprintf(stderr, "trans_k %d %d %d \n", trans_k->s1, trans_k->a, trans_k->s2);
-  //  fprintf(stderr, "#final states %d, final states %d \n",layer.finalStates.nStates , 
-  //          layer.finalStates.set[0]);
-    //showLayer(&layer);
-
-    //collapse if alle right states and keys isPartOfFinalStates() are identical
-    bool fin_key_j = isFinalState(layer,state_j);
-    bool fin_key_k = isFinalState(layer,state_k);
-    //then do not collapse
-    //if(key_j != key_k || state_right_j != state_right_k || fin_key_k != fin_key_j){
-    if(fin_key_k == fin_key_j){
-        return 1; //collapse
-    }
-    fprintf(stderr,"Will collapse set of Final states\n");
-    return 0;
 }
 
 bool isFinalState(Layer layer, State state){
@@ -348,36 +308,9 @@ void collapseLeft(Layer layer, State state_i, State state_j){
     }
        
 }
-void collapseRight(Layer layer, State state_i, State state_j){
-    //sets the deleted state to -1 and deletes the transitions to the lower state
-    if(state_i > state_j){ //to ensure that state_i < state_j 
-        State tmp =  state_i;
-        state_i = state_j;
-        state_j = tmp;
-        }
-    //delete state j and say where it get rerouted to save it as negative-1 to account for state 0 
-    layer.rightStates.set[state_j] = -(state_i+1); 
-    //collapse all transitions that start in state_j to the state_i
-    //both have the same number of Transitions so we could also take state_j
-    //we set the transition of the to be deleted state to -1
-    int i = 0;
-    Transition * trans_j = findTransitionRight(layer.transitions,state_j);
-    //buffer the left state that is to be overwritten
-    int buff = trans_j->s2;
-    int buff_incr = (trans_j+i)->s2;
-    while(buff == buff_incr)
-    {
-        buff_incr = (trans_j+i)->s2;
-        //maybe we do not have to collapse transitions ? 
-        //(trans_j+i)->s1 = -1;
-        i++;
-    }     
-    
-}
 
 //returns the first transition of a state 
 Transition * findTransitionLeft(TransitionContainer transitions, State state){
-    //Transition * findTransitionLeft(TransitionContainer transitions, State state){
     //finds the index of first occurence of a state in the sorted transitions list
     int left = -1;
     int right = transitions.nTransitions;
@@ -393,33 +326,6 @@ Transition * findTransitionLeft(TransitionContainer transitions, State state){
         }
     }
     if (right < transitions.nTransitions && transitions.set[right].s1 == state){
-        return &(transitions.set[right]);
-    }
-    else{
-        printf("state is not part of transition list \n");
-        return &(transitions.set[right]);
-    }
-
-}
-
-//returns the first transition of a state 
-Transition * findTransitionRight(TransitionContainer transitions, State state){
-    //Transition * findTransitionLeft(TransitionContainer transitions, State state){
-    //finds the index of first occurence of a state in the sorted transitions list  
-    int left = -1;
-    int right = transitions.nTransitions;
-
-    while (right > left +1){
-        int middle = (left+right)/2;
-        //cout << "middle" << middle << endl;
-        if (transitions.set[middle].s2 >= state){
-            right = middle;
-        }
-        else{
-            left = middle;
-        }
-    }
-    if (right < transitions.nTransitions && transitions.set[right].s2 == state){
         return &(transitions.set[right]);
     }
     else{
@@ -486,27 +392,3 @@ void livingTransition(Layer * layer, TransitionContainer * livingTransition){
     }
 }
 
-/*
-void livingFinalState(Layer * layer, StateContainer * livingFinalStates){ 
-    fprintf(stderr,"Entered final living states \n");
-    int count = 0; 
-    for(int i = 0; i < layer->finalStates.nStates;i++){
-        if(layer->finalStates.set[i] >= 0){
-            count ++;
-        }
-    }   
-    livingFinalStates->nStates = count;
-    fprintf(stderr,"#Living final states: %d \n",livingFinalStates->nStates);
-    livingFinalStates->set = malloc(sizeof(State) * livingFinalStates->nStates);
-    count = 0; 
-    fprintf(stderr,"memory for final living allocated");
-    for(int i = 0; i < layer->finalStates.nStates;i++){
-        if(layer->finalStates.set[i] >= 0){ 
-            livingFinalStates->set[count] = -(layer->rightStates.set[i]+1);
-            count ++;
-        }
-    }
-
-}
-
-*/
