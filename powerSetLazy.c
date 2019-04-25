@@ -11,9 +11,9 @@ typedef struct LinkedList
     struct LinkedList *next;
 } LinkedList;
 
-Layer *lazy_power(Layer *l, LinkedList *map, int w, int h, LinkedList *right_map, int *asz);
+Layer *lazy_power(Layer *l, LinkedList *map, int w, int h, LinkedList **right_map, int *asz);
 LinkedList *create_next_list(Layer *l, LinkedList *map, int w, int h, int *A_sz);
-void createList(ODD* odd, LinkedList* last);
+void createInitialList(ODD* odd, LinkedList* last);
 State number(int *next, LinkedList *A, Layer *l, int a_sz);
 
 ODD *lazy_power_ODD(ODD *odd)
@@ -25,16 +25,16 @@ ODD *lazy_power_ODD(ODD *odd)
     // Creating the initial left_map
     struct LinkedList *left_map = (struct LinkedList *)malloc(sizeof(struct LinkedList));
     struct LinkedList *last = left_map;
-    
-    createList(odd, last);
 
-    int h = pow(2, odd->layerSequence[0].initialStates.nStates) - 1;
-    result->layerSequence = malloc(odd->nLayers);
+    createInitialList(odd, last);
+
+    int h = 1;
+    result->layerSequence = calloc(odd->nLayers, sizeof(Layer));
     result->nLayers = odd->nLayers;
     for (int i = 0; i < odd->nLayers; i++)
     {
         int asz = 0;
-        result->layerSequence[i] = *lazy_power(&odd->layerSequence[i], left_map, oddwidth, h, right_map, &asz);
+        result->layerSequence[i] = *lazy_power(&odd->layerSequence[i], left_map, oddwidth, h, &right_map, &asz);
         left_map = right_map;
         h = asz;
     }
@@ -52,36 +52,46 @@ ODD *lazy_power_ODD(ODD *odd)
     return result;
 }
 
-void createList(ODD* odd, LinkedList* last) 
+void createInitialList(ODD* odd, LinkedList* last) 
 {
     int oddwidth = odd->width;
 
-    int *sinit = calloc(odd->layerSequence[0].initialStates.nStates, sizeof(int));
-    sinit[0] = 1;
-    for (int i = 1; i < pow(2, odd->layerSequence[0].initialStates.nStates); i++)
-    {
-        if (i != 1)
-        {
-            struct LinkedList *l = (struct LinkedList *)malloc(sizeof(struct LinkedList));
-            last->next = l;
-            last = l;
-        }
+    int *sinit = calloc(odd->width, sizeof(int));
+    // sinit[0] = 1;
+    // for (int i = 1; i < pow(2, odd->layerSequence[0].initialStates.nStates); i++)
+    // {
+    //     if (i != 1)
+    //     {
+    //         struct LinkedList *l = (struct LinkedList *)malloc(sizeof(struct LinkedList));
+    //         last->next = l;
+    //         last = l;
+    //     }
 
-        last->data = calloc(oddwidth, sizeof(int));
-        for(int j = 0; j < odd->layerSequence[0].initialStates.nStates; j++)
-        {
-            if (sinit[j]) {
-                last->data[odd->layerSequence[0].initialStates.set[j]] = 1;
-            }
-        }
+    //     last->data = calloc(oddwidth, sizeof(int));
+    //     for(int j = 0; j < odd->layerSequence[0].initialStates.nStates; j++)
+    //     {
+    //         if (sinit[j]) {
+    //             last->data[odd->layerSequence[0].initialStates.set[j]] = 1;
+    //         }
+    //     }
         
-        last->order = orderSetWidth(last->data, oddwidth);
-        last->next = NULL;
-        bitshift(sinit, odd->layerSequence[0].initialStates.nStates);
+    //     last->order = orderSetWidth(last->data, oddwidth);
+    //     last->next = NULL;
+    //     bitshift(sinit, odd->layerSequence[0].initialStates.nStates);
+    // }
+
+    last->data = calloc(odd->width, sizeof(int));
+    for(int i = 0; i < odd->layerSequence[0].initialStates.nStates; i++)
+    {
+        last->data[odd->layerSequence[0].initialStates.set[i]] = 1;
     }
+
+    last->order = orderSetWidth(last->data, odd->width);
+    last->next = NULL;
+
 }
 
-Layer *lazy_power(Layer *l, LinkedList *map, int w, int h, LinkedList *right_map, int *asz)
+Layer *lazy_power(Layer *l, LinkedList *map, int w, int h, LinkedList **right_map, int *asz)
 {
     int A_sz = 0;
     LinkedList *A = create_next_list(l, map, w, h, &A_sz);
@@ -95,8 +105,8 @@ Layer *lazy_power(Layer *l, LinkedList *map, int w, int h, LinkedList *right_map
     // TODO
     if (result->initialFlag)
     {
-        result->initialStates.nStates = l->initialStates.nStates;
-        result->initialStates.set = l->initialStates.set;
+        result->initialStates.nStates = h;
+        result->initialStates.set = malloc(h * sizeof(int));
     }
     else
     {
@@ -118,6 +128,10 @@ Layer *lazy_power(Layer *l, LinkedList *map, int w, int h, LinkedList *right_map
     for (int i = 0; i < h; i++)
     {
         result->leftStates.set[i] = i;
+        if (result->initialFlag) {
+            result->initialStates.set[i] = i;
+        }
+        
     }
 
     result->rightStates.set = malloc(A_sz * sizeof(int));
@@ -142,7 +156,7 @@ Layer *lazy_power(Layer *l, LinkedList *map, int w, int h, LinkedList *right_map
     }
 
     result->width = fmax(result->leftStates.nStates, result->rightStates.nStates);
-    right_map = A;
+    *right_map = A;
     *asz = A_sz;
     return result;
 }
