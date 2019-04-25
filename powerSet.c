@@ -156,7 +156,7 @@ Layer *powerSetLayer(Layer *layer)
     return result;
 }
 
-// maps subsets of integers to numbers. S has layer.width positions. S[i]=1 indicates that i belongs to S
+// maps subsets of integers to numbers. S has layer.oddwidth positions. S[i]=1 indicates that i belongs to S
 int orderSet(int *S, Layer *layer)
 {
     return orderSetWidth(S, layer->width);
@@ -211,39 +211,46 @@ State number(int *next, LinkedList *A, Layer *l, int a_sz)
     return -1;
 }
 
-// ODD *lazy_power_ODD()
-
 ODD *lazy_power_ODD(ODD *odd)
 {
     ODD *result = (ODD *)malloc(sizeof(ODD));
-    int width = odd->width;
+    int oddwidth = odd->width;
     struct LinkedList *right_map = NULL;
 
     // Creating the initial left_map
     struct LinkedList *left_map = (struct LinkedList *)malloc(sizeof(struct LinkedList));
     struct LinkedList *last = left_map;
-    for (int i = 0; i < odd->layerSequence[0].initialStates.nStates; i++)
+    int *sinit = calloc(odd->layerSequence[0].initialStates.nStates, sizeof(int));
+    sinit[0] = 1;
+    for (int i = 1; i < pow(2, odd->layerSequence[0].initialStates.nStates); i++)
     {
-        
-        if (i != 0)
+        if (i != 1)
         {
             struct LinkedList *l = (struct LinkedList *)malloc(sizeof(struct LinkedList));
             last->next = l;
             last = l;
         }
-        last->data = calloc(odd->width, sizeof(int));
-        last->data[findStateIndex(&odd->layerSequence[0], odd->layerSequence[0].initialStates.set[i], i)] = 1;
-        last->order = orderSetWidth(last->data, width);
+
+        last->data = calloc(oddwidth, sizeof(int));
+        for(int j = 0; j < odd->layerSequence[0].initialStates.nStates; j++)
+        {
+            if (sinit[j]) {
+                last->data[odd->layerSequence[0].initialStates.set[j]] = 1;
+            }
+        }
+        
+        last->order = orderSetWidth(last->data, oddwidth);
         last->next = NULL;
+        bitshift(sinit, odd->layerSequence[0].initialStates.nStates);
     }
 
-    int h = odd->layerSequence[0].initialStates.nStates;
+    int h = pow(2, odd->layerSequence[0].initialStates.nStates) - 1;
     result->layerSequence = malloc(odd->nLayers);
     result->nLayers = odd->nLayers;
     for (int i = 0; i < odd->nLayers; i++)
     {
         int asz = 0;
-        result->layerSequence[i] = *lazy_power(&odd->layerSequence[i], left_map, odd->width, h, right_map, &asz);
+        result->layerSequence[i] = *lazy_power(&odd->layerSequence[i], left_map, oddwidth, h, right_map, &asz);
         left_map = right_map;
         h = asz;
     }
@@ -502,7 +509,7 @@ void testPowerSetODD(ODD odd, ODD powerODD)
 {
     printf("\n------------------------ Result of PowerSetODD ---------------------------\n");
     printf("--------------------------------------------------------------------------\n");
-    printf("Original ODD has width: %d and powerODD has width: %d\n", odd.width, powerODD.width);
+    printf("Original ODD has oddwidth: %d and powerODD has oddwidth: %d\n", odd.width, powerODD.width);
     printf("Original ODD has %d layers and powerODD has %d layers\n", odd.nLayers, powerODD.nLayers);
 
     for (int i = 0; i < powerODD.nLayers; i++)
