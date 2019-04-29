@@ -4,13 +4,14 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
+#include <omp.h>
 // Copyright 2019 Nora Hobæk Hovland
 // This file is licensed under MIT License, as specified in the file LISENSE located at the root folder of this repository.
 
 //Union (Functions implemented in file union.c)
 
 
-StateContainer* unionStates(StateContainer* state1, StateContainer* state2){
+StateContainer* unionStatesParallell(StateContainer* state1, StateContainer* state2){
     
     int width=state2->set[state2->nStates-1]+1;
     StateContainer* result=malloc(sizeof(StateContainer));
@@ -29,7 +30,7 @@ StateContainer* unionStates(StateContainer* state1, StateContainer* state2){
 }
 
 
-int countTrans(Layer* layer1, Layer* layer2){
+int countTransParallell(Layer* layer1, Layer* layer2){
     int count=0;
     for(int i=0; i<layer1->transitions.nTransitions; i++){
         for(int j=0; j<layer2->transitions.nTransitions; j++){
@@ -41,13 +42,13 @@ int countTrans(Layer* layer1, Layer* layer2){
     return count;
 }
 
-Layer* unionTransitions(Layer* layer1, Layer* layer2){
+Layer* unionTransitionsParallell(Layer* layer1, Layer* layer2){
     TransitionContainer* transStates1=&(layer1->transitions);
     TransitionContainer* transStates2=&(layer2->transitions);
     int width1=layer2->leftStates.set[layer2->leftStates.nStates-1]+1;
     int width2=layer2->rightStates.set[layer2->rightStates.nStates-1]+1;
     
-    int transCount=countTrans(layer1, layer2);
+    int transCount=countTransParallell(layer1, layer2);
     Layer* result=malloc(sizeof(Layer));   
     result->transitions.set=malloc(sizeof(Transition)*transCount);
     result->transitions.nTransitions=transCount;
@@ -71,20 +72,20 @@ Layer* unionTransitions(Layer* layer1, Layer* layer2){
 
 
 
-Layer* unionLayers(Layer* layer1, Layer* layer2){
+Layer* unionLayersParallell(Layer* layer1, Layer* layer2){
     Layer* result=malloc(sizeof(Layer));
 
     //left states
     StateContainer* leftStates1=&(layer1->leftStates);   
     StateContainer* leftStates2=&(layer2->leftStates);    
-    StateContainer* leftresult=unionStates(leftStates1,leftStates2);
+    StateContainer* leftresult=unionStatesParallell(leftStates1,leftStates2);
     result->leftStates=*leftresult;
     free(leftresult);
 
     //right states
     StateContainer* rightStates1=&(layer1->rightStates);
     StateContainer* rightStates2=&(layer2->rightStates);
-    StateContainer* rightresult=unionStates(rightStates1,rightStates2);
+    StateContainer* rightresult=unionStatesParallell(rightStates1,rightStates2);
     result->rightStates=*rightresult;
     free(rightresult);
    
@@ -138,7 +139,7 @@ Layer* unionLayers(Layer* layer1, Layer* layer2){
     }
 
     //transitions
-    Layer* trans=unionTransitions(layer1, layer2);
+    Layer* trans=unionTransitionsParallell(layer1, layer2);
     result->transitions=trans->transitions;
     free(trans);
    
@@ -146,16 +147,18 @@ Layer* unionLayers(Layer* layer1, Layer* layer2){
 }
 
 
-ODD* unionODDs(ODD* odd1, ODD* odd2){
+ODD* unionODDsParallell(ODD* odd1, ODD* odd2){
     ODD* odd=malloc(sizeof(ODD));
     assert(odd1->nLayers==odd2->nLayers);
   
     odd->nLayers=odd1->nLayers;
     odd->layerSequence=malloc(sizeof(Layer)*odd->nLayers);
     odd->width=0;
+    #pragma omp parallell for
     for(int i=0;i<odd->nLayers;i++){
-        Layer* result=unionLayers(&odd1->layerSequence[i], &odd2->layerSequence[i]);
+        Layer* result=unionLayersParallell(&odd1->layerSequence[i], &odd2->layerSequence[i]);
         odd->layerSequence[i]=*result;
+        #pragma omp critical
         if(odd->width < result->width){
             odd->width=result->width;
         }
