@@ -21,7 +21,7 @@ Layer *lazy_power(Layer *l, LinkedList *map, int w, int h, LinkedList **right_ma
 LinkedList *create_next_list(Layer *l, LinkedList *map, int w, int h, int *A_sz);
 void createInitialList(ODD *odd, LinkedList *last);
 int compareTo(LinkedList *s1, LinkedList *s2);
-LinkedList *next(LinkedList *S, NumSymbol a, Layer *layer);
+LinkedList *nextLazy(LinkedList *S, NumSymbol a, Layer *layer);
 State number(LinkedList *next, LinkedList *A, Layer *l, int a_sz);
 
 ODD *lazy_power_ODD(ODD *odd)
@@ -139,7 +139,7 @@ Layer *lazy_power(Layer *l, LinkedList *map, int w, int h, LinkedList **right_ma
     {
         for (int ix = 0; ix < l->map.sizeAlphabet; ix++)
         {
-            State s2 = number(next(subset, l->map.S2N[ix], l), A, l, A_sz);
+            State s2 = number(nextLazy(subset, l->map.S2N[ix], l), A, l, A_sz);
             if (s2 != -1)
             {
                 result->transitions.set[result->transitions.nTransitions].s1 = k;
@@ -167,7 +167,7 @@ LinkedList *create_next_list(Layer *l, LinkedList *map, int w, int h, int *A_sz)
     {
         for (int alphi = 0; alphi < l->map.sizeAlphabet; alphi++)
         {
-            LinkedList *S = next(subset, l->map.S2N[alphi], l);
+            LinkedList *S = nextLazy(subset, l->map.S2N[alphi], l);
             S->next = NULL;
 
             if (S->size > 0 && asz == 0)
@@ -258,7 +258,7 @@ State number(LinkedList *next, LinkedList *A, Layer *l, int a_sz)
 //     return sum - 1;
 // }
 
-LinkedList *next(LinkedList *S, NumSymbol a, Layer *layer)
+LinkedList *nextLazy(LinkedList *S, NumSymbol a, Layer *layer)
 {
     LinkedList *linkedList = malloc(sizeof(LinkedList));
     linkedList->states = malloc(sizeof(StateList));

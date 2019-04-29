@@ -223,7 +223,7 @@ int orderSet(int* S, Layer* layer); // maps subsets of integers to numbers. S ha
 int* next(int* S, NumSymbol a, Layer* layer); // Returns the set obtained by reading symbol a from some state in set S.
 Layer* powerSetLayer (Layer* layer);
 ODD* powerSetODD(ODD* odd);
-
+ODD *lazy_power_ODD(ODD *odd);
 //Completion (Functions implemented in file completion.c)
 
 

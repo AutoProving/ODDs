@@ -152,7 +152,7 @@ int orderSet(int *S, Layer *layer)
     return orderSetWidth(S, layer->width);
 }
 
-int orderSetWidth(int *S, int width) 
+int orderSetWidth(int *S, int width)
 {
     int sum = 0;
     for (int i = 0; i < width; i++)
