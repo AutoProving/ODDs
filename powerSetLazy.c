@@ -66,6 +66,7 @@ void createInitialList(ODD *odd, LinkedList *last)
 
     last->states = malloc(sizeof(StateList));
     StateList *temp = last->states;
+    int sz = 0;
 
     for (int i = 0; i < odd->layerSequence[0].initialStates.nStates; i++)
     {
@@ -76,8 +77,9 @@ void createInitialList(ODD *odd, LinkedList *last)
         }
 
         temp->st = odd->layerSequence[0].initialStates.set[i];
+        sz++;
     }
-    last->size = 1;
+    last->size = sz;
     last->next = NULL;
 }
 
@@ -137,10 +139,14 @@ Layer *lazy_power(Layer *l, LinkedList *map, int w, int h, LinkedList **right_ma
     {
         for (int ix = 0; ix < l->map.sizeAlphabet; ix++)
         {
-            result->transitions.set[result->transitions.nTransitions].s1 = k;
-            result->transitions.set[result->transitions.nTransitions].a = l->map.S2N[ix];
-            result->transitions.set[result->transitions.nTransitions].s2 = number(next(subset, l->map.S2N[ix], l), A, l, A_sz);
-            result->transitions.nTransitions++;
+            State s2 = number(next(subset, l->map.S2N[ix], l), A, l, A_sz);
+            if (s2 != -1)
+            {
+                result->transitions.set[result->transitions.nTransitions].s1 = k;
+                result->transitions.set[result->transitions.nTransitions].a = l->map.S2N[ix];
+                result->transitions.set[result->transitions.nTransitions].s2 = s2;
+                result->transitions.nTransitions++;
+            }
         }
         subset = subset->next;
     }
@@ -163,22 +169,24 @@ LinkedList *create_next_list(Layer *l, LinkedList *map, int w, int h, int *A_sz)
         {
             LinkedList *S = next(subset, l->map.S2N[alphi], l);
             S->next = NULL;
-            LinkedList *it = A;
-            if (asz == 0)
+
+            if (S->size > 0 && asz == 0)
             {
                 A = S;
                 asz++;
             }
-            else
+            else if (S->size > 0)
             {
-                it = A;
+                LinkedList *it = A;
                 // Find correct position and add it to the linkedlist
-                if (compareTo(it, S) == -1)
+                int compared = compareTo(it, S);
+                if (compared == -1)
                 {
                     A = S;
                     A->next = it;
+                    asz++;
                 }
-                else
+                else if (compared != 0)
                 {
                     int compared = compareTo(it->next, S);
                     while (it != NULL && compared != 0)
@@ -189,10 +197,14 @@ LinkedList *create_next_list(Layer *l, LinkedList *map, int w, int h, int *A_sz)
                             it->next = S;
                             it->next->next = NULL;
                             asz++;
-                            break;
+                            it = NULL;
+                        }
+                        else
+                        {
+
+                            it = it->next;
                         }
 
-                        it = it->next;
                         if (it != NULL)
                         {
                             compared = compareTo(it->next, S);
@@ -212,6 +224,11 @@ LinkedList *create_next_list(Layer *l, LinkedList *map, int w, int h, int *A_sz)
 State number(LinkedList *next, LinkedList *A, Layer *l, int a_sz)
 {
     LinkedList *B = A;
+    if (next->size == 0)
+    {
+        return -1;
+    }
+
     for (int i = 0; i < a_sz && B != NULL; i++)
     {
         if (compareTo(next, B) == 0)
@@ -259,7 +276,8 @@ LinkedList *next(LinkedList *S, NumSymbol a, Layer *layer)
             {
                 // Insert in order without duplicates
                 StateList *souttemp = sout;
-                while (souttemp != NULL)
+                bool inserted = false;
+                while (souttemp != NULL && !inserted)
                 {
                     if (sz == 0)
                     {
@@ -267,13 +285,31 @@ LinkedList *next(LinkedList *S, NumSymbol a, Layer *layer)
                         sz++;
                         souttemp->next = NULL;
                     }
-                    else if (souttemp->next == NULL || souttemp->next->st > layer->transitions.set[j].s2)
+                    else
                     {
-                        StateList *statelistTemp = malloc(sizeof(StateList));
-                        statelistTemp->st = layer->transitions.set[j].s2;
-                        statelistTemp->next = souttemp->next;
-                        souttemp->next = statelistTemp;
-                        sz++;
+                        if (souttemp->st == layer->transitions.set[j].s2)
+                        {
+                            inserted = true;
+                        }
+                        else if (souttemp == sout && souttemp->st > layer->transitions.set[j].s2)
+                        {
+                            StateList *statelistTemp = malloc(sizeof(StateList));
+                            statelistTemp->st = layer->transitions.set[j].s2;
+                            statelistTemp->next = sout;
+                            linkedList->states = statelistTemp;
+                            sout = statelistTemp;
+                            sz++;
+                            inserted = true;
+                        }
+                        else if (souttemp->next == NULL || souttemp->next->st > layer->transitions.set[j].s2)
+                        {
+                            StateList *statelistTemp = malloc(sizeof(StateList));
+                            statelistTemp->st = layer->transitions.set[j].s2;
+                            statelistTemp->next = souttemp->next;
+                            souttemp->next = statelistTemp;
+                            sz++;
+                            inserted = true;
+                        }
                     }
 
                     souttemp = souttemp->next;
