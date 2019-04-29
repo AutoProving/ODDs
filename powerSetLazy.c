@@ -94,7 +94,6 @@ Layer *lazy_power(Layer *l, LinkedList *map, int w, int h, LinkedList **right_ma
     result->initialFlag = l->initialFlag;
     result->finalFlag = l->finalFlag;
 
-    // TODO
     if (result->initialFlag)
     {
         result->initialStates.nStates = h;
@@ -105,7 +104,6 @@ Layer *lazy_power(Layer *l, LinkedList *map, int w, int h, LinkedList **right_ma
         result->initialStates.nStates = 0;
     }
 
-    // TODO
     if (result->finalFlag)
     {
         result->finalStates.nStates = l->finalStates.nStates;
@@ -242,22 +240,6 @@ State number(LinkedList *next, LinkedList *A, Layer *l, int a_sz)
     return -1;
 }
 
-// int orderSet(LinkedList *S, Layer *layer)
-// {
-//     return orderSetWidth(S->data, S->size);
-// }
-
-// int orderSetWidth(int *S, int width)
-// {
-//     int sum = 0;
-//     for (int i = 0; i < width; i++)
-//     {
-//         sum += pow(2, S[i]);
-//     }
-
-//     return sum - 1;
-// }
-
 LinkedList *nextLazy(LinkedList *S, NumSymbol a, Layer *layer)
 {
     LinkedList *linkedList = malloc(sizeof(LinkedList));
@@ -322,26 +304,6 @@ LinkedList *nextLazy(LinkedList *S, NumSymbol a, Layer *layer)
 
     return linkedList;
 }
-
-// bool isEqual(LinkedList *s1, LinkedList *s2)
-// {
-//     if (s1->size != s2->size)
-//     {
-//         return false;
-//     }
-//     StateList *t1 = s1->states;
-//     StateList *t2 = s2->states;
-//     for (int i = 0; i < s1->size; i++)
-//     {
-//         if (t1->st != t2->st)
-//         {
-//             return false;
-//         }
-//         t1 = t1->next;
-//         t2 = t2->next;
-//     }
-//     return true;
-// }
 
 int compareTo(LinkedList *s1, LinkedList *s2)
 {
