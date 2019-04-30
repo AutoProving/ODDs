@@ -6,18 +6,20 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
+#include <omp.h>
 
-Layer* intersectionLayers(Layer* layer1, Layer* layer2);
-ODD* intersectionODD(ODD* odd1, ODD* odd2);
 
-void intersectionTransitions(Layer* layer1, Layer* layer2, Layer* result);
-void intersectionStates(StateContainer* s1, StateContainer* s2, StateContainer* result);
+Layer* intersectionLayersParallel(Layer* layer1, Layer* layer2);
+ODD* intersectionODDParallel(ODD* odd1, ODD* odd2);
+
+void intersectionTransitionsParallel(Layer* layer1, Layer* layer2, Layer* result);
+void intersectionStatesParallel(StateContainer* s1, StateContainer* s2, StateContainer* result);
 
 /*
  * Adds the cartesian product of layer1 and layer2 stats to result state using:
  * (a,b) = a * (max(s2.set) + 1) + b
  */
-void intersectionStates(StateContainer* s1, StateContainer* s2, StateContainer* result) {
+void intersectionStatesParallel(StateContainer* s1, StateContainer* s2, StateContainer* result) {
     result->nStates = s1->nStates * s2->nStates;
     result->set = (State*) malloc(sizeof(State) * result->nStates);
 
@@ -33,7 +35,7 @@ void intersectionStates(StateContainer* s1, StateContainer* s2, StateContainer* 
  * Adds the transitions from layer1 and layer2 where l1.trans.a = l2.trans.a in result as
  * ((l1.s1, l2.s1), a, (l1.s2, l2.s2))
  */
-void intersectionTransitions(Layer* layer1, Layer* layer2, Layer* result) {
+void intersectionTransitionsParallel(Layer* layer1, Layer* layer2, Layer* result) {
     result->transitions.set = (Transition*) malloc(sizeof(Transition) * layer1->transitions.nTransitions * layer2->transitions.nTransitions);
 
     int index = 0;
@@ -41,14 +43,14 @@ void intersectionTransitions(Layer* layer1, Layer* layer2, Layer* result) {
         for(int i1 = 0; i1 < layer2->transitions.nTransitions; i1++) {
             if(layer1->transitions.set[i].a == layer2->transitions.set[i1].a) {
                 result->transitions.set[index].s1 = layer1->transitions.set[i].s1
-                        * (layer2->leftStates.set[layer2->leftStates.nStates-1] + 1)
-                        + layer2->transitions.set[i1].s1;
+                                                    * (layer2->leftStates.set[layer2->leftStates.nStates-1] + 1)
+                                                    + layer2->transitions.set[i1].s1;
 
                 result->transitions.set[index].a = layer1->transitions.set[i].a;
 
                 result->transitions.set[index++].s2 = layer1->transitions.set[i].s2
-                        * (layer2->rightStates.set[layer2->rightStates.nStates-1] + 1)
-                        + layer2->transitions.set[i1].s2;
+                                                    * (layer2->rightStates.set[layer2->rightStates.nStates-1] + 1)
+                                                    + layer2->transitions.set[i1].s2;
             }
         }
     }
@@ -56,13 +58,13 @@ void intersectionTransitions(Layer* layer1, Layer* layer2, Layer* result) {
     result->transitions.set = (Transition*) realloc(result->transitions.set, result->transitions.nTransitions * sizeof(Transition));
 }
 
-Layer* intersectionLayers(Layer* layer1, Layer* layer2) {
+Layer* intersectionLayersParallel(Layer* layer1, Layer* layer2) {
     Layer* result = malloc(sizeof(Layer));
-    intersectionStates(&layer1->leftStates, &layer2->leftStates, &result->leftStates);
-    intersectionStates(&layer1->rightStates, &layer2->rightStates, &result->rightStates);
-    intersectionStates(&layer1->initialStates, &layer2->initialStates, &result->initialStates);
-    intersectionStates(&layer1->finalStates, &layer2->finalStates, &result->finalStates);
-    intersectionTransitions(layer1, layer2, result);
+    intersectionStatesParallel(&layer1->leftStates, &layer2->leftStates, &result->leftStates);
+    intersectionStatesParallel(&layer1->rightStates, &layer2->rightStates, &result->rightStates);
+    intersectionStatesParallel(&layer1->initialStates, &layer2->initialStates, &result->initialStates);
+    intersectionStatesParallel(&layer1->finalStates, &layer2->finalStates, &result->finalStates);
+    intersectionTransitionsParallel(layer1, layer2, result);
 
     assert(layer1->initialFlag == layer2->initialFlag);
     assert(layer1->finalFlag == layer2->finalFlag);
@@ -73,17 +75,20 @@ Layer* intersectionLayers(Layer* layer1, Layer* layer2) {
     return result;
 }
 
-ODD* intersectionODD(ODD* odd1, ODD* odd2) {
+ODD* intersectionODDParallel(ODD* odd1, ODD* odd2) {
     assert(odd1->nLayers == odd2->nLayers);
     ODD* odd = malloc(sizeof(ODD));
     odd->nLayers = odd1->nLayers;
     odd->width = 0;
     odd->layerSequence = (Layer*) malloc(sizeof(Layer) * odd->nLayers);
+    #pragma omp parallel for
     for(int i = 0; i < odd->nLayers; i++) {
         odd->layerSequence[i] = *intersectionLayers(&odd1->layerSequence[i], &odd2->layerSequence[i]);
-        if(odd->layerSequence[i].width > odd->width) {
-            odd->width = odd->layerSequence[i].width;
-        }
+    #pragma omp critical
+    if (odd->layerSequence[i].width > odd->width) {
+        odd->width = odd->layerSequence[i].width;
+    }
+
     }
     return odd;
 }
