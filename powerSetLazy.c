@@ -104,14 +104,29 @@ Layer *lazy_power(Layer *l, LinkedList *map, int w, int h, LinkedList **right_ma
         result->initialStates.nStates = 0;
     }
 
+    result->finalStates.nStates = 0;
     if (result->finalFlag)
     {
-        result->finalStates.nStates = l->finalStates.nStates;
-        result->finalStates.set = l->finalStates.set;
-    }
-    else
-    {
-        result->finalStates.nStates = 0;
+        result->finalStates.set = malloc(A_sz * sizeof(State));
+        LinkedList *temp = A;
+        for(int i = 0; i < A_sz; i++)
+        {
+            bool inserted = false;
+            StateList *tempState = A->states;
+            for(int j = 0; j < temp->size && !inserted; j++)
+            {
+                for(int fi = 0; fi < l->finalStates.nStates && !inserted; fi++)
+                {
+                    if (tempState->st == l->finalStates.set[fi]) {
+                        result->finalStates.set[result->finalStates.nStates] = i;
+                        result->finalStates.nStates++;
+                        inserted = true;
+                    }
+                }
+                tempState = tempState->next;
+            }
+            temp = temp->next;
+        }
     }
 
     result->leftStates.set = malloc(h * sizeof(int));
