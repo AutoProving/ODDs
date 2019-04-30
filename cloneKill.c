@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include "cloneKill.h"
 #include "odd.h"
-#include <string.h>
 
 ODD *cloneODD(ODD *original) {
 
@@ -39,7 +38,7 @@ Layer *cloneLayer(Layer *original) {
                     sizeof(char *)
             );
     for (int j = 0; j < clone->map.sizeAlphabet; ++j) {
-        clone->map.N2S[j] = strdup(original->map.N2S[j]);
+        clone->map.N2S[j] = original->map.N2S[j];
     }
 
     clone->map.S2N =
@@ -48,7 +47,7 @@ Layer *cloneLayer(Layer *original) {
                     sizeof(int)
             );
     for (int k = 0; k < clone->map.sizeAlphabet; ++k) {
-        clone->map.S2N[k] = original->map.S2N[k];
+        clone->map.N2S[k] = original->map.N2S[k];
     }
 
     // Layer leftStates
@@ -125,8 +124,5 @@ void killLayer(Layer *target) {
     free(target->initialStates.set);
     free(target->leftStates.set);
     free(target->map.S2N);
-    for (int i = 0; i < target->map.sizeAlphabet; ++i)
-        free(target->map.N2S[i]);
     free(target->map.N2S);
-
 }
