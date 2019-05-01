@@ -1,3 +1,6 @@
+// Copyright 2019 Markus Ragnhildstveit, Amund Lindberg, Ole Magnus Morken, Guillermo Hoyo Bravo and Josep Barbera Muñoz
+// This file is licensed under MIT License, as specified in the file LISENSE located at the root folder of this repository.
+
 #include <stdlib.h>
 #include <math.h>
 #include <stdbool.h>
@@ -17,37 +20,44 @@ typedef struct LinkedList
     struct LinkedList *next;
 } LinkedList;
 
-Layer *lazy_power(Layer *l, LinkedList *map, int w, int h, LinkedList **right_map, int *asz);
+
+//TODO: comments
+//A_sz is the number of right states in a layer (?)
+
+Layer *lazy_power(Layer *l, LinkedList *map, int w, int h, LinkedList **right_map, int *A_sz);
 LinkedList *create_next_list(Layer *l, LinkedList *map, int w, int h, int *A_sz);
-void createInitialList(ODD *odd, LinkedList *last);
-int compareTo(LinkedList *s1, LinkedList *s2);
+void create_initial_list(ODD *odd, LinkedList *last);
 LinkedList *nextLazy(LinkedList *S, NumSymbol a, Layer *layer);
-State number(LinkedList *next, LinkedList *A, Layer *l, int a_sz);
+
+//Returns the right state if found in A, -1 if not. (?)
+State number(LinkedList *next, LinkedList *A, Layer *l, int A_sz);
+
+//Returns -1 if s1 is lexicographically smaller than s2, 0 if equal, 1 if larger
+int compare(LinkedList *s1, LinkedList *s2);
 
 ODD *lazy_power_ODD(ODD *odd)
 {
     ODD *result = (ODD *)malloc(sizeof(ODD));
-    int oddwidth = odd->width;
-    LinkedList *right_map = NULL;
+
+    result->nLayers = odd->nLayers;
+    result->layerSequence = calloc(odd->nLayers, sizeof(Layer));
 
     // Creating the initial left_map
     LinkedList *left_map = (LinkedList *)malloc(sizeof(LinkedList));
-    LinkedList *last = left_map;
+    create_initial_list(odd, left_map);
 
-    createInitialList(odd, last);
-
+    LinkedList *right_map = NULL;
     int h = 1;
-    result->layerSequence = calloc(odd->nLayers, sizeof(Layer));
-    result->nLayers = odd->nLayers;
+
     for (int i = 0; i < odd->nLayers; i++)
     {
-        int asz = 0;
-        result->layerSequence[i] = *lazy_power(&odd->layerSequence[i], left_map, oddwidth, h, &right_map, &asz);
+        int A_sz = 0;
+        result->layerSequence[i] = *lazy_power(&odd->layerSequence[i], left_map, odd->width, h, &right_map, &A_sz);
         left_map = right_map;
-        h = asz;
+        h = A_sz;
     }
 
-    // Find the max width
+    // The width of the resulting lazy-power-ODD must be equal to its widest layer.
     result->width = 0;
     for (int i = 0; i < result->nLayers; i++)
     {
@@ -60,36 +70,34 @@ ODD *lazy_power_ODD(ODD *odd)
     return result;
 }
 
-void createInitialList(ODD *odd, LinkedList *last)
+void create_initial_list(ODD *odd, LinkedList *left_map)
 {
-    int oddwidth = odd->width;
 
-    last->states = malloc(sizeof(StateList));
-    StateList *temp = last->states;
-    int sz = 0;
+    left_map->states = malloc(sizeof(StateList));
+    StateList *temp = left_map->states;
+    left_map->size = 0;
 
     for (int i = 0; i < odd->layerSequence[0].initialStates.nStates; i++)
     {
-        if (i != 0)
+        if (i > 0)
         {
             temp->next = malloc(sizeof(StateList));
             temp = temp->next;
         }
 
         temp->st = odd->layerSequence[0].initialStates.set[i];
-        sz++;
+        left_map->size++;
     }
-    last->size = sz;
-    last->next = NULL;
+    left_map->next = NULL;
 }
 
-Layer *lazy_power(Layer *l, LinkedList *map, int w, int h, LinkedList **right_map, int *asz)
+Layer *lazy_power(Layer *l, LinkedList *map, int w, int h, LinkedList **right_map, int *A_sz)
 {
-    int A_sz = 0;
-    LinkedList *A = create_next_list(l, map, w, h, &A_sz);
+    int asz = 0;
+    LinkedList *A = create_next_list(l, map, w, h, &asz);
     Layer *result = malloc(sizeof(Layer));
     result->leftStates.nStates = h;
-    result->rightStates.nStates = A_sz;
+    result->rightStates.nStates = asz;
     result->map = l->map;
     result->initialFlag = l->initialFlag;
     result->finalFlag = l->finalFlag;
@@ -107,9 +115,9 @@ Layer *lazy_power(Layer *l, LinkedList *map, int w, int h, LinkedList **right_ma
     result->finalStates.nStates = 0;
     if (result->finalFlag)
     {
-        result->finalStates.set = malloc(A_sz * sizeof(State));
+        result->finalStates.set = malloc(asz * sizeof(State));
         LinkedList *temp = A;
-        for(int i = 0; i < A_sz; i++)
+        for(int i = 0; i < asz; i++)
         {
             bool inserted = false;
             StateList *tempState = A->states;
@@ -139,8 +147,8 @@ Layer *lazy_power(Layer *l, LinkedList *map, int w, int h, LinkedList **right_ma
         }
     }
 
-    result->rightStates.set = malloc(A_sz * sizeof(int));
-    for (int j = 0; j < A_sz; j++)
+    result->rightStates.set = malloc(asz * sizeof(int));
+    for (int j = 0; j < asz; j++)
     {
         result->rightStates.set[j] = j;
     }
@@ -152,7 +160,7 @@ Layer *lazy_power(Layer *l, LinkedList *map, int w, int h, LinkedList **right_ma
     {
         for (int ix = 0; ix < l->map.sizeAlphabet; ix++)
         {
-            State s2 = number(nextLazy(subset, l->map.S2N[ix], l), A, l, A_sz);
+            State s2 = number(nextLazy(subset, l->map.S2N[ix], l), A, l, asz);
             if (s2 != -1)
             {
                 result->transitions.set[result->transitions.nTransitions].s1 = k;
@@ -166,7 +174,7 @@ Layer *lazy_power(Layer *l, LinkedList *map, int w, int h, LinkedList **right_ma
 
     result->width = fmax(result->leftStates.nStates, result->rightStates.nStates);
     *right_map = A;
-    *asz = A_sz;
+    *A_sz = asz;
     return result;
 }
 
@@ -192,7 +200,7 @@ LinkedList *create_next_list(Layer *l, LinkedList *map, int w, int h, int *A_sz)
             {
                 LinkedList *it = A;
                 // Find correct position and add it to the linkedlist
-                int compared = compareTo(it, S);
+                int compared = compare(it, S);
                 if (compared == -1)
                 {
                     A = S;
@@ -201,7 +209,7 @@ LinkedList *create_next_list(Layer *l, LinkedList *map, int w, int h, int *A_sz)
                 }
                 else if (compared != 0)
                 {
-                    int compared = compareTo(it->next, S);
+                    int compared = compare(it->next, S);
                     while (it != NULL && compared != 0)
                     {
                         if (it->next == NULL || compared == -1)
@@ -214,13 +222,12 @@ LinkedList *create_next_list(Layer *l, LinkedList *map, int w, int h, int *A_sz)
                         }
                         else
                         {
-
                             it = it->next;
                         }
 
                         if (it != NULL)
                         {
-                            compared = compareTo(it->next, S);
+                            compared = compare(it->next, S);
                         }
                     }
                 }
@@ -234,17 +241,14 @@ LinkedList *create_next_list(Layer *l, LinkedList *map, int w, int h, int *A_sz)
     return A;
 }
 
-State number(LinkedList *next, LinkedList *A, Layer *l, int a_sz)
+State number(LinkedList *next, LinkedList *A, Layer *l, int A_sz)
 {
-    LinkedList *B = A;
-    if (next->size == 0)
-    {
-        return -1;
-    }
+    if (next->size == 0) return -1;
 
-    for (int i = 0; i < a_sz && B != NULL; i++)
+    LinkedList *B = A;
+    for (int i = 0; i < A_sz && B != NULL; i++)
     {
-        if (compareTo(next, B) == 0)
+        if (compare(next, B) == 0) 
         {
             return i;
         }
@@ -257,10 +261,10 @@ State number(LinkedList *next, LinkedList *A, Layer *l, int a_sz)
 
 LinkedList *nextLazy(LinkedList *S, NumSymbol a, Layer *layer)
 {
-    LinkedList *linkedList = malloc(sizeof(LinkedList));
-    linkedList->states = malloc(sizeof(StateList));
-    StateList *sout = linkedList->states;
-    int sz = 0;
+    LinkedList *result = malloc(sizeof(LinkedList));
+    result->states = malloc(sizeof(StateList));
+    result->size = 0;
+    StateList *sout = result->states;
     StateList *temp = S->states;
 
     for (int i = 0; i < S->size; i++)
@@ -276,10 +280,10 @@ LinkedList *nextLazy(LinkedList *S, NumSymbol a, Layer *layer)
                 bool inserted = false;
                 while (souttemp != NULL && !inserted)
                 {
-                    if (sz == 0)
+                    if (result->size == 0)
                     {
                         souttemp->st = layer->transitions.set[j].s2;
-                        sz++;
+                        result->size++;
                         souttemp->next = NULL;
                     }
                     else
@@ -293,9 +297,9 @@ LinkedList *nextLazy(LinkedList *S, NumSymbol a, Layer *layer)
                             StateList *statelistTemp = malloc(sizeof(StateList));
                             statelistTemp->st = layer->transitions.set[j].s2;
                             statelistTemp->next = sout;
-                            linkedList->states = statelistTemp;
+                            result->states = statelistTemp;
                             sout = statelistTemp;
-                            sz++;
+                            result->size++;
                             inserted = true;
                         }
                         else if (souttemp->next == NULL || souttemp->next->st > layer->transitions.set[j].s2)
@@ -304,7 +308,7 @@ LinkedList *nextLazy(LinkedList *S, NumSymbol a, Layer *layer)
                             statelistTemp->st = layer->transitions.set[j].s2;
                             statelistTemp->next = souttemp->next;
                             souttemp->next = statelistTemp;
-                            sz++;
+                            result->size++;
                             inserted = true;
                         }
                     }
@@ -315,43 +319,27 @@ LinkedList *nextLazy(LinkedList *S, NumSymbol a, Layer *layer)
         }
         temp = temp->next;
     }
-    linkedList->size = sz;
 
-    return linkedList;
+    return result;
 }
 
-int compareTo(LinkedList *s1, LinkedList *s2)
+int compare(LinkedList *s1, LinkedList *s2)
 {
-    if (s2 == NULL || s1 == NULL)
-    {
-        return -1;
-    }
+    if (s1 == NULL || s2 == NULL) return -1;
 
     StateList *t1 = s1->states;
     StateList *t2 = s2->states;
     for (int i = 0; i < fmin(s1->size, s2->size); i++)
     {
-        if (t1->st > t2->st)
-        {
-            return -1;
-        }
-        else if (t1->st < t2->st)
-        {
-            return 1;
-        }
+        if (t1->st > t2->st) return -1;
+        if (t1->st < t2->st) return 1;
 
         t1 = t1->next;
         t2 = t2->next;
     }
 
-    if (s1->size > s2->size)
-    {
-        return -1;
-    }
-    else if (s1->size < s2->size)
-    {
-        return 1;
-    }
+    if (s1->size > s2->size) return -1;
+    if (s1->size < s2->size) return 1;
 
     return 0;
 }
