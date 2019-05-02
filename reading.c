@@ -17,7 +17,7 @@ void skip(FILE *reader)
 void readAlphabetMap(FILE *reader, AlphabetMap *map)
 {
 
-    while (fscanf(reader, "ALPHABET_MAP %d", &map->sizeAlphabet) != 1)
+    while (fscanf(reader, "ALPHABET_MAP %d\n", &map->sizeAlphabet) != 1)
     {
         skip(reader);
     }
@@ -28,7 +28,7 @@ void readAlphabetMap(FILE *reader, AlphabetMap *map)
     for (int i = 0; i < map->sizeAlphabet; i++)
     {
         map->N2S[i] = malloc(sizeof(char *));
-        while (fscanf(reader, "%d %s", &map->S2N[i], map->N2S[i]) != 2)
+        while (fscanf(reader, "%d %s\n", &map->S2N[i], map->N2S[i]) != 2)
         {
             skip(reader);
         }
@@ -55,7 +55,7 @@ void readStates(FILE *reader, char *keyword, StateContainer *states)
 
 void readTransitions(FILE *reader, TransitionContainer *transitions)
 {
-    while (fscanf(reader, "TRANSITIONS %d", &transitions->nTransitions) != 1)
+    while (fscanf(reader, "TRANSITIONS %d\n", &transitions->nTransitions) != 1)
     {
         skip(reader);
     }
@@ -74,26 +74,26 @@ void readTransitions(FILE *reader, TransitionContainer *transitions)
 
 void readLayer(FILE *reader, Layer *layer)
 {
-    while (fscanf(reader, "LAYER") != 0)
+    while (fscanf(reader, "LAYER\n") != 0)
     {
         skip(reader);
     }
 
     readAlphabetMap(reader, &layer->map);
-    readStates(reader, "LEFT_STATES %d", &layer->leftStates);
-    readStates(reader, "RIGHT_STATES %d", &layer->rightStates);
-    readStates(reader, "INITIAL_STATES %d", &layer->initialStates);
-    readStates(reader, "FINAL_STATES %d", &layer->finalStates);
+    readStates(reader, "LEFT_STATES %d\n", &layer->leftStates);
+    readStates(reader, "RIGHT_STATES %d\n", &layer->rightStates);
+    readStates(reader, "INITIAL_STATES %d\n", &layer->initialStates);
+    readStates(reader, "FINAL_STATES %d\n", &layer->finalStates);
     readTransitions(reader, &layer->transitions);
 
     layer->width = layer->leftStates.nStates > layer->rightStates.nStates ? layer->leftStates.nStates : layer->rightStates.nStates;
     int initalTemp, finalTemp;
-    while (fscanf(reader, "INITIAL_FLAG %d", &initalTemp) != 1)
+    while (fscanf(reader, "INITIAL_FLAG %d\n", &initalTemp) != 1)
     {
         skip(reader);
     }
 
-    while (fscanf(reader, "FINAL_FLAG %d", &finalTemp) != 1)
+    while (fscanf(reader, "FINAL_FLAG %d\n", &finalTemp) != 1)
     {
         skip(reader);
     }
@@ -109,7 +109,7 @@ void readODD(char *filename, ODD *odd)
 
     if (reader != NULL)
     {
-        while (fscanf(reader, "ODD %d", &odd->nLayers) != 1)
+        while (fscanf(reader, "ODD %d\n", &odd->nLayers) != 1)
         {
             skip(reader);
         }
