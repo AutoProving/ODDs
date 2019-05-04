@@ -20,16 +20,17 @@ typedef struct LinkedList
     struct LinkedList *next;
 } LinkedList;
 
-
 //TODO: comments
-//A_sz is the number of right states in a layer (?)
+//A_sz is the number of right states in a layer
 
 Layer *lazy_power(Layer *l, LinkedList *map, int w, int h, LinkedList **right_map, int *A_sz);
 LinkedList *create_next_list(Layer *l, LinkedList *map, int w, int h, int *A_sz);
 void create_initial_list(ODD *odd, LinkedList *last);
 LinkedList *nextLazy(LinkedList *S, NumSymbol a, Layer *layer);
+void freeStateList(StateList *lst, int sz);
+void freeLinkedList(LinkedList *lst, int sz);
 
-//Returns the right state if found in A, -1 if not. (?)
+//Returns the right state if found in A, -1 if not.
 State number(LinkedList *next, LinkedList *A, Layer *l, int A_sz);
 
 //Returns -1 if s1 is lexicographically smaller than s2, 0 if equal, 1 if larger
@@ -53,9 +54,11 @@ ODD *lazy_power_ODD(ODD *odd)
     {
         int A_sz = 0;
         result->layerSequence[i] = *lazy_power(&odd->layerSequence[i], left_map, odd->width, h, &right_map, &A_sz);
+        freeLinkedList(left_map, h);
         left_map = right_map;
         h = A_sz;
     }
+    freeLinkedList(right_map, h);
 
     // The width of the resulting lazy-power-ODD must be equal to its widest layer.
     result->width = 0;
@@ -117,15 +120,16 @@ Layer *lazy_power(Layer *l, LinkedList *map, int w, int h, LinkedList **right_ma
     {
         result->finalStates.set = malloc(asz * sizeof(State));
         LinkedList *temp = A;
-        for(int i = 0; i < asz; i++)
+        for (int i = 0; i < asz; i++)
         {
             bool inserted = false;
-            StateList *tempState = A->states;
-            for(int j = 0; j < temp->size && !inserted; j++)
+            StateList *tempState = temp->states;
+            for (int j = 0; j < temp->size && !inserted; j++)
             {
-                for(int fi = 0; fi < l->finalStates.nStates && !inserted; fi++)
+                for (int fi = 0; fi < l->finalStates.nStates && !inserted; fi++)
                 {
-                    if (tempState->st == l->finalStates.set[fi]) {
+                    if (tempState->st == l->finalStates.set[fi])
+                    {
                         result->finalStates.set[result->finalStates.nStates] = i;
                         result->finalStates.nStates++;
                         inserted = true;
@@ -209,27 +213,29 @@ LinkedList *create_next_list(Layer *l, LinkedList *map, int w, int h, int *A_sz)
                 }
                 else if (compared != 0)
                 {
-                    int compared = compare(it->next, S);
+                    compared = compare(it->next, S);
                     while (it != NULL && compared != 0)
                     {
                         if (it->next == NULL || compared == -1)
                         {
                             S->next = it->next;
                             it->next = S;
-                            it->next->next = NULL;
                             asz++;
                             it = NULL;
                         }
                         else
                         {
                             it = it->next;
-                        }
-
-                        if (it != NULL)
-                        {
-                            compared = compare(it->next, S);
+                            if (it != NULL)
+                            {
+                                compared = compare(it->next, S);
+                            }
                         }
                     }
+                }
+                else
+                {
+                    freeLinkedList(S, 1);
                 }
             }
         }
@@ -243,19 +249,22 @@ LinkedList *create_next_list(Layer *l, LinkedList *map, int w, int h, int *A_sz)
 
 State number(LinkedList *next, LinkedList *A, Layer *l, int A_sz)
 {
-    if (next->size == 0) return -1;
+    if (next->size == 0)
+        return -1;
 
     LinkedList *B = A;
     for (int i = 0; i < A_sz && B != NULL; i++)
     {
-        if (compare(next, B) == 0) 
+        if (compare(next, B) == 0)
         {
+            freeLinkedList(next, 1);
             return i;
         }
 
         B = B->next;
     }
 
+    freeLinkedList(next, 1);
     return -1;
 }
 
@@ -325,21 +334,47 @@ LinkedList *nextLazy(LinkedList *S, NumSymbol a, Layer *layer)
 
 int compare(LinkedList *s1, LinkedList *s2)
 {
-    if (s1 == NULL || s2 == NULL) return -1;
+    if (s1 == NULL || s2 == NULL)
+        return -1;
 
     StateList *t1 = s1->states;
     StateList *t2 = s2->states;
     for (int i = 0; i < fmin(s1->size, s2->size); i++)
     {
-        if (t1->st > t2->st) return -1;
-        if (t1->st < t2->st) return 1;
+        if (t1->st > t2->st)
+            return -1;
+        if (t1->st < t2->st)
+            return 1;
 
         t1 = t1->next;
         t2 = t2->next;
     }
 
-    if (s1->size > s2->size) return -1;
-    if (s1->size < s2->size) return 1;
+    if (s1->size > s2->size)
+        return -1;
+    if (s1->size < s2->size)
+        return 1;
 
     return 0;
+}
+
+void freeLinkedList(LinkedList *lst, int sz)
+{
+    for (int i = 0; i < sz; i++)
+    {
+        LinkedList *next = lst->next;
+        freeStateList(lst->states, lst->size);
+        free(lst);
+        lst = next;
+    }
+}
+
+void freeStateList(StateList *lst, int sz)
+{
+    for (int i = 0; i < sz && lst != NULL; i++)
+    {
+        StateList *next = lst->next;
+        free(lst);
+        lst = next;
+    }
 }
