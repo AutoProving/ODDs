@@ -226,10 +226,7 @@ LinkedList *create_next_list(Layer *l, LinkedList *map, int w, int h, int *A_sz)
                         else
                         {
                             it = it->next;
-                            if (it != NULL)
-                            {
-                                compared = compare(it->next, S);
-                            }
+                            compared = compare(it->next, S);
                         }
                     }
                 }
