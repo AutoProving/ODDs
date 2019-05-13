@@ -153,6 +153,8 @@ void mergeStates(StateContainer* states, int leftLo, int leftHi, int rightLo, in
         states->set[index++] = rightArr->set[secondArrPointer++];
     }
 
+    free(leftArr->set);
+    free(rightArr->set);
     free(leftArr);
     free(rightArr);
 }
