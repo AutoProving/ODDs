@@ -27,8 +27,7 @@ void readAlphabetMap(FILE *reader, AlphabetMap *map)
 
     for (int i = 0; i < map->sizeAlphabet; i++)
     {
-        map->N2S[i] = malloc(sizeof(char *));
-        while (fscanf(reader, "%d %s\n", &map->S2N[i], map->N2S[i]) != 2)
+        while (fscanf(reader, "%d %ms\n", &map->S2N[i], &map->N2S[i]) != 2)
         {
             skip(reader);
         }
