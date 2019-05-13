@@ -11,11 +11,10 @@ NumSymbol *getPath(ODD *odd)
     NumSymbol *path = malloc(odd->nLayers * sizeof(NumSymbol));
     int numLayers = odd->nLayers - 1;
     Layer finalLayer = odd->layerSequence[numLayers];
-    int lastState;
 
     for (int finalstate = 0; finalstate < finalLayer.finalStates.nStates; finalstate++)
     {
-        lastState = finalLayer.finalStates.set[finalstate];
+        int lastState = finalLayer.finalStates.set[finalstate];
 
         for (int i = numLayers; i >= 0; i--)
         {
@@ -40,11 +39,11 @@ bool isTherePath(ODD *odd)
 {
     int numLayers = odd->nLayers - 1;
     Layer finalLayer = odd->layerSequence[numLayers];
-    int lastState, numPathSymbols;
+    int numPathSymbols;
 
     for (int finalstate = 0; finalstate < finalLayer.finalStates.nStates; finalstate++)
     {
-        lastState = finalLayer.finalStates.set[finalstate];
+        int lastState = finalLayer.finalStates.set[finalstate];
         numPathSymbols = 0;
 
         for (int i = numLayers; i >= 0; i--)
