@@ -19,8 +19,7 @@ Transition* find_transition(Layer* here, State leftState, NumSymbol symbol){
     return NULL;
 }
 
-
-void makeCompleteLayer(Layer *layer, Layer *result){
+void _makeCompleteLayer(Layer *layer, Layer * result){
     int i, j, k;
     result->finalStates = layer->finalStates;
     result->leftStates = layer->initialStates;
@@ -58,17 +57,24 @@ void makeCompleteLayer(Layer *layer, Layer *result){
     }
 }
 
+Layer* makeCompleteLayer(Layer * layer){
+    Layer * result = malloc(sizeof(Layer));
+    _makeCompleteLayer(layer, result);
+    return result;
+}
 
-void makeCompleteODD(ODD* odd, ODD* result){
-    if (!odd) return;
+
+ODD* makeCompleteODD(ODD* odd){
+    ODD* result = malloc(sizeof(ODD));
     int i;
     result->layerSequence = (Layer*)calloc(sizeof(Layer), odd->nLayers);
     result->nLayers = odd->nLayers;
     result->width = odd->width;
 
     for (i=0; i<odd->nLayers; i++){
-        makeCompleteLayer(&odd->layerSequence[i], &result->layerSequence[i]);
+        _makeCompleteLayer(&odd->layerSequence[i], &result->layerSequence[i]);
     }
+    return result;
 }
 
 
