@@ -7,8 +7,6 @@
 #include <omp.h> //also add -fopenmp to compile path
 #include <string.h>
 
-void minimize(ODD* o, ODD* result);
-
 int findIndexState(StateContainer* v, State s) {
     //returns index i such that v[i]=s
     //binary search
@@ -57,15 +55,6 @@ void collapseLeft(Layer layer, State state_i, State state_j);
 
 Transition * findTransitionLeft(TransitionContainer transitions, State state);
 
-int main(int argc, char** argv) {
-    ODD o;
-    ODD res;
-
-    readODD("ODD-ToMinimize2.txt", &o);
-    showODD(&o);
-    minimize(&o, &res);
-}
-
 void copyStates(StateContainer* l1, StateContainer* l2) {
     l2->nStates = l1->nStates;
     l2->set = memcpy(l2->set, l1->set, l1->nStates*sizeof(State));
@@ -88,24 +77,15 @@ int countUsefulStates(StateContainer s) {
 
 void cleanTransitionsRight(Layer* l) {
 
-	StateContainer* leftStates = &(l->leftStates);
 	StateContainer* rightStates = &(l->rightStates);
 	TransitionContainer* transitions = &(l->transitions);
 
-	TransitionContainer auxTransitions;
-	auxTransitions.set = malloc(transitions->nTransitions * sizeof(Transition));
-	auxTransitions.nTransitions = transitions->nTransitions;
-	for (int i = transitions->nTransitions - 1; i >= 0; i--) {
-		auxTransitions.set[i].s2 = -1;
-	}
-
-	int i = 0;
 	int curTransition = 0;
 	int usefulTransitions = 0;
 
 	for (int i = 0; i < rightStates->nStates; i++) {
 
-		while (transitions->set[curTransition].s2 <= rightStates->set[i] && curTransition < transitions->nTransitions) {
+		while (curTransition < transitions->nTransitions && transitions->set[curTransition].s2 <= rightStates->set[i]) {
 			if (transitions->set[curTransition].s2 == rightStates->set[i]) {
 				transitions->set[usefulTransitions] = transitions->set[curTransition];
 				usefulTransitions++;
@@ -123,22 +103,13 @@ void cleanTransitionsRight(Layer* l) {
 void cleanTransitions(Layer* l) {
 
     StateContainer* leftStates = &(l->leftStates);
-    StateContainer* rightStates = &(l->rightStates);
     TransitionContainer* transitions = &(l->transitions);
 
-    TransitionContainer auxTransitions;
-    auxTransitions.set = malloc(transitions->nTransitions * sizeof(Transition));
-    auxTransitions.nTransitions = transitions->nTransitions;
-    for (int i = 0; i < transitions->nTransitions; i++) {
-        auxTransitions.set[i].s1 = -1;
-    }
-
-    int i = 0;
     int curTransition = 0;
     int usefulTransitions = 0;
 
     for (int i = 0; i < leftStates->nStates; i++) {
-        while (transitions->set[curTransition].s1 <= leftStates->set[i] && curTransition < transitions->nTransitions) {
+        while (curTransition < transitions->nTransitions && transitions->set[curTransition].s1 <= leftStates->set[i]) {
             if (transitions->set[curTransition].s1 == leftStates->set[i]) {
                 transitions->set[usefulTransitions] = transitions->set[curTransition];
                 usefulTransitions++;
@@ -170,11 +141,10 @@ void cleanLeft(Layer* l) {
 	int i = 0;
 	//for each useful right state
 	while (i < usefulRight->nStates) {
-		while (l->transitions.set[transitionIndex].s2 <= usefulRight->set[i] && transitionIndex < l->transitions.nTransitions) {
+		while (transitionIndex < l->transitions.nTransitions && l->transitions.set[transitionIndex].s2 <= usefulRight->set[i]) {
 			if (l->transitions.set[transitionIndex].s2 == usefulRight->set[i]) {
 				// If useful, change value in aux state from -1
 				State* s = &l->transitions.set[transitionIndex].s1;
-				int index = findIndexState(usefulLeft, *s);
 				auxStates.set[findIndexState(usefulLeft, *s)] = *s;
 			}
 			// check next transition
@@ -189,9 +159,9 @@ void cleanLeft(Layer* l) {
 	usefulLeft->nStates = n;
 	int index = 0;
 
-	for (int i = 0; i < auxStates.nStates; i++) {
-		if (auxStates.set[i] != -1) {
-			usefulLeft->set[index] = auxStates.set[i];
+	for (int j = 0; j < auxStates.nStates; j++) {
+		if (auxStates.set[j] != -1) {
+			usefulLeft->set[index] = auxStates.set[j];
 			index++;
 		}
 	}
@@ -216,14 +186,13 @@ void cleanRight(Layer* l) {
     //for each useful left state
     while (i < usefulLeft->nStates) {
         //for each transition with left state as current left state (or there is a dead state with no transition coming out which is smaller)
-        while (l->transitions.set[transitionIndex].s1 <= usefulLeft->set[i] && transitionIndex < l->transitions.nTransitions) {
+        while (transitionIndex < l->transitions.nTransitions && l->transitions.set[transitionIndex].s1 <= usefulLeft->set[i]) {
             //fprintf(stderr, "State Index: %i\nTransitionIndex: %i\nUseful Transitions: %i\n\n", i, transitionIndex);
 
             //if the state transition has current useful state as left state
             if (l->transitions.set[transitionIndex].s1 == usefulLeft->set[i]) {
                 //set it as useful by changing aux state to not -1
                 State* s = &l->transitions.set[transitionIndex].s2;
-                int index = findIndexState(usefulRight, *s);
                 auxStates.set[findIndexState(usefulRight, *s)] = *s;
             }
             //next transition
@@ -239,9 +208,9 @@ void cleanRight(Layer* l) {
     usefulRight->nStates = n;
     int index = 0;
 
-    for (int i = 0; i < auxStates.nStates; i++) {
-        if (auxStates.set[i] != -1) {
-            usefulRight->set[index] = auxStates.set[i];
+    for (int j = 0; j < auxStates.nStates; j++) {
+        if (auxStates.set[j] != -1) {
+            usefulRight->set[index] = auxStates.set[j];
             index++;
         }
     }
@@ -599,7 +568,7 @@ void livingTransition(Layer * layer, TransitionContainer * livingTransition){
     }
 }
 
-void minimize(ODD* o, ODD* result) {
+ODD* minimizeODD(ODD* o) {
 
     int numLayers = o->nLayers;
 
@@ -626,7 +595,5 @@ void minimize(ODD* o, ODD* result) {
 	}
     //sortAllLeftTransitions(o);
 
-	result = collapseODD(o);
+    return collapseODD(o);
 }
-
-
