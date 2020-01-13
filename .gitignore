@@ -59,5 +59,9 @@ dkms.conf
 build/*
 !build/.keep
 
+# Doxygen docs dir
+doc/*
+!doc/.keep
+
 # YCM Config
 .ycm_extra_conf.py

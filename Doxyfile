@@ -1,0 +1,9 @@
+PROJECT_NAME = "ODDs"
+PROJECT_BRIEF = "An Ordered Decision Diagrams Library"
+
+INPUT = ./lib
+OUTPUT_DIRECTORY = ./doc
+PREDEFINED = __cplusplus
+GENERATE_LATEX = NO
+EXTRACT_ALL = YES
+SOURCE_BROWSER = YES
