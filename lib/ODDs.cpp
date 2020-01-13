@@ -97,7 +97,7 @@ public:
             ret.layers_[i].alphabet = std::move(alphabets_[i]);
             ret.layers_[i].leftStates = &ret.states_[i];
             ret.layers_[i].rightStates = &ret.states_[i + 1];
-            ret.layers_[i].transitions = transitions_[i];
+            ret.layers_[i].transitions = std::move(transitions_[i]);
             ret.layers_[i].isInitial = i == 0;
             ret.layers_[i].isFinal = i + 1 == (int)ret.states_.size();
         }
