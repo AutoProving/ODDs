@@ -9,6 +9,7 @@ add_library(ODDs STATIC
     lib/ODDs.cpp)
 
 target_include_directories(ODDs PUBLIC lib/)
+target_compile_options(ODDs PRIVATE -Wall -Wextra -Wshadow)
 
 enable_testing()
 
@@ -21,4 +22,5 @@ add_executable(ODDsTest
 target_include_directories(ODDsTest PUBLIC lib/)
 target_link_libraries(ODDsTest gtest gtest_main)
 target_link_libraries(ODDsTest ODDs)
+target_compile_options(ODDsTest PRIVATE -Wall -Wextra -Wshadow)
 gtest_discover_tests(ODDsTest)
