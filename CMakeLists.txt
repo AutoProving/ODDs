@@ -16,6 +16,9 @@ include(GoogleTest)
 add_subdirectory(ext/googletest)
 
 add_executable(ODDsTest
-    test/Sample.cpp)
+    test/Sample.cpp
+    test/ODDsStructures.cpp)
+target_include_directories(ODDsTest PUBLIC lib/)
 target_link_libraries(ODDsTest gtest gtest_main)
+target_link_libraries(ODDsTest ODDs)
 gtest_discover_tests(ODDsTest)
