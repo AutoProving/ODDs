@@ -55,19 +55,9 @@ dkms.conf
 .idea
 .vscode
 
-# CMake
-CMakeLists.txt.user
-CMakeCache.txt
-CMakeFiles
-CMakeScripts
-Makefile
-Testing
-cmake_install.cmake
-install_manifest.txt
-compile_commands.json
-CTestTestfile.cmake
-_deps
-*.cmake
+# CMake build dir
+build/*
+!build/.keep
 
-# Executables
-ODDsTest
+# YCM Config
+.ycm_extra_conf.py
