@@ -9,3 +9,13 @@ add_library(ODDs STATIC
     lib/ODDs.cpp)
 
 target_include_directories(ODDs PUBLIC lib/)
+
+enable_testing()
+
+include(GoogleTest)
+add_subdirectory(ext/googletest)
+
+add_executable(ODDsTest
+    test/Sample.cpp)
+target_link_libraries(ODDsTest gtest gtest_main)
+gtest_discover_tests(ODDsTest)

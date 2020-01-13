@@ -1,0 +1,6 @@
+[submodule "googletest"]
+	path = googletest
+	url = ssh://git@github.com/google/googletest
+[submodule "ext/googletest"]
+	path = ext/googletest
+	url = ssh://git@github.com/google/googletest
