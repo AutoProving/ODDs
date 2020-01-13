@@ -89,6 +89,7 @@ public:
     }
 
     ODD build() {
+        // We try to use std::move whereever possible.
         ODD ret;
         ret.states_ = std::move(states_);
         ret.layers_.resize(alphabets_.size());

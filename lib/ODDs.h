@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <map>
 #include <memory>
 #include <set>
@@ -201,5 +202,19 @@ private:
     class Impl;
     std::unique_ptr<Impl> impl_;
 };
+
+/**
+ * @brief Reads ODD description from an input stream.
+ *
+ * TODO: Provide format description.
+ */
+std::istream& operator>>(std::istream& is, ODD& odd);
+
+/**
+ * @brief Writes ODD description to an output stream.
+ *
+ * TODO: Provide format description.
+ */
+std::ostream& operator<<(std::ostream& os, const ODD& odd);
 
 }
