@@ -44,6 +44,10 @@ int ODD::AlphabetMap::symbolToNumber(const std::string& symbol) const {
     return it->second;
 }
 
+bool ODD::AlphabetMap::operator==(const ODD::AlphabetMap& rhs) const {
+    return n2s_ == rhs.n2s_;
+}
+
 int ODD::Layer::width() const {
     return std::max<int>(leftStates->size(), rightStates->size());
 }
@@ -99,10 +103,12 @@ public:
             ret.layers_[i].rightStates = &ret.states_[i + 1];
             ret.layers_[i].transitions = std::move(transitions_[i]);
             ret.layers_[i].isInitial = i == 0;
-            ret.layers_[i].isFinal = i + 1 == (int)ret.states_.size();
+            ret.layers_[i].isFinal = i + 2 == (int)ret.states_.size();
         }
-        ret.layers_[0].initialStates = std::move(initialStates_);
-        ret.layers_.back().finalStates = std::move(finalStates_);
+        if (!ret.layers_.empty()) {
+            ret.layers_[0].initialStates = std::move(initialStates_);
+            ret.layers_.back().finalStates = std::move(finalStates_);
+        }
         return ret;
     }
 
@@ -117,6 +123,8 @@ private:
 ODDBuilder::ODDBuilder(const ODD::StateContainer& firstLayerLeft)
     : impl_(std::make_unique<ODDBuilder::Impl>(firstLayerLeft))
 {}
+
+ODDBuilder::~ODDBuilder() = default;
 
 void ODDBuilder::addLayer(const ODD::AlphabetMap& alphabet,
                           const ODD::TransitionContainer& transitions,

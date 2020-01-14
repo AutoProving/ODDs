@@ -94,6 +94,12 @@ public:
          */
         int symbolToNumber(const std::string& symbol) const;
 
+        /**
+         * @brief Compares two alphabet maps on equality.
+         *
+         * Needed for tests.
+         */
+        bool operator==(const AlphabetMap& rhs) const;
     private:
         std::vector<std::string> n2s_;
         std::map<std::string, int> s2n_;
@@ -103,6 +109,7 @@ public:
      * @brief A type for layers.
      */
     struct Layer {
+        // XXX: Do we even need state containers?
         AlphabetMap alphabet;
         StateContainer *leftStates; // Owned by the ODD
         StateContainer initialStates;
@@ -114,7 +121,7 @@ public:
         /**
          * @brief Width of the layer.
          *
-         * Equal to `max(leftStates.size(), rightStates.size())`.
+         * Equal to `max(leftStates->size(), rightStates->size())`.
          */
         int width() const;
 
@@ -158,7 +165,48 @@ private:
  * Simple alternative to a monsterous constructor. Guarantees by design that
  * the built ODD is correct.
  * 
- * TODO: Provide an example.
+ * @section Example
+ * @code
+ *
+ *  ODDs::ODD::StateContainer initialStates = {2};
+ *
+ *  ODDs::ODD::StateContainer states0 = {0, 1, 2};
+ *
+ *  ODDs::ODD::AlphabetMap alphabet0;
+ *  int a0a = alphabet0.addSymbol("a");
+ *  int a0b = alphabet0.addSymbol("b");
+ *  ODDs::ODD::TransitionContainer transitions0;
+ *  transitions0.insert({0, a0a, 0});
+ *  transitions0.insert({0, a0b, 1});
+ *  transitions0.insert({1, a0a, 0});
+ *  transitions0.insert({1, a0b, 1});
+ *  transitions0.insert({2, a0a, 1});
+ *  transitions0.insert({2, a0b, 0});
+ *
+ *  ODDs::ODD::StateContainer states1 = {0, 1};
+ *
+ *  ODDs::ODD::AlphabetMap alphabet1;
+ *  int a1c = alphabet1.addSymbol("c");
+ *  int a1d = alphabet1.addSymbol("d");
+ *  ODDs::ODD::TransitionContainer transitions1;
+ *  transitions1.insert({0, a1c, 0});
+ *  transitions1.insert({0, a1d, 1});
+ *  transitions1.insert({0, a1c, 0});
+ *  transitions1.insert({0, a1d, 2});
+ *  // Non-deterministic, why not?
+ *  transitions1.insert({0, a1d, 0});
+ *
+ *  ODDs::ODD::StateContainer states2 = {0, 1, 2};
+ *
+ *  ODDs::ODD::StateContainer finalStates = {2};
+ *
+ *  ODDs::ODDBuilder builder(states0);
+ *  builder.addLayer(alphabet0, transitions0, states1);
+ *  builder.addLayer(alphabet1, transitions1, states2);
+ *  builder.setInitialStates(initialStates);
+ *  builder.setFinalStates(finalStates);
+ *  ODDs::ODD odd = builder.build();
+ * @endcode
  */
 class ODDBuilder {
 public:
@@ -167,7 +215,7 @@ public:
      */
     ODDBuilder(const ODD::StateContainer& firstLayerLeft);
 
-    ~ODDBuilder() = default;
+    ~ODDBuilder();
     ODDBuilder(const ODDBuilder&) = delete;
     ODDBuilder& operator=(const ODDBuilder&) = delete;
     ODDBuilder(ODDBuilder&&) = default;
