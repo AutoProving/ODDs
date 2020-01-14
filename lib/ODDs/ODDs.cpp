@@ -53,7 +53,7 @@ bool ODD::AlphabetMap::operator==(const ODD::AlphabetMap& rhs) const {
 }
 
 int ODD::Layer::width() const {
-    return std::max<int>(leftStates->size(), rightStates->size());
+    return std::max<int>(leftStates, rightStates);
 }
 
 bool ODD::Layer::checkSanity() const {
@@ -76,16 +76,16 @@ const ODD::Layer& ODD::getLayer(int i) const {
 
 class ODDBuilder::Impl {
 public:
-    Impl(const ODD::StateContainer& firstLayerLeft)
-        : states_({firstLayerLeft})
+    Impl(int firstLayerCount)
+        : stateCounts_({firstLayerCount})
     {}
 
     void addLayer(const ODD::AlphabetMap& alphabet,
                   const ODD::TransitionContainer& transitions,
-                  const ODD::StateContainer& rightStates) {
+                  int rightStateCount) {
         alphabets_.push_back(alphabet);
         transitions_.push_back(transitions);
-        states_.push_back(rightStates);
+        stateCounts_.push_back(rightStateCount);
     }
 
     void setInitialStates(const ODD::StateContainer& initialStates) {
@@ -99,15 +99,14 @@ public:
     ODD build() {
         // We try to use std::move whereever possible.
         ODD ret;
-        ret.states_ = std::move(states_);
         ret.layers_.resize(alphabets_.size());
         for (int i = 0; i < (int)alphabets_.size(); i++) {
             ret.layers_[i].alphabet = std::move(alphabets_[i]);
-            ret.layers_[i].leftStates = &ret.states_[i];
-            ret.layers_[i].rightStates = &ret.states_[i + 1];
+            ret.layers_[i].leftStates = stateCounts_[i];
+            ret.layers_[i].rightStates = stateCounts_[i + 1];
             ret.layers_[i].transitions = std::move(transitions_[i]);
             ret.layers_[i].isInitial = i == 0;
-            ret.layers_[i].isFinal = i + 2 == (int)ret.states_.size();
+            ret.layers_[i].isFinal = i + 2 == (int)stateCounts_.size();
         }
         if (!ret.layers_.empty()) {
             ret.layers_[0].initialStates = std::move(initialStates_);
@@ -117,23 +116,23 @@ public:
     }
 
 private:
-    std::vector<ODD::StateContainer> states_;
+    std::vector<int> stateCounts_;
     std::vector<ODD::AlphabetMap> alphabets_;
     std::vector<ODD::TransitionContainer> transitions_;
     ODD::StateContainer initialStates_;
     ODD::StateContainer finalStates_;
 };
 
-ODDBuilder::ODDBuilder(const ODD::StateContainer& firstLayerLeft)
-    : impl_(std::make_unique<ODDBuilder::Impl>(firstLayerLeft))
+ODDBuilder::ODDBuilder(int leftStateCount)
+    : impl_(std::make_unique<ODDBuilder::Impl>(leftStateCount))
 {}
 
 ODDBuilder::~ODDBuilder() = default;
 
 void ODDBuilder::addLayer(const ODD::AlphabetMap& alphabet,
                           const ODD::TransitionContainer& transitions,
-                          const ODD::StateContainer& rightStates) {
-    impl_->addLayer(alphabet, transitions, rightStates);
+                          int rightStateCount) {
+    impl_->addLayer(alphabet, transitions, rightStateCount);
 }
 
 void ODDBuilder::setInitialStates(const ODD::StateContainer& initialStates) {
@@ -193,13 +192,15 @@ ODD readFromIStream(std::istream& is) {
     int layers;
     is >> layers;
     ODD::StateContainer initialStates = readStateSet(is);
-    ODD::StateContainer leftStates = readStateSet(is);
+    int leftStates;
+    is >> leftStates;
     ODDBuilder builder(leftStates);
     for (int layer = 0; layer < layers; layer++) {
         ODD::AlphabetMap alphabet = readAlphabetMap(is);
         ODD::TransitionContainer transitions = readTransitionSet(alphabet, is);
-        ODD::StateContainer nextStates = readStateSet(is);
-        builder.addLayer(alphabet, transitions, nextStates);
+        int rightStates;
+        is >> rightStates;
+        builder.addLayer(alphabet, transitions, rightStates);
     }
     builder.setInitialStates(initialStates);
     builder.setFinalStates(readStateSet(is));
@@ -238,12 +239,12 @@ void writeTransitionSet(std::ostream& os,
 void writeToOStream(std::ostream& os, const ODD& odd) {
     os << odd.countLayers() << std::endl;
     writeStateSet(os, odd.getLayer(0).initialStates);
-    writeStateSet(os, *odd.getLayer(0).leftStates);
+    os << odd.getLayer(0).leftStates << std::endl;
     for (int layer = 0; layer < odd.countLayers(); layer++) {
         const auto& alphabet = odd.getLayer(layer).alphabet;
         writeAlphabetMap(os, alphabet);
         writeTransitionSet(os, alphabet, odd.getLayer(layer).transitions);
-        writeStateSet(os, *odd.getLayer(layer).rightStates);
+        os << odd.getLayer(layer).rightStates << std::endl;
     }
     writeStateSet(os, odd.getLayer(odd.countLayers() - 1).finalStates);
 }

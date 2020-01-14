@@ -116,11 +116,10 @@ public:
      * @brief A type for layers.
      */
     struct Layer {
-        // XXX: Do we even need state containers?
         AlphabetMap alphabet;
-        StateContainer *leftStates; // Owned by the ODD
+        int leftStates; // Owned by the ODD
         StateContainer initialStates;
-        StateContainer *rightStates; // Owned by the ODD
+        int rightStates; // Owned by the ODD
         StateContainer finalStates;
         TransitionContainer transitions;
         bool isInitial, isFinal;
@@ -128,7 +127,7 @@ public:
         /**
          * @brief Width of the layer.
          *
-         * Equal to `max(leftStates->size(), rightStates->size())`.
+         * Equal to `max(leftStates, rightStates)`.
          */
         int width() const;
 
@@ -160,7 +159,6 @@ public:
     const Layer& getLayer(int i) const;
 
 private:
-    std::vector<StateContainer> states_;
     std::vector<Layer> layers_;
 
     friend class ODDBuilder;
@@ -176,8 +174,6 @@ private:
  * @code
  *  ODDs::ODD::StateContainer initialStates = {2};
  *
- *  ODDs::ODD::StateContainer states0 = {0, 1, 2};
- *
  *  ODDs::ODD::AlphabetMap alphabet0;
  *  ODDs::ODD::Symbol a0a = alphabet0.addSymbol("a");
  *  ODDs::ODD::Symbol a0b = alphabet0.addSymbol("b");
@@ -188,8 +184,6 @@ private:
  *  transitions0.insert({1, a0b, 1});
  *  transitions0.insert({2, a0a, 1});
  *  transitions0.insert({2, a0b, 0});
- *
- *  ODDs::ODD::StateContainer states1 = {0, 1};
  *
  *  ODDs::ODD::AlphabetMap alphabet1;
  *  ODDs::ODD::Symbol a1c = alphabet1.addSymbol("c");
@@ -202,13 +196,11 @@ private:
  *  // Non-deterministic, why not?
  *  transitions1.insert({1, a1d, 0});
  *
- *  ODDs::ODD::StateContainer states2 = {0, 1, 2};
- *
  *  ODDs::ODD::StateContainer finalStates = {2};
  *
- *  ODDs::ODDBuilder builder(states0);
- *  builder.addLayer(alphabet0, transitions0, states1);
- *  builder.addLayer(alphabet1, transitions1, states2);
+ *  ODDs::ODDBuilder builder(3);
+ *  builder.addLayer(alphabet0, transitions0, 2);
+ *  builder.addLayer(alphabet1, transitions1, 3);
  *  builder.setInitialStates(initialStates);
  *  builder.setFinalStates(finalStates);
  *  ODDs::ODD odd = builder.build();
@@ -217,9 +209,10 @@ private:
 class ODDBuilder {
 public:
     /**
-     * @brief Construct from the leftmost set of states.
+     * @brief Construct a builder given the number of vertices in the first
+     * layer.
      */
-    ODDBuilder(const ODD::StateContainer& firstLayerLeft);
+    ODDBuilder(int leftStateCount);
 
     ~ODDBuilder();
     ODDBuilder(const ODDBuilder&) = delete;
@@ -232,7 +225,7 @@ public:
      */
     void addLayer(const ODD::AlphabetMap& alphabet,
                   const ODD::TransitionContainer& transitions,
-                  const ODD::StateContainer& rightStates);
+                  int rightStateCount);
 
     /**
      * @brief Set the initial states set for the leftmost layer.
@@ -275,17 +268,17 @@ ODD readFromIStream(std::istream& is);
  * ```
  * <number of layers>
  * <initial states>
- * <first state set>
+ * <first state set size>
  * <first layer alphabet>
  * <first layer transitions>
- * <second state set>
+ * <second state set size>
  * <second layer alphabet>
  * <second layer transitions>
- * <third state set>
+ * <third state set size>
  * ...
  * <last layer alphabet>
  * <last layer transitions>
- * <last state set>
+ * <last state set size>
  * <final states>
  * ```
  *
@@ -328,7 +321,6 @@ ODD readFromIStream(std::istream& is);
  * 1
  * 2 
  * 3
- * 0 1 2 
  * 2
  * a b 
  * 6
@@ -339,7 +331,6 @@ ODD readFromIStream(std::istream& is);
  * 2 a 1
  * 2 b 0
  * 2
- * 0 1 
  * 2
  * c d 
  * 5
@@ -349,7 +340,6 @@ ODD readFromIStream(std::istream& is);
  * 1 d 0
  * 1 d 2
  * 3
- * 0 1 2 
  * 1
  * 2 
  * ```

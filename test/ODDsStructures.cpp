@@ -69,17 +69,11 @@ TEST(ODDsStructuresTest, alphabetMapSymbols) {
 }
 
 TEST(ODDsStructuresTest, layerWidthLeft) {
-    ODDs::ODD::StateContainer leftStates, rightStates;
-    leftStates.insert(1);
-    leftStates.insert(2);
-    leftStates.insert(3);
-    rightStates.insert(1);
-    rightStates.insert(2);
     ODDs::ODD::Layer layer {
         {},
-        &leftStates,
+        3,
         {},
-        &rightStates,
+        2,
         {},
         {},
         false, false
@@ -88,17 +82,11 @@ TEST(ODDsStructuresTest, layerWidthLeft) {
 }
 
 TEST(ODDsStructuresTest, layerWidthRight) {
-    ODDs::ODD::StateContainer leftStates, rightStates;
-    rightStates.insert(1);
-    rightStates.insert(2);
-    rightStates.insert(3);
-    leftStates.insert(1);
-    leftStates.insert(2);
     ODDs::ODD::Layer layer {
         {},
-        &leftStates,
+        2,
         {},
-        &rightStates,
+        3,
         {},
         {},
         false, false
@@ -107,12 +95,11 @@ TEST(ODDsStructuresTest, layerWidthRight) {
 }
 
 TEST(ODDsStructuresTest, emptyLayerWidth) {
-    ODDs::ODD::StateContainer leftStates, rightStates;
     ODDs::ODD::Layer layer {
         {},
-        &leftStates,
+        0,
         {},
-        &rightStates,
+        0,
         {},
         {},
         false, false
@@ -123,36 +110,36 @@ TEST(ODDsStructuresTest, emptyLayerWidth) {
 TEST(ODDsStructuresTest, layerSanity) {
     ODDs::ODD::StateContainer empty, nonEmpty;
     nonEmpty.insert(0);
-    ODDs::ODD::Layer layerEEFF {{},&empty,empty,&empty,empty,{},false,false};
+    ODDs::ODD::Layer layerEEFF {{},5,empty,5,empty,{},false,false};
     EXPECT_TRUE(layerEEFF.checkSanity());
-    ODDs::ODD::Layer layerEEFT {{},&empty,empty,&empty,empty,{},false,true};
+    ODDs::ODD::Layer layerEEFT {{},5,empty,5,empty,{},false,true};
     EXPECT_TRUE(layerEEFT.checkSanity());
-    ODDs::ODD::Layer layerEETF {{},&empty,empty,&empty,empty,{},true,false};
+    ODDs::ODD::Layer layerEETF {{},5,empty,5,empty,{},true,false};
     EXPECT_TRUE(layerEETF.checkSanity());
-    ODDs::ODD::Layer layerEETT {{},&empty,empty,&empty,empty,{},true,true};
+    ODDs::ODD::Layer layerEETT {{},5,empty,5,empty,{},true,true};
     EXPECT_TRUE(layerEETT.checkSanity());
-    ODDs::ODD::Layer layerENFF {{},&empty,empty,&empty,nonEmpty,{},false,false};
+    ODDs::ODD::Layer layerENFF {{},5,empty,5,nonEmpty,{},false,false};
     EXPECT_FALSE(layerENFF.checkSanity());
-    ODDs::ODD::Layer layerENFT {{},&empty,empty,&empty,nonEmpty,{},false,true};
+    ODDs::ODD::Layer layerENFT {{},5,empty,5,nonEmpty,{},false,true};
     EXPECT_TRUE(layerENFT.checkSanity());
-    ODDs::ODD::Layer layerENTF {{},&empty,empty,&empty,nonEmpty,{},true,false};
+    ODDs::ODD::Layer layerENTF {{},5,empty,5,nonEmpty,{},true,false};
     EXPECT_FALSE(layerENTF.checkSanity());
-    ODDs::ODD::Layer layerENTT {{},&empty,empty,&empty,nonEmpty,{},true,true};
+    ODDs::ODD::Layer layerENTT {{},5,empty,5,nonEmpty,{},true,true};
     EXPECT_TRUE(layerENTT.checkSanity());
-    ODDs::ODD::Layer layerNEFF {{},&empty,nonEmpty,&empty,empty,{},false,false};
+    ODDs::ODD::Layer layerNEFF {{},5,nonEmpty,5,empty,{},false,false};
     EXPECT_FALSE(layerNEFF.checkSanity());
-    ODDs::ODD::Layer layerNEFT {{},&empty,nonEmpty,&empty,empty,{},false,true};
+    ODDs::ODD::Layer layerNEFT {{},5,nonEmpty,5,empty,{},false,true};
     EXPECT_FALSE(layerNEFT.checkSanity());
-    ODDs::ODD::Layer layerNETF {{},&empty,nonEmpty,&empty,empty,{},true,false};
+    ODDs::ODD::Layer layerNETF {{},5,nonEmpty,5,empty,{},true,false};
     EXPECT_TRUE(layerNETF.checkSanity());
-    ODDs::ODD::Layer layerNETT {{},&empty,nonEmpty,&empty,empty,{},true,true};
+    ODDs::ODD::Layer layerNETT {{},5,nonEmpty,5,empty,{},true,true};
     EXPECT_TRUE(layerNETT.checkSanity());
-    ODDs::ODD::Layer layerNNFF {{},&empty,nonEmpty,&empty,nonEmpty,{},false,false};
+    ODDs::ODD::Layer layerNNFF {{},5,nonEmpty,5,nonEmpty,{},false,false};
     EXPECT_FALSE(layerNNFF.checkSanity());
-    ODDs::ODD::Layer layerNNFT {{},&empty,nonEmpty,&empty,nonEmpty,{},false,true};
+    ODDs::ODD::Layer layerNNFT {{},5,nonEmpty,5,nonEmpty,{},false,true};
     EXPECT_FALSE(layerNNFT.checkSanity());
-    ODDs::ODD::Layer layerNNTF {{},&empty,nonEmpty,&empty,nonEmpty,{},true,false};
+    ODDs::ODD::Layer layerNNTF {{},5,nonEmpty,5,nonEmpty,{},true,false};
     EXPECT_FALSE(layerNNTF.checkSanity());
-    ODDs::ODD::Layer layerNNTT {{},&empty,nonEmpty,&empty,nonEmpty,{},true,true};
+    ODDs::ODD::Layer layerNNTT {{},5,nonEmpty,5,nonEmpty,{},true,true};
     EXPECT_TRUE(layerNNTT.checkSanity());
 }
