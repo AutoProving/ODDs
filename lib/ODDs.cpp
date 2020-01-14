@@ -33,15 +33,19 @@ int ODD::AlphabetMap::addSymbol(const std::string& symbol) {
     return newId;
 }
 
-const std::string& ODD::AlphabetMap::numberToSymbol(int number) const {
+const std::string& ODD::AlphabetMap::numberToSymbol(ODD::Symbol number) const {
     return n2s_[number];
 }
 
-int ODD::AlphabetMap::symbolToNumber(const std::string& symbol) const {
+ODD::Symbol ODD::AlphabetMap::symbolToNumber(const std::string& symbol) const {
     auto it = s2n_.find(symbol);
     if (it == s2n_.end())
         return -1;
     return it->second;
+}
+
+const std::vector<std::string>& ODD::AlphabetMap::symbols() const {
+    return n2s_;
 }
 
 bool ODD::AlphabetMap::operator==(const ODD::AlphabetMap& rhs) const {
@@ -142,6 +146,106 @@ void ODDBuilder::setFinalStates(const ODD::StateContainer& finalStates) {
 
 ODD ODDBuilder::build() {
     return impl_->build();
+}
+
+namespace {
+
+ODD::StateContainer readStateSet(std::istream& is) {
+    int size;
+    is >> size;
+    ODD::StateContainer states;
+    for (int i = 0; i < size; i++) {
+        int state;
+        is >> state;
+        states.insert(state);
+    }
+    return states;
+}
+
+ODD::AlphabetMap readAlphabetMap(std::istream& is) {
+    int size;
+    is >> size;
+    ODD::AlphabetMap alphabet;
+    for (int i = 0; i < size; i++) {
+        std::string symbol;
+        is >> symbol;
+        alphabet.addSymbol(symbol);
+    }
+    return alphabet;
+}
+
+ODD::TransitionContainer readTransitionSet(const ODD::AlphabetMap& alphabet, std::istream& is) {
+    int size;
+    is >> size;
+    ODD::TransitionContainer transitions;
+    for (int i = 0; i < size; i++) {
+        int from, to;
+        std::string symbol;
+        is >> from >> symbol >> to;
+        transitions.insert({from, alphabet.symbolToNumber(symbol), to});
+    }
+    return transitions;
+}
+
+}
+
+ODD readFromIStream(std::istream& is) {
+    int layers;
+    is >> layers;
+    ODD::StateContainer initialStates = readStateSet(is);
+    ODD::StateContainer leftStates = readStateSet(is);
+    ODDBuilder builder(leftStates);
+    for (int layer = 0; layer < layers; layer++) {
+        ODD::AlphabetMap alphabet = readAlphabetMap(is);
+        ODD::TransitionContainer transitions = readTransitionSet(alphabet, is);
+        ODD::StateContainer nextStates = readStateSet(is);
+        builder.addLayer(alphabet, transitions, nextStates);
+    }
+    builder.setInitialStates(initialStates);
+    builder.setFinalStates(readStateSet(is));
+    return builder.build();
+}
+
+namespace {
+
+void writeStateSet(std::ostream& os, const ODD::StateContainer& states) {
+    os << states.size() << std::endl;
+    for (int state : states)
+        os << state << " ";
+    os << std::endl;
+}
+
+void writeAlphabetMap(std::ostream& os, const ODD::AlphabetMap& alphabet) {
+    os << alphabet.symbols().size() << std::endl;
+    for (const std::string& symbol :  alphabet.symbols())
+        os << symbol << " ";
+    os << std::endl;
+}
+
+void writeTransitionSet(std::ostream& os,
+                        const ODD::AlphabetMap& alphabet,
+                        const ODD::TransitionContainer& transitions) {
+    os << transitions.size() << std::endl;
+    for (const ODD::Transition& transition : transitions) {
+        os << transition.from << " "
+           << alphabet.numberToSymbol(transition.symbol) << " "
+           << transition.to << std::endl;
+    }
+}
+
+}
+
+void writeToOStream(std::ostream& os, const ODD& odd) {
+    os << odd.countLayers() << std::endl;
+    writeStateSet(os, odd.getLayer(0).initialStates);
+    writeStateSet(os, *odd.getLayer(0).leftStates);
+    for (int layer = 0; layer < odd.countLayers(); layer++) {
+        const auto& alphabet = odd.getLayer(layer).alphabet;
+        writeAlphabetMap(os, alphabet);
+        writeTransitionSet(os, alphabet, odd.getLayer(layer).transitions);
+        writeStateSet(os, *odd.getLayer(layer).rightStates);
+    }
+    writeStateSet(os, odd.getLayer(odd.countLayers() - 1).finalStates);
 }
 
 }

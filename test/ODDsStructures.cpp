@@ -1,12 +1,12 @@
 #include <gtest/gtest.h>
 #include <ODDs.h>
 
-TEST(ODDsStructures, transitionEqualityTrivial) {
+TEST(ODDsStructuresTest, transitionEqualityTrivial) {
     EXPECT_EQ(ODDs::ODD::Transition(0, 1, 2), ODDs::ODD::Transition(0, 1, 2));
     EXPECT_FALSE(ODDs::ODD::Transition(0, 0, 0) == ODDs::ODD::Transition(1, 1, 1));
 }
 
-TEST(ODDsStructures, trainsitionComparatorTrivial) {
+TEST(ODDsStructuresTest, trainsitionComparatorTrivial) {
     EXPECT_LT(ODDs::ODD::Transition(0, 1, 2), ODDs::ODD::Transition(0, 1, 3));
     EXPECT_LT(ODDs::ODD::Transition(0, 1, 3), ODDs::ODD::Transition(0, 2, 1));
     EXPECT_LT(ODDs::ODD::Transition(0, 1, 2), ODDs::ODD::Transition(0, 1, 3));
@@ -14,10 +14,10 @@ TEST(ODDsStructures, trainsitionComparatorTrivial) {
     EXPECT_FALSE(ODDs::ODD::Transition(0, 1, 3) < ODDs::ODD::Transition(0, 1, 2));
 }
 
-TEST(ODDsStructures, alphabetMapTrivial) {
+TEST(ODDsStructuresTest, alphabetMapTrivial) {
     ODDs::ODD::AlphabetMap alphabet;
-    int a = alphabet.addSymbol("symb_a");
-    int b = alphabet.addSymbol("symb_b");
+    ODDs::ODD::Symbol a = alphabet.addSymbol("symb_a");
+    ODDs::ODD::Symbol b = alphabet.addSymbol("symb_b");
     EXPECT_EQ(a, alphabet.symbolToNumber("symb_a"));
     EXPECT_EQ(b, alphabet.symbolToNumber("symb_b"));
     EXPECT_EQ(-1, alphabet.symbolToNumber("symb_c"));
@@ -25,21 +25,21 @@ TEST(ODDsStructures, alphabetMapTrivial) {
     EXPECT_EQ("symb_b", alphabet.numberToSymbol(b));
 }
 
-TEST(ODDsStructures, alphabetMapEmpty) {
+TEST(ODDsStructuresTest, alphabetMapEmpty) {
     ODDs::ODD::AlphabetMap alphabet;
     EXPECT_EQ(-1, alphabet.symbolToNumber("a"));
-    int a = alphabet.addSymbol("a");
+    ODDs::ODD::Symbol a = alphabet.addSymbol("a");
     EXPECT_EQ(a, alphabet.symbolToNumber("a"));
 }
 
-TEST(ODDsStructures, alphabetMapExistingSymbol) {
+TEST(ODDsStructuresTest, alphabetMapExistingSymbol) {
     ODDs::ODD::AlphabetMap alphabet;
-    int a1 = alphabet.addSymbol("a");
-    int a2 = alphabet.addSymbol("a");
+    ODDs::ODD::Symbol a1 = alphabet.addSymbol("a");
+    ODDs::ODD::Symbol a2 = alphabet.addSymbol("a");
     ASSERT_EQ(a1, a2);
 }
 
-TEST(ODDsStructures, alphabetMapEqualityTrivial) {
+TEST(ODDsStructuresTest, alphabetMapEqualityTrivial) {
     ODDs::ODD::AlphabetMap a;
     a.addSymbol("a");
     a.addSymbol("b");
@@ -49,7 +49,7 @@ TEST(ODDsStructures, alphabetMapEqualityTrivial) {
     ASSERT_FALSE(a == b);
 }
 
-TEST(ODDsStructures, alphabetMapOrder) {
+TEST(ODDsStructuresTest, alphabetMapOrder) {
     ODDs::ODD::AlphabetMap a;
     a.addSymbol("a");
     a.addSymbol("b");
@@ -59,7 +59,16 @@ TEST(ODDsStructures, alphabetMapOrder) {
     ASSERT_FALSE(a == b);
 }
 
-TEST(ODDsStructures, layerWidthLeft) {
+TEST(ODDsStructuresTest, alphabetMapSymbols) {
+    ODDs::ODD::AlphabetMap a;
+    a.addSymbol("b");
+    a.addSymbol("a");
+    a.addSymbol("b");
+    std::vector<std::string> expected = {"b", "a"};
+    ASSERT_EQ(expected, a.symbols());
+}
+
+TEST(ODDsStructuresTest, layerWidthLeft) {
     ODDs::ODD::StateContainer leftStates, rightStates;
     leftStates.insert(1);
     leftStates.insert(2);
@@ -78,7 +87,7 @@ TEST(ODDsStructures, layerWidthLeft) {
     ASSERT_EQ(3, layer.width());
 }
 
-TEST(ODDsStructures, layerWidthRight) {
+TEST(ODDsStructuresTest, layerWidthRight) {
     ODDs::ODD::StateContainer leftStates, rightStates;
     rightStates.insert(1);
     rightStates.insert(2);
@@ -97,7 +106,7 @@ TEST(ODDsStructures, layerWidthRight) {
     ASSERT_EQ(3, layer.width());
 }
 
-TEST(ODDsStructures, emptyLayerWidth) {
+TEST(ODDsStructuresTest, emptyLayerWidth) {
     ODDs::ODD::StateContainer leftStates, rightStates;
     ODDs::ODD::Layer layer {
         {},
@@ -111,7 +120,7 @@ TEST(ODDsStructures, emptyLayerWidth) {
     ASSERT_EQ(0, layer.width());
 }
 
-TEST(ODDsStructures, layerSanity) {
+TEST(ODDsStructuresTest, layerSanity) {
     ODDs::ODD::StateContainer empty, nonEmpty;
     nonEmpty.insert(0);
     ODDs::ODD::Layer layerEEFF {{},&empty,empty,&empty,empty,{},false,false};

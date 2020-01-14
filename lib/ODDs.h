@@ -86,13 +86,20 @@ public:
          *
          * The behaviour in case the number is not in alphabet is undefined.
          */
-        const std::string& numberToSymbol(int number) const;
+        const std::string& numberToSymbol(Symbol number) const;
 
         /**
          * @brief  Get the symbol id.
          * @return Symbol id, or -1 in case the symbol is not mapped.
          */
-        int symbolToNumber(const std::string& symbol) const;
+        Symbol symbolToNumber(const std::string& symbol) const;
+
+        /**
+         * @brief Get all symbols added to the alphabet.
+         *
+         * The symbols are ordered by the time they were added.
+         */
+        const std::vector<std::string>& symbols() const;
 
         /**
          * @brief Compares two alphabet maps on equality.
@@ -167,14 +174,13 @@ private:
  * 
  * @section Example
  * @code
- *
  *  ODDs::ODD::StateContainer initialStates = {2};
  *
  *  ODDs::ODD::StateContainer states0 = {0, 1, 2};
  *
  *  ODDs::ODD::AlphabetMap alphabet0;
- *  int a0a = alphabet0.addSymbol("a");
- *  int a0b = alphabet0.addSymbol("b");
+ *  ODDs::ODD::Symbol a0a = alphabet0.addSymbol("a");
+ *  ODDs::ODD::Symbol a0b = alphabet0.addSymbol("b");
  *  ODDs::ODD::TransitionContainer transitions0;
  *  transitions0.insert({0, a0a, 0});
  *  transitions0.insert({0, a0b, 1});
@@ -186,15 +192,15 @@ private:
  *  ODDs::ODD::StateContainer states1 = {0, 1};
  *
  *  ODDs::ODD::AlphabetMap alphabet1;
- *  int a1c = alphabet1.addSymbol("c");
- *  int a1d = alphabet1.addSymbol("d");
+ *  ODDs::ODD::Symbol a1c = alphabet1.addSymbol("c");
+ *  ODDs::ODD::Symbol a1d = alphabet1.addSymbol("d");
  *  ODDs::ODD::TransitionContainer transitions1;
  *  transitions1.insert({0, a1c, 0});
  *  transitions1.insert({0, a1d, 1});
- *  transitions1.insert({0, a1c, 0});
- *  transitions1.insert({0, a1d, 2});
+ *  transitions1.insert({1, a1c, 0});
+ *  transitions1.insert({1, a1d, 2});
  *  // Non-deterministic, why not?
- *  transitions1.insert({0, a1d, 0});
+ *  transitions1.insert({1, a1d, 0});
  *
  *  ODDs::ODD::StateContainer states2 = {0, 1, 2};
  *
@@ -254,15 +260,100 @@ private:
 /**
  * @brief Reads ODD description from an input stream.
  *
- * TODO: Provide format description.
+ * The format is the same as in writeToOStream. This function is insensitive to
+ * indentation and EOLs.
  */
-std::istream& operator>>(std::istream& is, ODD& odd);
+ODD readFromIStream(std::istream& is);
 
 /**
  * @brief Writes ODD description to an output stream.
  *
- * TODO: Provide format description.
+ * @section Format
+ *
+ * Prints the ODD in the following way:
+ *
+ * ```
+ * <number of layers>
+ * <initial states>
+ * <first state set>
+ * <first layer alphabet>
+ * <first layer transitions>
+ * <second state set>
+ * <second layer alphabet>
+ * <second layer transitions>
+ * <third state set>
+ * ...
+ * <last layer alphabet>
+ * <last layer transitions>
+ * <last state set>
+ * <final states>
+ * ```
+ *
+ * The state sets are printed in the following way:
+ *
+ * ```
+ * <number of states>
+ * <space-separated list of states>
+ * ```
+ *
+ * There might be an additional space in the end of the last line.
+ * The states are ordered by their IDs.
+ *
+ * The alphabets are printed in the following way:
+ *
+ * ```
+ * <number of symbols>
+ * <space-separated list of symbols (strings)>
+ * ```
+ *
+ * There might be an additional space in the end of the last line.
+ * The symbols are ordered by the time they were added.
+ *
+ * The transition sets are printed in the following way:
+ *
+ * ```
+ * <number of transitions>
+ * <first left end> <first symbol> <first right end>
+ * <second left end> <second symbol> <second right end>
+ * ...
+ * ```
+ *
+ * The transitions are ordered lexicographically.
+ *
+ * @subsection Example
+ *
+ * For instance, the ODD from the ODDBuilder class example is printed as
+ * ```
+ * 2
+ * 1
+ * 2 
+ * 3
+ * 0 1 2 
+ * 2
+ * a b 
+ * 6
+ * 0 a 0
+ * 0 b 1
+ * 1 a 0
+ * 1 b 1
+ * 2 a 1
+ * 2 b 0
+ * 2
+ * 0 1 
+ * 2
+ * c d 
+ * 5
+ * 0 c 0
+ * 0 d 1
+ * 1 c 0
+ * 1 d 0
+ * 1 d 2
+ * 3
+ * 0 1 2 
+ * 1
+ * 2 
+ * ```
  */
-std::ostream& operator<<(std::ostream& os, const ODD& odd);
+void writeToOStream(std::ostream& os, const ODD& odd);
 
 }
