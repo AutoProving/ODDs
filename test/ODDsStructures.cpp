@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <ODDs.h>
+#include <ODDs/ODDs.h>
 
 TEST(ODDsStructuresTest, transitionEqualityTrivial) {
     EXPECT_EQ(ODDs::ODD::Transition(0, 1, 2), ODDs::ODD::Transition(0, 1, 2));

@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <ODDs.h>
+#include <ODDs/ODDs.h>
 
 #include <sstream>
 

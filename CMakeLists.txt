@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 add_library(ODDs STATIC
-    lib/ODDs.cpp)
+    lib/ODDs/ODDs.cpp)
 
 target_include_directories(ODDs PUBLIC lib/)
 target_compile_options(ODDs PRIVATE -Wall -Wextra -Wshadow)
