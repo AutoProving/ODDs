@@ -68,6 +68,15 @@ TEST(ODDsStructuresTest, alphabetMapSymbols) {
     ASSERT_EQ(expected, a.symbols());
 }
 
+TEST(ODDsStructuresTest, alphabetMapContains) {
+    ODDs::ODD::AlphabetMap a;
+    a.addSymbol("a");
+    a.addSymbol("c");
+    ASSERT_TRUE(a.contains("a"));
+    ASSERT_FALSE(a.contains("b"));
+    ASSERT_TRUE(a.contains("c"));
+}
+
 TEST(ODDsStructuresTest, layerWidthLeft) {
     ODDs::ODD::Layer layer {
         {},

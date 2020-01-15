@@ -52,6 +52,10 @@ bool ODD::AlphabetMap::operator==(const ODD::AlphabetMap& rhs) const {
     return n2s_ == rhs.n2s_;
 }
 
+bool ODD::AlphabetMap::contains(const std::string& symbol) const {
+    return s2n_.count(symbol);
+}
+
 int ODD::Layer::width() const {
     return std::max<int>(leftStates, rightStates);
 }

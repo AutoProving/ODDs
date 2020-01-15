@@ -107,6 +107,11 @@ public:
          * Needed for tests.
          */
         bool operator==(const AlphabetMap& rhs) const;
+
+        /**
+         * @brief Checks if alphabet map contains a symbol.
+         */
+        bool contains(const std::string& symbol) const;
     private:
         std::vector<std::string> n2s_;
         std::map<std::string, int> s2n_;
