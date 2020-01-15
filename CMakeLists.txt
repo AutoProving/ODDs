@@ -6,10 +6,12 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 add_library(ODDs STATIC
+    lib/ODDs/JSONDump.cpp
     lib/ODDs/ODDs.cpp
     lib/ODDs/Operations.cpp)
 
 target_include_directories(ODDs PUBLIC lib/)
+target_include_directories(ODDs PUBLIC ext/rapidjson/include/)
 target_compile_options(ODDs PRIVATE -Wall -Wextra -Wshadow)
 
 enable_testing()
@@ -22,6 +24,7 @@ add_executable(ODDsTest
     test/ODDsStructures.cpp
     test/ODDsUnion.cpp)
 target_include_directories(ODDsTest PUBLIC lib/)
+target_include_directories(ODDsTest PUBLIC ext/googletest/googletest/include/)
 target_link_libraries(ODDsTest gtest gtest_main)
 target_link_libraries(ODDsTest ODDs)
 target_compile_options(ODDsTest PRIVATE -Wall -Wextra -Wshadow)

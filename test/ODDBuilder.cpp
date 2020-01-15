@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <ODDs/ODDs.h>
+#include <ODDs/JSONDump.h>
 
 #include <sstream>
 
@@ -94,6 +95,8 @@ protected:
         finalStates = {2};
     }
 
+    static std::string jsonDescription;
+
     static void SetUpTestSuite() {
         setDescription();
         setODDBuilderPrerequisites();
@@ -107,6 +110,15 @@ protected:
         ASSERT_EQ(initialStates, odd.getLayer(0).initialStates);
         ASSERT_EQ(finalStates, odd.getLayer(1).finalStates);
     }
+
+    virtual ODDs::ODD buildODD() {
+        ODDs::ODDBuilder builder(states0);
+        builder.addLayer(alphabet0, transitions0, states1);
+        builder.addLayer(alphabet1, transitions1, states2);
+        builder.setInitialStates(initialStates);
+        builder.setFinalStates(finalStates);
+        return builder.build();
+    }
 };
 
 std::string                    ODDBuilderTest::description;
@@ -115,14 +127,93 @@ int                            ODDBuilderTest::states0, ODDBuilderTest::states1,
 ODDs::ODD::AlphabetMap         ODDBuilderTest::alphabet0, ODDBuilderTest::alphabet1;
 ODDs::ODD::TransitionContainer ODDBuilderTest::transitions0, ODDBuilderTest::transitions1;
 
-TEST_F(ODDBuilderTest, trivial) {
-    ODDs::ODDBuilder builder(states0);
-    builder.addLayer(alphabet0, transitions0, states1);
-    builder.addLayer(alphabet1, transitions1, states2);
-    builder.setInitialStates(initialStates);
-    builder.setFinalStates(finalStates);
-    ODDs::ODD odd = builder.build();
+std::string ODDBuilderTest::jsonDescription = R"({
+  "leftLayerStates": 3,
+  "initialStates": [
+    2
+  ],
+  "layers": [
+    {
+      "alphabet": [
+        "a",
+        "b"
+      ],
+      "transitions": [
+        {
+          "from": 0,
+          "symbol": "a",
+          "to": 0
+        },
+        {
+          "from": 0,
+          "symbol": "b",
+          "to": 1
+        },
+        {
+          "from": 1,
+          "symbol": "a",
+          "to": 0
+        },
+        {
+          "from": 1,
+          "symbol": "b",
+          "to": 1
+        },
+        {
+          "from": 2,
+          "symbol": "a",
+          "to": 1
+        },
+        {
+          "from": 2,
+          "symbol": "b",
+          "to": 0
+        }
+      ],
+      "rightLayerStates": 2
+    },
+    {
+      "alphabet": [
+        "c",
+        "d"
+      ],
+      "transitions": [
+        {
+          "from": 0,
+          "symbol": "c",
+          "to": 0
+        },
+        {
+          "from": 0,
+          "symbol": "d",
+          "to": 1
+        },
+        {
+          "from": 1,
+          "symbol": "c",
+          "to": 0
+        },
+        {
+          "from": 1,
+          "symbol": "d",
+          "to": 0
+        },
+        {
+          "from": 1,
+          "symbol": "d",
+          "to": 2
+        }
+      ],
+      "rightLayerStates": 3
+    }
+  ],
+  "finalStates": [
+    2
+  ]
+})";
 
+TEST_F(ODDBuilderTest, trivial) {
+    ODDs::ODD odd = buildODD();
     checkODD(odd);
 }
 
@@ -143,14 +234,73 @@ TEST_F(ODDBuilderTest, input) {
 }
 
 TEST_F(ODDBuilderTest, output) {
-    ODDs::ODDBuilder builder(states0);
-    builder.addLayer(alphabet0, transitions0, states1);
-    builder.addLayer(alphabet1, transitions1, states2);
-    builder.setInitialStates(initialStates);
-    builder.setFinalStates(finalStates);
-    ODDs::ODD odd = builder.build();
-
+    ODDs::ODD odd = buildODD();
     std::stringstream ss;
     writeToOStream(ss, odd);
     ASSERT_EQ(description, ss.str());
+}
+
+TEST_F(ODDBuilderTest, jsonRead) {
+    ODDs::ODD odd = ODDs::readJSON(jsonDescription);
+    checkODD(odd);
+}
+
+TEST_F(ODDBuilderTest, jsonReadStream) {
+    std::istringstream is(jsonDescription);
+    ODDs::ODD odd = ODDs::readJSON(is);
+    checkODD(odd);
+}
+
+TEST_F(ODDBuilderTest, jsonWrite) {
+    ODDs::ODD odd = buildODD();
+    ASSERT_EQ(jsonDescription, writeJSON(odd));
+}
+
+TEST_F(ODDBuilderTest, jsonWriteStream) {
+    ODDs::ODD odd = buildODD();
+    std::stringstream ss;
+    writeJSON(ss, odd);
+    ASSERT_EQ(jsonDescription, ss.str());
+}
+
+TEST_F(ODDBuilderTest, jsonDumpTrivials) {
+    ODDs::ODD odd = buildODD();
+    ASSERT_EQ(ODDs::JSONDump(odd), ODDs::JSONDump(odd));
+}
+
+TEST_F(ODDBuilderTest, jsonDumpAlphabetNotSorted) {
+    ODDs::ODDBuilder builder1(1);
+    builder1.setInitialStates({0});
+    ODDs::ODD::AlphabetMap alphabet1;
+    int a1 = alphabet1.addSymbol("a");
+    int b1 = alphabet1.addSymbol("b");
+    builder1.addLayer(
+        alphabet1,
+        {
+            {0, a1, 0},
+            {0, b1, 1}
+        },
+        2
+    );
+    builder1.setFinalStates({0, 1});
+    ODDs::ODD odd1 = builder1.build();
+
+
+    ODDs::ODDBuilder builder2(1);
+    builder2.setInitialStates({0});
+    ODDs::ODD::AlphabetMap alphabet2;
+    int b2 = alphabet2.addSymbol("b");
+    int a2 = alphabet2.addSymbol("a");
+    builder2.addLayer(
+        alphabet1,
+        {
+            {0, a2, 0},
+            {0, b2, 1}
+        },
+        2
+    );
+    builder2.setFinalStates({0, 1});
+    ODDs::ODD odd2 = builder2.build();
+
+    ASSERT_FALSE(ODDs::JSONDump(odd1) == ODDs::JSONDump(odd2));
 }
