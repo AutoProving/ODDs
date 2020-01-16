@@ -180,4 +180,170 @@ ODD diagramIntersection(const ODD& lhs, const ODD& rhs) {
     return builder.build();
 }
 
+namespace {
+
+std::string glueSymbolPair(const std::string& a, const std::string& b) {
+    return a + "," + b;
+}
+
+ODD::AlphabetMap alphabetCrossProduct(const ODD::AlphabetMap& lhs,
+                                      const ODD::AlphabetMap& rhs) {
+    ODD::AlphabetMap ret;
+    for (const std::string& a : lhs.symbols())
+        for (const std::string& b : rhs.symbols())
+            ret.addSymbol(glueSymbolPair(a, b));
+    return ret;
+}
+
+ODD::TransitionContainer tensorProductTransitions(const ODD::TransitionContainer& lt,
+                                                  const ODD::AlphabetMap& la,
+                                                  const ODD::TransitionContainer& rt,
+                                                  const ODD::AlphabetMap& ra,
+                                                  int rlsz, int rrsz,
+                                                  const ODD::AlphabetMap& ja) {
+    ODD::TransitionContainer transitions;
+    for (const ODD::Transition& ltt : lt) {
+        for (const ODD::Transition& rtt : rt) {
+            ODD::Symbol symbol = ja.symbolToNumber(
+                glueSymbolPair(
+                    la.numberToSymbol(ltt.symbol),
+                    ra.numberToSymbol(rtt.symbol)
+                )
+            );
+            transitions.insert({
+                ltt.from * rlsz + rtt.from,
+                symbol,
+                ltt.to * rrsz + rtt.to
+            });
+        }
+    }
+    return transitions;
+}
+
+}
+
+ODD diagramTensorProduct(const ODD& lhs, const ODD& rhs) {
+    assert(lhs.countLayers() == rhs.countLayers());
+
+    ODDBuilder builder(lhs.getLayer(0).leftStates * rhs.getLayer(0).leftStates);
+    builder.setInitialStates(
+        crossProduct(
+            lhs.initialStates(),
+            rhs.initialStates(),
+            rhs.getLayer(0).leftStates
+        )
+    );
+    for (int i = 0; i < lhs.countLayers(); i++) {
+        ODD::AlphabetMap alphabet =
+            alphabetCrossProduct(
+                lhs.getLayer(i).alphabet,
+                rhs.getLayer(i).alphabet
+            );
+        ODD::TransitionContainer transitions =
+            tensorProductTransitions(
+                lhs.getLayer(i).transitions,
+                lhs.getLayer(i).alphabet,
+                rhs.getLayer(i).transitions,
+                rhs.getLayer(i).alphabet,
+                rhs.getLayer(i).leftStates,
+                rhs.getLayer(i).rightStates,
+                alphabet
+            );
+        int rightSize =
+            lhs.getLayer(i).rightStates * rhs.getLayer(i).rightStates;
+        builder.addLayer(alphabet, transitions, rightSize);
+    }
+    int n = lhs.countLayers();
+    builder.setFinalStates(
+        crossProduct(
+            lhs.finalStates(),
+            rhs.finalStates(),
+            rhs.getLayer(n - 1).rightStates
+        )
+    );
+    return builder.build();
+}
+
+namespace {
+
+ODD::StateContainer negateStates(const ODD::StateContainer& states, int n) {
+    auto it = states.begin();
+    ODD::StateContainer ret;
+    for (int state = 0; state < n; state++) {
+        if (state == *it)
+            it++;
+        else
+            ret.insert(ret.end(), state);
+    }
+    return ret;
+}
+
+}
+
+ODD diagramNegation(const ODD& odd) {
+    ODDBuilder builder(odd.getLayer(0).leftStates);
+    builder.setInitialStates(odd.initialStates());
+    for (int i = 0; i < odd.countLayers(); i++) {
+        builder.addLayer(
+            odd.getLayer(i).alphabet,
+            odd.getLayer(i).transitions,
+            odd.getLayer(i).rightStates
+        );
+    }
+    builder.setFinalStates(
+        negateStates(
+            odd.finalStates(),
+            odd.getLayer(odd.countLayers() - 1).rightStates
+        )
+    );
+    return builder.build();
+}
+
+namespace {
+
+ODD::AlphabetMap alphabetMapping(std::function<std::string(std::string)> g,
+                                 const ODD::AlphabetMap& alphabet) {
+    ODD::AlphabetMap ret;
+    for (const std::string& symbol : alphabet.symbols())
+        ret.addSymbol(g(symbol));
+    return ret;
+}
+
+ODD::TransitionContainer transitionMapping(std::function<std::string(std::string)> g,
+                                           const ODD::TransitionContainer& ts,
+                                           const ODD::AlphabetMap& oldAlphabet,
+                                           const ODD::AlphabetMap& newAlphabet) {
+    ODD::TransitionContainer ret;
+    for (const ODD::Transition& transition : ts) {
+        std::string symbol = oldAlphabet.numberToSymbol(transition.symbol);
+        ret.insert({
+            transition.from,
+            newAlphabet.symbolToNumber(g(symbol)),
+            transition.to
+        });
+    }
+    return ret;
+}
+
+}
+
+ODD diagramMapping(std::function<std::string(std::string)> g, const ODD& odd) {
+    ODDBuilder builder(odd.getLayer(0).leftStates);
+    builder.setInitialStates(odd.initialStates());
+    for (int i = 0; i < odd.countLayers(); i++) {
+        ODD::AlphabetMap oldAlphabet = odd.getLayer(i).alphabet;
+        ODD::AlphabetMap newAlphabet = alphabetMapping(g, oldAlphabet);
+        ODD::TransitionContainer transitions = transitionMapping(
+            g,
+            odd.getLayer(i).transitions,
+            oldAlphabet,
+            newAlphabet
+        );
+        int rightStates = odd.getLayer(i).rightStates;
+        builder.addLayer(newAlphabet, transitions, rightStates);
+    }
+    builder.setFinalStates(odd.finalStates());
+    return builder.build();
+}
+
 }

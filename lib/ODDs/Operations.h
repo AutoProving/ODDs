@@ -2,6 +2,8 @@
 
 #include <ODDs/ODDs.h>
 
+#include <functional>
+
 namespace ODDs {
 
 /**
@@ -36,6 +38,8 @@ inline ODD operator&(const ODD& lhs, const ODD& rhs) {
 
 /**
  * @brief Construct tensor product of the diagrams.
+ *
+ * Alphabet symbols are connected with a comma between.
  */
 ODD diagramTensorProduct(const ODD& lhs, const ODD& rhs);
 
@@ -47,10 +51,13 @@ inline ODD operator*(const ODD& lhs, const ODD& rhs) {
 }
 
 /**
- * @brief Construct negation of the diagram.
+ * @brief Construct negation of a *complete deterministic* diagram.
  *
- * Construct a diagram that accepts exactly the complement of language of
- * given diagram.
+ * Construct a diagram that accepts exactly the complement of language of given
+ * diagram.
+ *
+ * @warning In case the diagram is non-deterministic or not complete, constructs
+ * a valid diagram that *is not a negation*.
  */
 ODD diagramNegation(const ODD& odd);
 
@@ -60,5 +67,27 @@ ODD diagramNegation(const ODD& odd);
 inline ODD operator~(const ODD& odd) {
     return diagramNegation(odd);
 }
+
+/**
+ * @brief Maps an alphabet of an ODD with given function.
+ */
+ODD diagramMapping(std::function<std::string(std::string)> g, const ODD& odd);
+
+/**
+ * @brief Checks if ODD is deterministic.
+ */
+bool isDeterministic(const ODD& odd);
+
+/**
+ * @brief Checks if ODD is complete.
+ */
+bool isComplete(const ODD& odd);
+
+/**
+ * @brief Construct a power set of the ODD.
+ *
+ * Construct a deterministic, complete ODD with same language as the given.
+ */
+ODD diagramPowerSet(const ODD& odd);
 
 }
