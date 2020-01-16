@@ -54,8 +54,8 @@ protected:
             "0 c 0\n"
             "0 d 1\n"
             "1 c 0\n"
-            "1 d 0\n"
-            "1 d 2\n"     // Non-deterministic
+            "1 d 2\n"
+            "1 d 0\n"     // Non-deterministic
             "3\n"         // Rightmost layer states
             "1\n2 \n";    // Final states
     }
@@ -196,12 +196,12 @@ std::string ODDBuilderTest::jsonDescription = R"({
         {
           "from": 1,
           "symbol": "d",
-          "to": 0
+          "to": 2
         },
         {
           "from": 1,
           "symbol": "d",
-          "to": 2
+          "to": 0
         }
       ],
       "rightLayerStates": 3

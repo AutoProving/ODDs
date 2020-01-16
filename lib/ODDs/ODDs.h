@@ -5,6 +5,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace ODDs {
@@ -35,6 +36,9 @@ public:
         Symbol symbol;
         State to;
 
+        // Needed by TransitionContainer::Iterator
+        Transition() = default;
+
         Transition(State stateFrom, Symbol bySymbol, State stateTo);
 
         /**
@@ -62,11 +66,124 @@ public:
     using StateContainer = std::set<State>;
 
     /**
+     * @brief A key for TransitionContainer.
+     */
+    struct TransitionKey {
+        State from;
+        Symbol symbol;
+
+        /**
+         * @brief Compares two transition keys lexicographically.
+         *
+         * Needed by multimap in TransitionContainer.
+         */
+        bool operator<(const TransitionKey& rhs) const;
+
+        /**
+         * @brief Compares two transition keys on equality,
+         *
+         * Needed by multimap in TransitionContainer.
+         */
+        bool operator==(const TransitionKey& rhs) const;
+    };
+
+    /**
      * @brief A type for transition containers.
      *
-     * TODO: Make it a wrapper around `std::multimap`.
+     * A wrapper around std::multimap.
      */
-    using TransitionContainer = std::set<Transition>;
+    class TransitionContainer {
+        using Base = std::multimap<TransitionKey, State>;
+        using BaseIterator = typename Base::const_iterator;
+    public:
+        /**
+         * @brief A wrapper around constant multimap iterator.
+         *
+         * Needed for value_type being Transition.
+         */
+        class Iterator {
+        public:
+            // Iterator traits (for range-based loops, for instance)
+            using difference_type   = BaseIterator::difference_type;
+            using value_type        = Transition;
+            using pointer           = const Transition*;
+            using reference         = const Transition&;
+            using iterator_category = std::bidirectional_iterator_tag;
+
+            Iterator() = default;
+            Iterator(const Iterator&) = default;
+            Iterator& operator=(const Iterator&) = default;
+            Iterator(Iterator&&) = default;
+            Iterator& operator=(Iterator&&) = default;
+            ~Iterator() = default;
+
+            bool operator==(const Iterator& rhs) const;
+            bool operator!=(const Iterator& rhs) const;
+
+            reference operator*();
+            pointer operator->();
+
+            Iterator& operator++();
+            Iterator operator++(int);
+            Iterator& operator--();
+            Iterator operator--(int);
+
+        private:
+            Iterator(BaseIterator it);
+
+            void updateStored_();
+
+            BaseIterator it_;
+            Transition stored_;
+
+            friend class TransitionContainer;
+        };
+
+        /**
+         * @brief Construct an empty container.
+         */
+        TransitionContainer() = default;
+
+        /**
+         * @brief Construct container with given elements.
+         */
+        TransitionContainer(std::initializer_list<Transition> elements);
+
+        TransitionContainer(const TransitionContainer&) = default;
+        TransitionContainer& operator=(const TransitionContainer&) = default;
+        TransitionContainer(TransitionContainer&&) = default;
+        TransitionContainer& operator=(TransitionContainer&&) = default;
+
+        /**
+         * @brief Iterator to the beginning.
+         */
+        Iterator begin() const;
+
+        /**
+         * @brief Iterator to the end.
+         */
+        Iterator end() const;
+
+        /**
+         * @brief Insert a new transition into the container.
+         */
+        Iterator insert(const Transition& transition);
+
+        /**
+         * @brief Number of stored transitions.
+         */
+        std::size_t size() const;
+
+        /**
+         * @brief Compares two transition containers on equality.
+         *
+         * Needed by tests.
+         */
+        bool operator==(const TransitionContainer& rhs) const;
+
+    private:
+        Base m_;
+    };
 
     /**
      * @brief A mapping between the alphabet and the state.
@@ -162,6 +279,11 @@ public:
      * @brief Constant reference to the layer by its id.
      */
     const Layer& getLayer(int i) const;
+
+    /**
+     * @brief Checks if an ODD accepts a string.
+     */
+    bool accepts(const std::vector<std::string>& string) const;
 
 private:
     std::vector<Layer> layers_;
@@ -316,7 +438,8 @@ ODD readFromIStream(std::istream& is);
  * ...
  * ```
  *
- * The transitions are ordered lexicographically.
+ * The transitions are ordered lexicographically by first two elements and by
+ * order of insertion by the last element.
  *
  * @subsection Example
  *
@@ -342,8 +465,8 @@ ODD readFromIStream(std::istream& is);
  * 0 c 0
  * 0 d 1
  * 1 c 0
- * 1 d 0
  * 1 d 2
+ * 1 d 0
  * 3
  * 1
  * 2 

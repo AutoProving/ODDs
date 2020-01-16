@@ -22,6 +22,100 @@ bool ODD::Transition::operator<(const ODD::Transition& rhs) const {
     return to < rhs.to;
 }
 
+bool ODD::TransitionKey::operator<(const ODD::TransitionKey& rhs) const {
+    if (from != rhs.from)
+        return from < rhs.from;
+    return symbol < rhs.symbol;
+}
+
+bool ODD::TransitionKey::operator==(const ODD::TransitionKey& rhs) const {
+    return from == rhs.from
+        && symbol == rhs.symbol;
+}
+
+using TCIterator = ODD::TransitionContainer::Iterator;
+
+bool TCIterator::operator==(const TCIterator& rhs) const {
+    return it_ == rhs.it_;
+}
+
+bool TCIterator::operator!=(const TCIterator& rhs) const {
+    return it_ != rhs.it_;
+}
+
+TCIterator::reference TCIterator::operator*() {
+    updateStored_();
+    return stored_;
+}
+
+TCIterator::pointer TCIterator::operator->() {
+    updateStored_();
+    return &stored_;
+}
+
+TCIterator& TCIterator::operator++() {
+    ++it_;
+    return *this;
+}
+
+TCIterator TCIterator::operator++(int) {
+    TCIterator ret(it_);
+    ++it_;
+    return ret;
+}
+
+TCIterator& TCIterator::operator--() {
+    --it_;
+    return *this;
+}
+
+TCIterator TCIterator::operator--(int) {
+    TCIterator ret(it_);
+    --it_;
+    return ret;
+}
+
+TCIterator::Iterator(ODD::TransitionContainer::BaseIterator it)
+    : it_(it)
+{}
+
+void TCIterator::updateStored_() {
+    stored_.from = it_->first.from;
+    stored_.symbol = it_->first.symbol;
+    stored_.to = it_->second;
+}
+
+using TC = ODD::TransitionContainer;
+
+TC::TransitionContainer(std::initializer_list<Transition> elements) {
+    for (const Transition& transition : elements)
+        insert(transition);
+}
+
+TCIterator TC::begin() const {
+    return TCIterator(m_.begin());
+}
+
+TCIterator TC::end() const {
+    return TCIterator(m_.end());
+}
+
+TCIterator TC::insert(const Transition& transition) {
+    Base::value_type element = {
+        {transition.from, transition.symbol},
+        transition.to
+    };
+    return TCIterator(m_.insert(std::move(element)));
+}
+
+std::size_t TC::size() const {
+    return m_.size();
+}
+
+bool TC::operator==(const TC& rhs) const {
+    return m_ == rhs.m_;
+}
+
 int ODD::AlphabetMap::addSymbol(const std::string& symbol) {
     auto it = s2n_.lower_bound(symbol);
     if (it != s2n_.end() && it->first == symbol) {

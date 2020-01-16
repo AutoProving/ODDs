@@ -235,8 +235,8 @@ std::string ODDsUnionTest::nonDetExpectedDesc = R"(
       "transitions": [
         {"from": 0, "symbol": "c", "to": 0},
         {"from": 1, "symbol": "d", "to": 1},
-        {"from": 2, "symbol": "a", "to": 2},
-        {"from": 2, "symbol": "a", "to": 3}
+        {"from": 2, "symbol": "a", "to": 3},
+        {"from": 2, "symbol": "a", "to": 2}
       ],
       "rightLayerStates": 4
     }

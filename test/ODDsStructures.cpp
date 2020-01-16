@@ -152,3 +152,73 @@ TEST(ODDsStructuresTest, layerSanity) {
     ODDs::ODD::Layer layerNNTT {{},5,nonEmpty,5,nonEmpty,{},true,true};
     EXPECT_TRUE(layerNNTT.checkSanity());
 }
+
+TEST(ODDsStructuresTest, transitionContainerOrder) {
+    ODDs::ODD::TransitionContainer transitions;
+    transitions.insert({0, 0, 1});
+    transitions.insert({0, 1, 0});
+    transitions.insert({1, 0, 1});
+    transitions.insert({0, 0, 0});
+    
+    std::vector<ODDs::ODD::Transition> ord;
+    for (const ODDs::ODD::Transition& transition : transitions) {
+        ord.push_back(transition);
+    }
+
+    std::vector<ODDs::ODD::Transition> expected = {
+        {0, 0, 1},
+        {0, 0, 0},
+        {0, 1, 0},
+        {1, 0, 1}
+    };
+
+    ASSERT_EQ(expected, ord);
+}
+
+TEST(ODDsStructuresTest, transitionContainerOrderIList) {
+    ODDs::ODD::TransitionContainer transitions = {
+        {0, 0, 1},
+        {0, 1, 0},
+        {1, 0, 1},
+        {0, 0, 0}
+    };
+    
+    std::vector<ODDs::ODD::Transition> ord;
+    for (const ODDs::ODD::Transition& transition : transitions) {
+        ord.push_back(transition);
+    }
+
+    std::vector<ODDs::ODD::Transition> expected = {
+        {0, 0, 1},
+        {0, 0, 0},
+        {0, 1, 0},
+        {1, 0, 1}
+    };
+
+    ASSERT_EQ(expected, ord);
+}
+
+TEST(ODDsStructuresTest, transitionContainerIteratorDecrement) {
+    ODDs::ODD::Transition transition0(0, 0, 1);
+    ODDs::ODD::Transition transition1(0, 0, 0);
+    ODDs::ODD::Transition transition2(0, 1, 0);
+    ODDs::ODD::Transition transition3(1, 0, 1);
+
+    ODDs::ODD::TransitionContainer transitions = {
+        transition0,
+        transition1,
+        transition2,
+        transition3
+    };
+
+    auto it = transitions.begin();
+    ASSERT_EQ(transition0, *it);
+    it++;
+    ASSERT_EQ(transition1, *it);
+    std::advance(it, 2);
+    ASSERT_EQ(transition3, *it);
+    --it;
+    ASSERT_EQ(transition2, *it);
+    std::advance(it, -2);
+    ASSERT_EQ(transition0, *it);
+}
