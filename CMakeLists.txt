@@ -20,11 +20,14 @@ include(GoogleTest)
 add_subdirectory(ext/googletest)
 
 add_executable(ODDsTest
+    test/Common/DivisionODDs.cpp
+    test/DivisionODDs.cpp
     test/ODDBuilder.cpp
     test/ODDsStructures.cpp
     test/ODDsUnion.cpp
     test/ODDsIntersection.cpp)
 target_include_directories(ODDsTest PUBLIC lib/)
+target_include_directories(ODDsTest PUBLIC test/)
 target_include_directories(ODDsTest PUBLIC ext/googletest/googletest/include/)
 target_link_libraries(ODDsTest gtest gtest_main)
 target_link_libraries(ODDsTest ODDs)

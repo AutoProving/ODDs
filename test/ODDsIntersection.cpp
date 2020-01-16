@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <Common/DivisionODDs.h>
+
 #include <ODDs/ODDs.h>
 #include <ODDs/Operations.h>
 #include <ODDs/JSONDump.h>
@@ -135,4 +137,12 @@ std::string ODDsIntersectionTest::trivialExpectedDesc = R"(
 
 TEST_F(ODDsIntersectionTest, trivial) {
     doTest(trivialLhsDesc, trivialRhsDesc, trivialExpectedDesc);
+}
+
+TEST_F(ODDsIntersectionTest, div2div3) {
+    ODDs::ODD odd = TestCommon::div2(10) & TestCommon::div3(10);
+    auto pred = [](int n) -> bool {
+        return n % 6 == 0;
+    };
+    ASSERT_TRUE(TestCommon::checkPredicate(odd, pred));
 }

@@ -4,6 +4,8 @@
 #include <ODDs/Operations.h>
 #include <ODDs/JSONDump.h>
 
+#include <Common/DivisionODDs.h>
+
 #include <string>
 
 namespace {
@@ -246,4 +248,12 @@ std::string ODDsUnionTest::nonDetExpectedDesc = R"(
 
 TEST_F(ODDsUnionTest, nonDet) {
     doTest(nonDetLhsDesc, nonDetRhsDesc, nonDetExpectedDesc);
+}
+
+TEST_F(ODDsUnionTest, div2div3) {
+    auto odd = TestCommon::div2(10) | TestCommon::div3(10);
+    auto pred = [](int n) -> bool {
+        return n % 2 == 0 || n % 3 == 0;
+    };
+    ASSERT_TRUE(TestCommon::checkPredicate(odd, pred));
 }
