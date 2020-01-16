@@ -94,7 +94,7 @@ public:
      */
     class TransitionContainer {
         using Base = std::multimap<TransitionKey, State>;
-        using BaseIterator = typename Base::const_iterator;
+        using BaseIterator = Base::const_iterator;
     public:
         /**
          * @brief A wrapper around constant multimap iterator.
@@ -140,6 +140,28 @@ public:
         };
 
         /**
+         * @brief Represents a range of transitions.
+         *
+         * Needed for iterating through edges of same key.
+         */
+        class Range {
+        public:
+            Range(Iterator from, Iterator to);
+
+            ~Range() = default;
+            Range(const Range&) = default;
+            Range& operator=(const Range&) = default;
+            Range(Range&&) = default;
+            Range& operator=(Range&&) = default;
+
+            Iterator begin() const;
+            Iterator end() const;
+
+        private:
+            Iterator b_, e_;
+        };
+
+        /**
          * @brief Construct an empty container.
          */
         TransitionContainer() = default;
@@ -177,9 +199,43 @@ public:
         /**
          * @brief Compares two transition containers on equality.
          *
-         * Needed by tests.
+         * Needed for tests.
          */
         bool operator==(const TransitionContainer& rhs) const;
+
+        /**
+         * @brief Range of transitions with the same key.
+         *
+         * Thanks to the Range class, we can use it as
+         * @code
+         * for (const Transition& t : ts.proceed(key)) {
+         *     // Do something
+         * }
+         * @endcode
+         */
+        Range proceed(const TransitionKey& key) const;
+
+        /**
+         * @brief Range of transitions with the same key.
+         *
+         * A slightly more usable overload.
+         */
+        Range proceed(State from, Symbol symbol) const;
+
+        /**
+         * @brief Returns first transition with given key.
+         *
+         * Useful for determinate ODDs.
+         * Behaviour is undefined in case no such edge exists.
+         */
+        State go(const TransitionKey& key) const;
+
+        /**
+         * @brief Returns first transition with given key.
+         *
+         * A slightly more usable overload.
+         */
+        State go(State from, Symbol symbol) const;
 
     private:
         Base m_;
@@ -279,6 +335,16 @@ public:
      * @brief Constant reference to the layer by its id.
      */
     const Layer& getLayer(int i) const;
+
+    /**
+     * @brief Initial states of the leftmost state layer.
+     */
+    const StateContainer& initialStates() const;
+
+    /**
+     * @brief Final states of the rightmost state layer.
+     */
+    const StateContainer& finalStates() const;
 
     /**
      * @brief Checks if an ODD accepts a string.

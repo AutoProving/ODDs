@@ -304,3 +304,9 @@ TEST_F(ODDBuilderTest, jsonDumpAlphabetNotSorted) {
 
     ASSERT_FALSE(ODDs::JSONDump(odd1) == ODDs::JSONDump(odd2));
 }
+
+TEST_F(ODDBuilderTest, accepts) {
+    ODDs::ODD odd = buildODD();
+    EXPECT_FALSE(odd.accepts({"a", "c"}));
+    EXPECT_TRUE(odd.accepts({"a", "d"}));
+}

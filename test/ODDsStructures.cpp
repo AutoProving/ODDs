@@ -182,7 +182,7 @@ TEST(ODDsStructuresTest, transitionContainerOrderIList) {
         {1, 0, 1},
         {0, 0, 0}
     };
-    
+
     std::vector<ODDs::ODD::Transition> ord;
     for (const ODDs::ODD::Transition& transition : transitions) {
         ord.push_back(transition);
@@ -206,9 +206,9 @@ TEST(ODDsStructuresTest, transitionContainerIteratorDecrement) {
 
     ODDs::ODD::TransitionContainer transitions = {
         transition0,
-        transition1,
+        transition3,
         transition2,
-        transition3
+        transition1
     };
 
     auto it = transitions.begin();
@@ -221,4 +221,46 @@ TEST(ODDsStructuresTest, transitionContainerIteratorDecrement) {
     ASSERT_EQ(transition2, *it);
     std::advance(it, -2);
     ASSERT_EQ(transition0, *it);
+}
+
+TEST(ODDsStructuresTest, transitionContainerProceed) {
+    ODDs::ODD::Transition transition0(0, 0, 1);
+    ODDs::ODD::Transition transition1(0, 0, 0);
+    ODDs::ODD::Transition transition2(0, 1, 0);
+    ODDs::ODD::Transition transition3(1, 0, 1);
+
+    ODDs::ODD::TransitionContainer transitions = {
+        transition0,
+        transition1,
+        transition2,
+        transition3
+    };
+
+    auto range00 = transitions.proceed({0, 0});
+    std::vector<ODDs::ODD::Transition> expected = {
+        transition0,
+        transition1
+    };
+    std::vector<ODDs::ODD::Transition> actual;
+    std::copy(range00.begin(), range00.end(), std::back_inserter(actual));
+    ASSERT_EQ(expected, actual);
+
+    expected = {transition2};
+    actual.clear();
+    for (const ODDs::ODD::Transition& transition : transitions.proceed(0, 1)) {
+        actual.push_back(transition);
+    }
+    ASSERT_EQ(expected, actual);
+}
+
+TEST(ODDsStructuresTest, transitionContainerGo) {
+    ODDs::ODD::TransitionContainer transitions = {
+        {0, 0, 1},
+        {0, 1, 0},
+        {1, 0, 1},
+        {0, 0, 0}
+    };
+
+    ASSERT_EQ(1, transitions.go(0, 0));
+    ASSERT_EQ(0, transitions.go(0, 1));
 }

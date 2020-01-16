@@ -69,11 +69,11 @@ ODD diagramUnion(const ODD& lhs, const ODD& rhs) {
     }
 
     int n = lhs.countLayers();
-    builder.setInitialStates(stateSetUnion(lhs.getLayer(0).initialStates,
-                                           rhs.getLayer(0).initialStates,
+    builder.setInitialStates(stateSetUnion(lhs.initialStates(),
+                                           rhs.initialStates(),
                                            lhs.getLayer(0).leftStates));
-    builder.setFinalStates(stateSetUnion(lhs.getLayer(n - 1).finalStates,
-                                         rhs.getLayer(n - 1).finalStates,
+    builder.setFinalStates(stateSetUnion(lhs.finalStates(),
+                                         rhs.finalStates(),
                                          lhs.getLayer(n - 1).rightStates));
 
     return builder.build();
@@ -144,8 +144,8 @@ ODD diagramIntersection(const ODD& lhs, const ODD& rhs) {
     ODDBuilder builder(lhs.getLayer(0).leftStates * rhs.getLayer(0).leftStates);
     builder.setInitialStates(
         crossProduct(
-            lhs.getLayer(0).initialStates,
-            rhs.getLayer(0).initialStates,
+            lhs.initialStates(),
+            rhs.initialStates(),
             rhs.getLayer(0).leftStates
         )
     );
@@ -172,8 +172,8 @@ ODD diagramIntersection(const ODD& lhs, const ODD& rhs) {
     int n = lhs.countLayers();
     builder.setFinalStates(
         crossProduct(
-            lhs.getLayer(n - 1).finalStates,
-            rhs.getLayer(n - 1).finalStates,
+            lhs.finalStates(),
+            rhs.finalStates(),
             rhs.getLayer(n - 1).rightStates
         )
     );

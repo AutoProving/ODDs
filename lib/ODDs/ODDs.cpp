@@ -87,6 +87,19 @@ void TCIterator::updateStored_() {
 
 using TC = ODD::TransitionContainer;
 
+TC::Range::Range(Iterator from, Iterator to)
+    : b_(from)
+    , e_(to)
+{}
+
+TCIterator TC::Range::begin() const {
+    return b_;
+}
+
+TCIterator TC::Range::end() const {
+    return e_;
+}
+
 TC::TransitionContainer(std::initializer_list<Transition> elements) {
     for (const Transition& transition : elements)
         insert(transition);
@@ -106,6 +119,23 @@ TCIterator TC::insert(const Transition& transition) {
         transition.to
     };
     return TCIterator(m_.insert(std::move(element)));
+}
+
+TC::Range TC::proceed(const ODD::TransitionKey& key) const {
+    auto range = m_.equal_range(key);
+    return {range.first, range.second};
+}
+
+TC::Range TC::proceed(State from, Symbol symbol) const {
+    return proceed({from, symbol});
+}
+
+ODD::State TC::go(const ODD::TransitionKey& key) const {
+    return m_.lower_bound(key)->second;
+}
+
+ODD::State TC::go(ODD::State from, ODD::Symbol symbol) const {
+    return go({from, symbol});
 }
 
 std::size_t TC::size() const {
@@ -170,6 +200,50 @@ int ODD::countLayers() const {
 
 const ODD::Layer& ODD::getLayer(int i) const {
     return layers_[i];
+}
+
+const ODD::StateContainer& ODD::initialStates() const {
+    return getLayer(0).initialStates;
+}
+
+const ODD::StateContainer& ODD::finalStates() const {
+    return getLayer(countLayers() - 1).finalStates;
+}
+
+namespace {
+
+bool intersects(const ODD::StateContainer& lhs,
+                const ODD::StateContainer& rhs) {
+    auto it = lhs.begin();
+    auto jt = rhs.begin();
+    while (it != lhs.end() && jt != rhs.end()) {
+        if (*it == *jt)
+            return true;
+        if (*it < *jt)
+            it++;
+        else
+            jt++;
+    }
+    return false;
+}
+
+}
+
+bool ODD::accepts(const std::vector<std::string>& string) const {
+    assert((int)string.size() == countLayers());
+    StateContainer curStates = initialStates();
+    for (int i = 0; i < countLayers(); i++) {
+        Symbol symbol = getLayer(i).alphabet.symbolToNumber(string[i]);
+        StateContainer nextStates;
+        for (const State& cur : curStates) {
+            TransitionKey key = {cur, symbol};
+            for (const Transition& t : getLayer(i).transitions.proceed(key)) {
+                nextStates.insert(t.to);
+            }
+        }
+        curStates = nextStates;
+    }
+    return intersects(curStates, finalStates());
 }
 
 class ODDBuilder::Impl {
