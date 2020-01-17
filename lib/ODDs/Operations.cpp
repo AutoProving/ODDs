@@ -426,6 +426,19 @@ bool isDeterministic(const ODD& odd) {
     return true;
 }
 
-
+bool isComplete(const ODD& odd) {
+    for (int i = 0; i < odd.countLayers(); i++) {
+        const ODD::Layer& layer = odd.getLayer(i);
+        int alphabetSize = layer.alphabet.symbols().size();
+        for (int state = 0; state < layer.leftStates; state++) {
+            for (int symbol = 0; symbol < alphabetSize; symbol++) {
+                if (!layer.transitions.hasKey(state, symbol)) {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
 
 }

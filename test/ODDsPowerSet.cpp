@@ -114,19 +114,18 @@ std::string ODDsPowerSetTest::leftDesc = R"(
 
 std::string ODDsPowerSetTest::incompleteDesc = R"(
 {
-  "leftlayerstates": 2,
-  "initialstates": [0, 1],
+  "leftLayerStates": 2,
+  "initialStates": [0, 1],
   "layers": [
     {
       "alphabet": ["a", "b"],
       "transitions": [
-        {"from": 0, "symbol": "a", "to": 0},
-        {"from": 1, "symbol": "b", "to": 1}
+        {"from": 0, "symbol": "a", "to": 0}
       ],
-      "rightlayerstates": 2
+      "rightLayerStates": 2
     }
   ],
-  "finalstates": [0, 1]
+  "finalStates": [0, 1]
 })";
 
 TEST_F(ODDsPowerSetTest, isDeterministicTrue) {
@@ -153,14 +152,13 @@ TEST_F(ODDsPowerSetTest, isDeterministicLeft) {
     ASSERT_FALSE(ODDs::isDeterministic(odd));
 }
 
-#if false
 TEST_F(ODDsPowerSetTest, isCompleteTrue) {
     ODDs::ODD odd = ODDs::readJSON(trivialExpectedDesc);
     ASSERT_TRUE(ODDs::isComplete(odd));
 }
 
 TEST_F(ODDsPowerSetTest, isCompleteFalse) {
-    ODDs::ODD odd = ODDs::readJSON(trivialArgDesc);
+    ODDs::ODD odd = ODDs::readJSON(incompleteDesc);
     ASSERT_FALSE(ODDs::isComplete(odd));
 }
 
@@ -168,6 +166,7 @@ TEST_F(ODDsPowerSetTest, isCompleteDiv2) {
     ASSERT_TRUE(ODDs::isComplete(TestCommon::div2(10)));
 }
 
+#if false
 TEST_F(ODDsPowerSetTest, trivial) {
     ODDs::ODD arg = ODDs::readJSON(trivialArgDesc);
     ODDs::ODD expected = ODDs::readJSON(trivialExpectedDesc);

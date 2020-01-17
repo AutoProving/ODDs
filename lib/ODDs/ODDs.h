@@ -242,6 +242,18 @@ public:
          */
         State go(State from, Symbol symbol) const;
 
+        /**
+         * @brief Checks if container contains a transition with given key.
+         */
+        bool hasKey(const TransitionKey& key) const;
+
+        /**
+         * @brief Checks if container contains a transition with given key.
+         *
+         * A slightly more usable overload.
+         */
+        bool hasKey(State from, Symbol symbol) const;
+
     private:
         Base m_;
         std::set<Transition> p_;

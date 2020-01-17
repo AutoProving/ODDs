@@ -286,3 +286,16 @@ TEST(ODDsStructuresTest, transitionContainerDuplicates) {
 
     ASSERT_EQ(expected, actual);
 }
+
+TEST(ODDsStructuresTest, transitionContainerHasKey) {
+    ODDs::ODD::TransitionContainer transitions = {
+        {0, 0, 1},
+        {0, 1, 0},
+        {1, 0, 1},
+        {0, 0, 0}
+    };
+
+    EXPECT_TRUE(transitions.hasKey(0, 1));
+    EXPECT_TRUE(transitions.hasKey({0, 0}));
+    EXPECT_FALSE(transitions.hasKey(1, 1));
+}

@@ -151,6 +151,14 @@ bool TC::operator==(const TC& rhs) const {
     return m_ == rhs.m_;
 }
 
+bool TC::hasKey(const ODD::TransitionKey& key) const {
+    return m_.count(key);
+}
+
+bool TC::hasKey(State from, Symbol symbol) const {
+    return hasKey({from, symbol});
+}
+
 int ODD::AlphabetMap::addSymbol(const std::string& symbol) {
     auto it = s2n_.lower_bound(symbol);
     if (it != s2n_.end() && it->first == symbol) {
