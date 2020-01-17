@@ -10,6 +10,9 @@
 
 namespace ODDs {
 
+/**
+ * @brief An Ordered Decision Diagram.
+ */
 class ODD {
 public:
     /**
@@ -188,8 +191,10 @@ public:
 
         /**
          * @brief Insert a new transition into the container.
+         *
+         * No effect in case given transition is already in the container.
          */
-        Iterator insert(const Transition& transition);
+        void insert(const Transition& transition);
 
         /**
          * @brief Number of stored transitions.
@@ -239,6 +244,7 @@ public:
 
     private:
         Base m_;
+        std::set<Transition> p_;
     };
 
     /**

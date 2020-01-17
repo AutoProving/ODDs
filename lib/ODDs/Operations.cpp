@@ -402,4 +402,30 @@ ODD diagramInverseMapping(const std::vector<AlphabetMapping>& gs,
     return builder.build();
 }
 
+bool isDeterministic(const ODD& odd) {
+    const ODD::Layer& leftLayer = odd.getLayer(0);
+    if (leftLayer.initialStates.size() != 1)
+        return false;
+    if (leftLayer.leftStates != 1)
+        return false;
+
+    for (int i = 0; i < odd.countLayers(); i++) {
+        const ODD::Layer& layer = odd.getLayer(i);
+        ODD::Transition prev;
+        bool first = true;
+        for (const ODD::Transition& transition : layer.transitions) {
+            if (!first
+                && prev.from == transition.from
+                && prev.symbol == transition.symbol) {
+                return false;
+            }
+            prev = transition;
+            first = false;
+        }
+    }
+    return true;
+}
+
+
+
 }

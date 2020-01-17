@@ -264,3 +264,25 @@ TEST(ODDsStructuresTest, transitionContainerGo) {
     ASSERT_EQ(1, transitions.go(0, 0));
     ASSERT_EQ(0, transitions.go(0, 1));
 }
+
+TEST(ODDsStructuresTest, transitionContainerDuplicates) {
+    ODDs::ODD::TransitionContainer transitions = {
+        {0, 0, 0},
+        {0, 0, 1},
+        {0, 0, 0}, 
+        {0, 0, 2}
+    };
+
+    std::vector<ODDs::ODD::Transition> actual;
+    for (const ODDs::ODD::Transition& transition : transitions) {
+        actual.emplace_back(transition);
+    }
+
+    std::vector<ODDs::ODD::Transition> expected = {
+        {0, 0, 0},
+        {0, 0, 1},
+        {0, 0, 2}
+    };
+
+    ASSERT_EQ(expected, actual);
+}

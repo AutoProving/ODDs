@@ -99,6 +99,9 @@ bool isComplete(const ODD& odd);
  * @brief Construct a power set of the ODD.
  *
  * Construct a deterministic, complete ODD with same language as the given.
+ * This is an optimized version that stores only reachable state sets. For
+ * example, if an automation is already deterministic and complete, it does
+ * nothing.
  */
 ODD diagramPowerSet(const ODD& odd);
 

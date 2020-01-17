@@ -113,12 +113,17 @@ TCIterator TC::end() const {
     return TCIterator(m_.end());
 }
 
-TCIterator TC::insert(const Transition& transition) {
+void TC::insert(const Transition& transition) {
+    auto it = p_.lower_bound(transition);
+    if (it != p_.end() && *it == transition)
+        return;
+    p_.insert(it, transition);
+
     Base::value_type element = {
         {transition.from, transition.symbol},
         transition.to
     };
-    return TCIterator(m_.insert(std::move(element)));
+    m_.insert(std::move(element));
 }
 
 TC::Range TC::proceed(const ODD::TransitionKey& key) const {
