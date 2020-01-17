@@ -517,4 +517,89 @@ ODD diagramPowerSet(const ODD& odd) {
     return builder.build();
 }
 
+namespace {
+
+using StateSubsetMap = std::map<ODD::StateContainer, int>;
+using StateSubsetList = std::vector<ODD::StateContainer>;
+
+StateSubsetList dlpsAddLayer(ODDBuilder& builder,
+                             const ODD::Layer& layer,
+                             const StateSubsetList& prev) {
+    StateSubsetMap toId;
+    StateSubsetList toSet;
+    int alphabetSize = layer.alphabet.symbols().size();
+    ODD::TransitionContainer transitions;
+    for (int i = 0; i < (int)prev.size(); i++) {
+        const ODD::StateContainer& from = prev[i];
+        for (int symbol = 0; symbol < alphabetSize; symbol++) {
+            ODD::StateContainer to;
+            for (ODD::State state : from) {
+                auto range = layer.transitions.proceed(state, symbol);
+                for (const ODD::Transition& t : range) {
+                    to.insert(t.to);
+                }
+            }
+            int next;
+            auto it = toId.lower_bound(to);
+            if (it != toId.end() && it->first == to) {
+                next = it->second;
+            } else {
+                next = toSet.size();
+                toId.insert(it, {to, next});
+                toSet.emplace_back(std::move(to));
+            }
+            transitions.insert({i, symbol, next});
+        }
+    }
+    builder.addLayer(
+        layer.alphabet,
+        transitions,
+        toSet.size()
+    );
+    return toSet;
+}
+
+bool intersects(const ODD::StateContainer& lhs, const ODD::StateContainer& rhs) {
+    auto it = lhs.begin();
+    auto jt = rhs.begin();
+    while (it != lhs.end() && jt != rhs.end()) {
+        if (*it == *jt)
+            return true;
+        if (*it < *jt)
+            it++;
+        else
+            jt++;
+    }
+    return false;
+}
+
+ODD::StateContainer dlpsFinalStates(const ODD::Layer& rightLayer,
+                                    const StateSubsetList& prev) {
+    ODD::StateContainer ret;
+    for (int i = 0; i < (int)prev.size(); i++) {
+        const ODD::StateContainer& state = prev[i];
+        if (intersects(state, rightLayer.finalStates))
+            ret.insert(i);
+    }
+    return ret;
+}
+
+}
+
+ODD diagramLazyPowerSet(const ODD& odd) {
+    ODDBuilder builder(1);
+    builder.setInitialStates({0});
+    StateSubsetList next = {odd.initialStates()};
+    for (int i = 0; i < odd.countLayers(); i++) {
+        next = dlpsAddLayer(builder, odd.getLayer(i), next);
+    }
+    builder.setFinalStates(
+        dlpsFinalStates(
+            odd.getLayer(odd.countLayers() - 1),
+            next
+        )
+    );
+    return builder.build();
+}
+
 }

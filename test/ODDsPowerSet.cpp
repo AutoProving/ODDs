@@ -68,15 +68,15 @@ std::string ODDsPowerSetTest::trivialExpectedDesc = R"(
     {
       "alphabet": ["a", "b"],
       "transitions": [
-        {"from": 0, "symbol": "a", "to": 1},
-        {"from": 0, "symbol": "b", "to": 0},
+        {"from": 0, "symbol": "a", "to": 0},
+        {"from": 0, "symbol": "b", "to": 1},
         {"from": 1, "symbol": "a", "to": 0},
-        {"from": 1, "symbol": "b", "to": 0}
+        {"from": 1, "symbol": "b", "to": 1}
       ],
       "rightLayerStates": 2
     }
   ],
-  "finalStates": [1]
+  "finalStates": [0]
 })";
 
 std::string ODDsPowerSetTest::trivialNLExpectedDesc = R"(
@@ -219,11 +219,17 @@ TEST_F(ODDsPowerSetTest, incomplete) {
     ASSERT_TRUE(isComplete(actual));
 }
 
-#if false
 TEST_F(ODDsPowerSetTest, lazyTrivial) {
     ODDs::ODD arg = ODDs::readJSON(trivialArgDesc);
     ODDs::ODD expected = ODDs::readJSON(trivialExpectedDesc);
     ODDs::ODD actual = ODDs::diagramLazyPowerSet(arg);
+    if (ODDs::writeJSON(expected) != ODDs::writeJSON(actual)) {
+        std::cout << "Expected:" << std::endl;
+        ODDs::writeJSON(std::cout, expected);
+        std::cout << std::endl << "Actual: " << std::endl;
+        ODDs::writeJSON(std::cout, actual);
+        std::cout << std::endl;
+    }
     ASSERT_EQ(ODDs::writeJSON(expected), ODDs::writeJSON(actual));
 }
 
@@ -238,4 +244,3 @@ TEST_F(ODDsPowerSetTest, lazyIncomplete) {
     ODDs::ODD actual = ODDs::diagramLazyPowerSet(odd);
     ASSERT_TRUE(isComplete(actual));
 }
-#endif
