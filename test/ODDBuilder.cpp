@@ -263,48 +263,6 @@ TEST_F(ODDBuilderTest, jsonWriteStream) {
     ASSERT_EQ(jsonDescription, ss.str());
 }
 
-TEST_F(ODDBuilderTest, jsonDumpTrivials) {
-    ODDs::ODD odd = buildODD();
-    ASSERT_EQ(ODDs::JSONDump(odd), ODDs::JSONDump(odd));
-}
-
-TEST_F(ODDBuilderTest, jsonDumpAlphabetNotSorted) {
-    ODDs::ODDBuilder builder1(1);
-    builder1.setInitialStates({0});
-    ODDs::ODD::AlphabetMap alphabet1;
-    int a1 = alphabet1.addSymbol("a");
-    int b1 = alphabet1.addSymbol("b");
-    builder1.addLayer(
-        alphabet1,
-        {
-            {0, a1, 0},
-            {0, b1, 1}
-        },
-        2
-    );
-    builder1.setFinalStates({0, 1});
-    ODDs::ODD odd1 = builder1.build();
-
-
-    ODDs::ODDBuilder builder2(1);
-    builder2.setInitialStates({0});
-    ODDs::ODD::AlphabetMap alphabet2;
-    int b2 = alphabet2.addSymbol("b");
-    int a2 = alphabet2.addSymbol("a");
-    builder2.addLayer(
-        alphabet1,
-        {
-            {0, a2, 0},
-            {0, b2, 1}
-        },
-        2
-    );
-    builder2.setFinalStates({0, 1});
-    ODDs::ODD odd2 = builder2.build();
-
-    ASSERT_FALSE(ODDs::JSONDump(odd1) == ODDs::JSONDump(odd2));
-}
-
 TEST_F(ODDBuilderTest, accepts) {
     ODDs::ODD odd = buildODD();
     EXPECT_FALSE(odd.accepts({"a", "c"}));

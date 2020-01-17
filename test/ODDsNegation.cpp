@@ -14,7 +14,7 @@ void doTest(std::string argDesc, std::string expectedDesc) {
     ODDs::ODD arg = ODDs::readJSON(argDesc);
     ODDs::ODD expected = ODDs::readJSON(expectedDesc);
     ODDs::ODD result = ODDs::diagramNegation(arg);
-    ASSERT_EQ(ODDs::JSONDump(expected), ODDs::JSONDump(result));
+    ASSERT_EQ(ODDs::writeJSON(expected), ODDs::writeJSON(result));
 }
 
 }

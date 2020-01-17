@@ -17,7 +17,7 @@ void doTest(std::string lhsDesc,
     ODDs::ODD rhs = ODDs::readJSON(rhsDesc);
     ODDs::ODD expected = ODDs::readJSON(expectedDesc);
     ODDs::ODD result = ODDs::diagramUnion(lhs, rhs);
-    ASSERT_EQ(ODDs::JSONDump(expected), ODDs::JSONDump(result));
+    ASSERT_EQ(ODDs::writeJSON(expected), ODDs::writeJSON(result));
 }
 
 }

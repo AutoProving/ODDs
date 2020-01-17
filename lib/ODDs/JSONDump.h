@@ -52,23 +52,6 @@
 namespace ODDs {
 
 /**
- * @brief A comparable class for ODDs.
- *
- * Useful for comparing ODDs on being structurally equivalent.
- */
-class JSONDump {
-public:
-    JSONDump(const ODD& odd);
-    ~JSONDump();
-
-    bool operator==(const JSONDump& rhs) const;
-
-private:
-    class Impl;
-    std::unique_ptr<Impl> impl_;
-};
-
-/**
  * @brief Write a prettyprinted JSON description of an ODD to an output stream.
  *
  * Uses 2 spaces for indentaion.

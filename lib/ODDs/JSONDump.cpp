@@ -104,33 +104,6 @@ void writeJSON(const ODD& odd, W& writer) {
 
 }
 
-class JSONDump::Impl {
-public:
-    Impl(const ODD& odd) {
-        rapidjson::StringBuffer s;
-        rapidjson::Writer writer(s);
-        writeJSON(odd, writer);
-        description_ = s.GetString();
-    }
-
-    bool operator==(const Impl& rhs) const {
-        return description_ == rhs.description_;
-    }
-
-private:
-    std::string description_;
-};
-
-JSONDump::JSONDump(const ODD& odd)
-    : impl_(std::make_unique<JSONDump::Impl>(odd))
-{}
-
-JSONDump::~JSONDump() = default;
-
-bool JSONDump::operator==(const JSONDump& rhs) const {
-    return *impl_ == *rhs.impl_;
-}
-
 namespace {
 
 template<class B>

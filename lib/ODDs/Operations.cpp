@@ -270,7 +270,7 @@ ODD::StateContainer negateStates(const ODD::StateContainer& states, int n) {
     auto it = states.begin();
     ODD::StateContainer ret;
     for (int state = 0; state < n; state++) {
-        if (state == *it)
+        if (it != states.end() && state == *it)
             it++;
         else
             ret.insert(ret.end(), state);
@@ -301,7 +301,7 @@ ODD diagramNegation(const ODD& odd) {
 
 namespace {
 
-ODD::AlphabetMap alphabetMapping(std::function<std::string(std::string)> g,
+ODD::AlphabetMap alphabetMapping(const AlphabetMapping& g,
                                  const ODD::AlphabetMap& alphabet) {
     ODD::AlphabetMap ret;
     for (const std::string& symbol : alphabet.symbols())
@@ -309,7 +309,7 @@ ODD::AlphabetMap alphabetMapping(std::function<std::string(std::string)> g,
     return ret;
 }
 
-ODD::TransitionContainer transitionMapping(std::function<std::string(std::string)> g,
+ODD::TransitionContainer transitionMapping(const AlphabetMapping& g,
                                            const ODD::TransitionContainer& ts,
                                            const ODD::AlphabetMap& oldAlphabet,
                                            const ODD::AlphabetMap& newAlphabet) {
@@ -327,14 +327,70 @@ ODD::TransitionContainer transitionMapping(std::function<std::string(std::string
 
 }
 
-ODD diagramMapping(std::function<std::string(std::string)> g, const ODD& odd) {
+ODD diagramMapping(const std::vector<AlphabetMapping>& gs, const ODD& odd) {
+    assert((int)gs.size() == odd.countLayers());
     ODDBuilder builder(odd.getLayer(0).leftStates);
     builder.setInitialStates(odd.initialStates());
     for (int i = 0; i < odd.countLayers(); i++) {
         ODD::AlphabetMap oldAlphabet = odd.getLayer(i).alphabet;
-        ODD::AlphabetMap newAlphabet = alphabetMapping(g, oldAlphabet);
+        ODD::AlphabetMap newAlphabet = alphabetMapping(gs[i], oldAlphabet);
         ODD::TransitionContainer transitions = transitionMapping(
-            g,
+            gs[i],
+            odd.getLayer(i).transitions,
+            oldAlphabet,
+            newAlphabet
+        );
+        int rightStates = odd.getLayer(i).rightStates;
+        builder.addLayer(newAlphabet, transitions, rightStates);
+    }
+    builder.setFinalStates(odd.finalStates());
+    return builder.build();
+}
+
+namespace {
+
+using InvMap = std::map<std::string, std::vector<std::string>>;
+
+InvMap alphabetInvMap(const AlphabetMapping& g, const ODD::AlphabetMap& a) {
+    InvMap ret;
+    for (std::string symbol : a.symbols())
+        ret[g(symbol)].emplace_back(symbol);
+    return ret;
+}
+
+ODD::TransitionContainer transitionInvMapping(const AlphabetMapping& g,
+                                              const ODD::TransitionContainer& ts,
+                                              const ODD::AlphabetMap& oldAlphabet,
+                                              const ODD::AlphabetMap& newAlphabet) {
+    InvMap invMap = alphabetInvMap(g, newAlphabet);
+    ODD::TransitionContainer ret;
+    for (const ODD::Transition& transition : ts) {
+        std::string oldSymbol = oldAlphabet.numberToSymbol(transition.symbol);
+        for (const std::string& symbol: invMap[oldSymbol]) {
+            ret.insert({
+                transition.from,
+                newAlphabet.symbolToNumber(symbol),
+                transition.to
+            });
+        }
+    }
+    return ret;
+}
+
+}
+
+ODD diagramInverseMapping(const std::vector<AlphabetMapping>& gs,
+                          const std::vector<ODD::AlphabetMap>& newAlphabets,
+                          const ODD& odd) {
+    assert((int)gs.size() == odd.countLayers());
+    assert((int)newAlphabets.size() == odd.countLayers());
+    ODDBuilder builder(odd.getLayer(0).leftStates);
+    builder.setInitialStates(odd.initialStates());
+    for (int i = 0; i < odd.countLayers(); i++) {
+        ODD::AlphabetMap oldAlphabet = odd.getLayer(i).alphabet;
+        const ODD::AlphabetMap& newAlphabet = newAlphabets[i];
+        ODD::TransitionContainer transitions = transitionInvMapping(
+            gs[i],
             odd.getLayer(i).transitions,
             oldAlphabet,
             newAlphabet

@@ -69,9 +69,21 @@ inline ODD operator~(const ODD& odd) {
 }
 
 /**
- * @brief Maps an alphabet of an ODD with given function.
+ * @brief A mapping from one alphabet to another.
  */
-ODD diagramMapping(std::function<std::string(std::string)> g, const ODD& odd);
+using AlphabetMapping = std::function<std::string(std::string)>;
+
+/**
+ * @brief Maps an alphabet of an ODD with given functions.
+ */
+ODD diagramMapping(const std::vector<AlphabetMapping>& mappings, const ODD& odd);
+
+/**
+ * @brief Performs an inverse mapping of ODD alphabet with given functions.
+ */
+ODD diagramInverseMapping(const std::vector<AlphabetMapping>& mappings,
+                          const std::vector<ODD::AlphabetMap>& newAlphabets,
+                          const ODD& odd);
 
 /**
  * @brief Checks if ODD is deterministic.
