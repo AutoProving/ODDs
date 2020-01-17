@@ -441,4 +441,80 @@ bool isComplete(const ODD& odd) {
     return true;
 }
 
+namespace {
+
+ODD::TransitionContainer dpsLeftTransitions(const ODD::Layer& leftLayer) {
+    int leftAlphabetSize = leftLayer.alphabet.symbols().size();
+    ODD::TransitionContainer leftTransitions;
+    for (int symbol = 0; symbol < leftAlphabetSize; symbol++) {
+        int go = 0;
+        for (ODD::State state : leftLayer.initialStates) {
+            auto range = leftLayer.transitions.proceed(state, symbol);
+            for (const ODD::Transition& t : range) {
+                go |= 1 << t.to;
+            }
+        }
+        leftTransitions.insert({0, symbol, go});
+    }
+    return leftTransitions;
+}
+
+void dpsAddLayer(ODDBuilder& builder, const ODD::Layer& layer) {
+    int alphabetSize = layer.alphabet.symbols().size();
+    ODD::TransitionContainer transitions;
+    for (int from = 0; from < (1 << layer.leftStates); from++) {
+        for (int symbol = 0; symbol < alphabetSize; symbol++) {
+            int to = 0;
+            for (int state = 0; state < layer.leftStates; state++) {
+                if (!((from >> state) & 1))
+                    continue;
+                auto range = layer.transitions.proceed(state, symbol);
+                for (const ODD::Transition& t : range)
+                    to |= 1 << t.to;
+            }
+            transitions.insert({from, symbol, to});
+        }
+    }
+    builder.addLayer(
+        layer.alphabet,
+        transitions,
+        1 << layer.rightStates
+    );
+}
+
+ODD::StateContainer dpsFinalStates(const ODD::Layer& rightLayer) {
+    int finalStatesMask = 0;
+    for (int state : rightLayer.finalStates)
+        finalStatesMask |= 1 << state;
+    ODD::StateContainer ret;
+    for (int i = 0; i < (1 << rightLayer.rightStates); i++) {
+        if (i & finalStatesMask)
+            ret.insert(i);
+    }
+    return ret;
+}
+
+}
+
+ODD diagramPowerSet(const ODD& odd) {
+    ODDBuilder builder(1);
+    builder.setInitialStates({0});
+    builder.addLayer(
+        odd.getLayer(0).alphabet,
+        dpsLeftTransitions(odd.getLayer(0)),
+        1 << odd.getLayer(0).rightStates
+    );
+    for (int i = 1; i < odd.countLayers(); i++) {
+        dpsAddLayer(builder, odd.getLayer(i));
+    }
+    builder.setFinalStates(
+        dpsFinalStates(
+            odd.getLayer(
+                odd.countLayers() - 1
+            )
+        )
+    );
+    return builder.build();
+}
+
 }

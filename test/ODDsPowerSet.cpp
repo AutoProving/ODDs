@@ -10,6 +10,7 @@ class ODDsPowerSetTest : public ::testing::Test {
 protected:
     static std::string trivialArgDesc;
     static std::string trivialExpectedDesc;
+    static std::string trivialNLExpectedDesc;
     static std::string initialDesc;
     static std::string leftDesc;
     static std::string incompleteDesc;
@@ -25,7 +26,7 @@ std::string ODDsPowerSetTest::trivialArgDesc = R"(
       "transitions": [
         {"from": 0, "symbol": "a", "to": 0},
         {"from": 0, "symbol": "b", "to": 0},
-        {"from": 0, "symbol": "b", "to": 1},
+        {"from": 0, "symbol": "a", "to": 1},
         {"from": 1, "symbol": "a", "to": 2},
         {"from": 1, "symbol": "b", "to": 1},
         {"from": 2, "symbol": "b", "to": 2},
@@ -76,6 +77,45 @@ std::string ODDsPowerSetTest::trivialExpectedDesc = R"(
     }
   ],
   "finalStates": [1]
+})";
+
+std::string ODDsPowerSetTest::trivialNLExpectedDesc = R"(
+{
+  "leftLayerStates": 1,
+  "initialStates": [0],
+  "layers": [
+    {
+      "alphabet": ["a", "b"],
+      "transitions": [
+        {"from": 0, "symbol": "a", "to": 3},
+        {"from": 0, "symbol": "b", "to": 5}
+      ],
+      "rightLayerStates": 8
+    },
+    {
+      "alphabet": ["a", "b"],
+      "transitions": [
+        {"from": 0, "symbol": "a", "to": 0},
+        {"from": 0, "symbol": "b", "to": 0},
+        {"from": 1, "symbol": "a", "to": 3},
+        {"from": 1, "symbol": "b", "to": 1},
+        {"from": 2, "symbol": "a", "to": 1},
+        {"from": 2, "symbol": "b", "to": 1},
+        {"from": 3, "symbol": "a", "to": 3},
+        {"from": 3, "symbol": "b", "to": 1},
+        {"from": 4, "symbol": "a", "to": 1},
+        {"from": 4, "symbol": "b", "to": 1},
+        {"from": 5, "symbol": "a", "to": 3},
+        {"from": 5, "symbol": "b", "to": 1},
+        {"from": 6, "symbol": "a", "to": 1},
+        {"from": 6, "symbol": "b", "to": 1},
+        {"from": 7, "symbol": "a", "to": 3},
+        {"from": 7, "symbol": "b", "to": 1}
+      ],
+      "rightLayerStates": 4
+    }
+  ],
+  "finalStates": [2, 3]
 })";
 
 std::string ODDsPowerSetTest::initialDesc = R"(
@@ -166,23 +206,36 @@ TEST_F(ODDsPowerSetTest, isCompleteDiv2) {
     ASSERT_TRUE(ODDs::isComplete(TestCommon::div2(10)));
 }
 
-#if false
 TEST_F(ODDsPowerSetTest, trivial) {
     ODDs::ODD arg = ODDs::readJSON(trivialArgDesc);
-    ODDs::ODD expected = ODDs::readJSON(trivialExpectedDesc);
+    ODDs::ODD expected = ODDs::readJSON(trivialNLExpectedDesc);
     ODDs::ODD actual = ODDs::diagramPowerSet(arg);
     ASSERT_EQ(ODDs::writeJSON(expected), ODDs::writeJSON(actual));
-}
-
-TEST_F(ODDsPowerSetTest, detComplete) {
-    ODDs::ODD odd = ODDs::readJSON(trivialExpectedDesc);
-    ODDs::ODD actual = ODDs::diagramPowerSet(odd);
-    ASSERT_EQ(ODDs::writeJSON(odd), ODDs::writeJSON(actual));
 }
 
 TEST_F(ODDsPowerSetTest, incomplete) {
     ODDs::ODD odd = ODDs::readJSON(incompleteDesc);
     ODDs::ODD actual = ODDs::diagramPowerSet(odd);
+    ASSERT_TRUE(isComplete(actual));
+}
+
+#if false
+TEST_F(ODDsPowerSetTest, lazyTrivial) {
+    ODDs::ODD arg = ODDs::readJSON(trivialArgDesc);
+    ODDs::ODD expected = ODDs::readJSON(trivialExpectedDesc);
+    ODDs::ODD actual = ODDs::diagramLazyPowerSet(arg);
+    ASSERT_EQ(ODDs::writeJSON(expected), ODDs::writeJSON(actual));
+}
+
+TEST_F(ODDsPowerSetTest, lazyDetComplete) {
+    ODDs::ODD odd = ODDs::readJSON(trivialExpectedDesc);
+    ODDs::ODD actual = ODDs::diagramLazyPowerSet(odd);
+    ASSERT_EQ(ODDs::writeJSON(odd), ODDs::writeJSON(actual));
+}
+
+TEST_F(ODDsPowerSetTest, lazyIncomplete) {
+    ODDs::ODD odd = ODDs::readJSON(incompleteDesc);
+    ODDs::ODD actual = ODDs::diagramLazyPowerSet(odd);
     ASSERT_TRUE(isComplete(actual));
 }
 #endif
