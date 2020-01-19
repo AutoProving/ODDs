@@ -29,7 +29,8 @@ add_executable(ODDsTest
     test/ODDsTensorProduct.cpp
     test/ODDsNegation.cpp
     test/ODDsMapping.cpp
-    test/ODDsPowerSet.cpp)
+    test/ODDsPowerSet.cpp
+    test/ODDsMinimization.cpp)
 target_include_directories(ODDsTest PUBLIC lib/)
 target_include_directories(ODDsTest PUBLIC test/)
 target_include_directories(ODDsTest PUBLIC ext/googletest/googletest/include/)

@@ -24,6 +24,16 @@ TEST(DivisionODDsTest, testDiv2_1) {
     ASSERT_TRUE(TestCommon::checkPredicate(odd, divsBy2));
 }
 
+TEST(DivisionOddsTest, testDiv2NM) {
+    ODDs::ODD odd = TestCommon::div2NM(10);
+    ASSERT_TRUE(TestCommon::checkPredicate(odd, divsBy2));
+}
+
+TEST(DivisionOddsTest, testDiv2NM_1) {
+    ODDs::ODD odd = TestCommon::div2NM(1);
+    ASSERT_TRUE(TestCommon::checkPredicate(odd, divsBy2));
+}
+
 TEST(DivisionODDsTest, testDiv3) {
     ODDs::ODD odd = TestCommon::div3(10);
     ASSERT_TRUE(TestCommon::checkPredicate(odd, divsBy3));

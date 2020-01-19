@@ -17,6 +17,26 @@ ODDs::ODD div2(int length) {
     return builder.build();
 }
 
+ODDs::ODD div2NM(int length) {
+    ODDs::ODD::AlphabetMap binary;
+    int zero = binary.addSymbol("0");
+    int one = binary.addSymbol("1");
+
+    ODDs::ODDBuilder builder(2);
+    builder.setInitialStates({0});
+    for (int i = 0; i < length; i++) {
+        ODDs::ODD::TransitionContainer transitions = {
+            {0, zero, 0},
+            {0, one, 1},
+            {1, zero, 0},
+            {1, one, 1}
+        };
+        builder.addLayer(binary, transitions, 1);
+    }
+    builder.setFinalStates({0});
+    return builder.build();
+}
+
 ODDs::ODD div3(int length) {
     ODDs::ODD::AlphabetMap binary;
     int zero = binary.addSymbol("0");

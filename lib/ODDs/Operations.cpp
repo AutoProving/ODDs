@@ -602,4 +602,8 @@ ODD diagramLazyPowerSet(const ODD& odd) {
     return builder.build();
 }
 
+ODD minimize(const ODD& odd) {
+    return odd;
+}
+
 }

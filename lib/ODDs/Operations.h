@@ -117,4 +117,12 @@ ODD diagramPowerSet(const ODD& odd);
  */
 ODD diagramLazyPowerSet(const ODD& odd);
 
+/**
+ * @brief Construct a minimal determinate complete diagram with same language.
+ *
+ * If the automation is not complete or non-determinate, first performs
+ * diagramLazyPowerSet.
+ */
+ODD minimize(const ODD& odd);
+
 }
