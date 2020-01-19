@@ -29,3 +29,14 @@ You can also run tests with the following command.
 ```
 $ make test
 ```
+
+## Building documentation
+
+The header files are provided with [Doxygen](http://www.doxygen.nl/) documentation.
+To build it, install Doxygen and type
+
+```
+$ doxygen Doxyfile
+```
+
+The home page of documentation will be available at `doc/html/index.html`.
