@@ -602,8 +602,175 @@ ODD diagramLazyPowerSet(const ODD& odd) {
     return builder.build();
 }
 
-ODD minimize(const ODD& odd) {
-    return odd;
+namespace {
+
+using LayerReachabilityMap = std::vector<bool>;
+using ReachabilityMap = std::vector<LayerReachabilityMap>;
+
+ReachabilityMap reachabilityMap(const ODD& odd) {
+    ReachabilityMap ret(odd.countLayers() + 1);
+    ret[0].resize(odd.getLayer(0).leftStates, false);
+    for (int u : odd.initialStates())
+        ret[0][u] = true;
+    for (int i = 0; i < odd.countLayers(); i++) {
+        const auto& layer = odd.getLayer(i);
+        int alphabetSize = layer.alphabet.symbols().size();
+        ret[i + 1].resize(layer.rightStates);
+        for (int j = 0; j < layer.leftStates; j++) {
+            if (!ret[i][j]) {
+                continue;
+            }
+            // Now j-th state of i-th layer is reachable from initial states.
+            for (int symbol = 0; symbol < alphabetSize; symbol++) {
+                for (const auto& t : layer.transitions.proceed(j, symbol)) {
+                    ret[i + 1][t.to] = true;
+                }
+            }
+        }
+    }
+    return ret;
+}
+
+/**
+ * For each vertex of a layer of vertices, stores either an id of its component
+ * or -1 in case the vertex isn't reachable from initial states.
+ */
+using ComponentMap = std::vector<int>;
+
+/**
+ * @param reachable Reachability map for the rightmost layer of vertices.
+ */
+ComponentMap glueRightLayer(const ODD::Layer& layer,
+                            const LayerReachabilityMap& reachable) {
+    ComponentMap ret(layer.rightStates);
+    for (int i = 0; i < layer.rightStates; i++)
+        ret[i] = reachable[i] ? 1 : -1;
+    for (int u : layer.finalStates)
+        ret[u] = 0;
+    if (layer.finalStates.empty()) {
+        for (int& u : ret) {
+            if (u == 1) {
+                u--;
+            }
+        }
+    }
+    return ret;
+}
+
+/**
+ * For each symbol a component of state to which a state has transition by this
+ * symbol.
+ */
+using TransitionMap = std::vector<int>;
+
+TransitionMap stateTransitionMap(const ODD::Layer& layer,
+                                 int state,
+                                 const ComponentMap& next) {
+    int alphabetSize = layer.alphabet.symbols().size();
+    TransitionMap ret(alphabetSize);
+    for (int symbol = 0; symbol < alphabetSize; symbol++) {
+        ret[symbol] = next[layer.transitions.go(state, symbol)];
+    }
+    return ret;
+}
+
+using ComponentStateMap = std::map<TransitionMap, int>;
+
+/**
+ * @param reachable Reachability map for the left layer of vertices.
+ * @param next      Component map for the right layer of vertices.
+ */
+ComponentMap glueLayer(const ODD::Layer& layer,
+                       const LayerReachabilityMap& reachable,
+                       const ComponentMap& next) {
+    ComponentMap ret(layer.leftStates, -1);
+    ComponentStateMap comps;
+    for (int i = 0; i < layer.leftStates; i++) {
+        if (!reachable[i])
+            continue;
+        auto tm = stateTransitionMap(layer, i, next);
+        auto it = comps.lower_bound(tm);
+        if (it != comps.end() && it->first == tm) {
+            ret[i] = it->second;
+        } else {
+            ret[i] = comps.size();
+            comps.insert(it, {tm, comps.size()});
+        }
+    }
+    return ret;
+}
+
+int countClasses(const ComponentMap& map) {
+    return (*std::max_element(map.begin(), map.end())) + 1;
+}
+
+/**
+ * For each class an ID of some of its states or -1 in case the class is empty
+ * (empty classes can occur in case of empty language of given ODD).
+ */
+using ExemplarList = std::vector<int>;
+
+ExemplarList exemplarList(const ComponentMap& map) {
+    ExemplarList ret(countClasses(map), -1);
+    for (int i = 0; i < (int)map.size(); i++) {
+        if (map[i] == -1)
+            continue;
+        if (ret[map[i]] == -1)
+            ret[map[i]] = i;
+    }
+    return ret;
+}
+
+void minAddLayer(ODDBuilder& builder,
+                 const ODD::Layer& oldLayer,
+                 const ComponentMap& leftMap,
+                 const ComponentMap& rightMap) {
+    int alphabetSize = oldLayer.alphabet.symbols().size();
+    ExemplarList some = exemplarList(leftMap);
+    ODD::TransitionContainer transitions;
+    for (int i = 0; i < (int)some.size(); i++) {
+        if (some[i] == -1)
+            continue;
+        for (int symbol = 0; symbol < alphabetSize; symbol++) {
+            int to = rightMap[oldLayer.transitions.go(some[i], symbol)];
+            transitions.insert({i, symbol, to});
+        }
+    }
+    builder.addLayer(
+        oldLayer.alphabet,
+        transitions,
+        countClasses(rightMap)
+    );
+}
+
+}
+
+ODD minimize(ODD odd) {
+    if (!isDeterministic(odd) || !isComplete(odd)) {
+        odd = diagramLazyPowerSet(odd);
+    }
+
+    int n = odd.countLayers();
+    ReachabilityMap reachable = reachabilityMap(odd);
+    std::vector<ComponentMap> maps(odd.countLayers() + 1);
+    maps.back() = glueRightLayer(odd.getLayer(n - 1), reachable.back());
+    for (int i = n - 1; i >= 0; i--) {
+        maps[i] = glueLayer(odd.getLayer(i), reachable[i], maps[i + 1]);
+    }
+
+    ODDBuilder builder(1);
+    builder.setInitialStates({0});
+    for (int i = 0; i < n; i++) {
+        minAddLayer(builder, odd.getLayer(i), maps[i], maps[i + 1]);
+    }
+    if (!odd.finalStates().empty()) {
+        // The ID of final state of the rightmost layer is 0.
+        builder.setFinalStates({0});
+    } else {
+        builder.setFinalStates({});
+    }
+
+    return builder.build();
 }
 
 }

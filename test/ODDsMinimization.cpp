@@ -11,6 +11,7 @@ protected:
     static std::string trivialArgDesc;
     static std::string trivialExpectedDesc;
     static std::string everyAccepted;
+    static std::string noneAccepted;
 };
 
 std::string ODDsMinimizationTest::trivialArgDesc = R"(
@@ -56,20 +57,20 @@ std::string ODDsMinimizationTest::trivialExpectedDesc = R"(
       "alphabet": ["a", "b"],
       "transitions": [
         {"from": 0, "symbol": "a", "to": 0},
-        {"from": 0, "symbol": "b", "to": 1}
+        {"from": 0, "symbol": "b", "to": 0}
       ],
-      "rightLayerStates": 2
+      "rightLayerStates": 1
     },
     {
       "alphabet": ["a", "b"],
       "transitions": [
-        {"from": 0, "symbol": "a", "to": 1},
-        {"from": 1, "symbol": "b", "to": 0}
+        {"from": 0, "symbol": "a", "to": 0},
+        {"from": 0, "symbol": "b", "to": 1}
       ],
       "rightLayerStates": 2
     }
   ],
-  "finalStates": [1]
+  "finalStates": [0]
 })";
 
 std::string ODDsMinimizationTest::everyAccepted = R"(
@@ -99,6 +100,31 @@ std::string ODDsMinimizationTest::everyAccepted = R"(
   "finalStates": [0, 1, 2, 3]
 })";
 
+std::string ODDsMinimizationTest::noneAccepted = R"(
+{
+  "leftLayerStates": 1,
+  "initialStates": [0],
+  "layers": [
+    {
+      "alphabet": ["a", "b"],
+      "transitions": [
+        {"from": 0, "symbol": "a", "to": 0},
+        {"from": 0, "symbol": "b", "to": 1}
+      ],
+      "rightLayerStates": 2
+    },
+    {
+      "alphabet": ["a", "b"],
+      "transitions": [
+        {"from": 0, "symbol": "a", "to": 0},
+        {"from": 1, "symbol": "b", "to": 1}
+      ],
+      "rightLayerStates": 2
+    }
+  ],
+  "finalStates": []
+})";
+
 TEST_F(ODDsMinimizationTest, trivial) {
     ODDs::ODD arg = ODDs::readJSON(trivialArgDesc);
     ODDs::ODD expected = ODDs::readJSON(trivialExpectedDesc);
@@ -108,6 +134,13 @@ TEST_F(ODDsMinimizationTest, trivial) {
 
 TEST_F(ODDsMinimizationTest, everyAccepted) {
     ODDs::ODD arg = ODDs::readJSON(everyAccepted);
+    ODDs::ODD odd = ODDs::minimize(arg);
+    for (int i = 0; i < odd.countLayers(); i++)
+        EXPECT_EQ(1, odd.getLayer(i).width());
+}
+
+TEST_F(ODDsMinimizationTest, noneAccepted) {
+    ODDs::ODD arg = ODDs::readJSON(noneAccepted);
     ODDs::ODD odd = ODDs::minimize(arg);
     for (int i = 0; i < odd.countLayers(); i++)
         EXPECT_EQ(1, odd.getLayer(i).width());
@@ -123,24 +156,27 @@ TEST_F(ODDsMinimizationTest, div3) {
     );
 }
 
-TEST_F(ODDsMinimizationTest, div6) {
+TEST_F(ODDsMinimizationTest, div2) {
     using namespace TestCommon;
     ODDs::ODD odd = ODDs::minimize(div2NM(10) & (div3(10) | div2NM(10)));
     auto pred = [](int n) -> bool {
-        return n % 6 == 0;
+        return n % 2 == 0;
     };
     EXPECT_TRUE(checkPredicate(odd, pred));
-    for (int i = 0; i < odd.countLayers(); i++)
-        EXPECT_EQ(6, odd.getLayer(i).width());
+    for (int i = 0; i < odd.countLayers() - 1; i++)
+        EXPECT_EQ(1, odd.getLayer(i).width());
+    EXPECT_EQ(2, odd.getLayer(odd.countLayers() - 1).width());
 }
 
-TEST_F(ODDsMinimizationTest, div6DoubleDiv2) {
+TEST_F(ODDsMinimizationTest, div6) {
     using namespace TestCommon;
     ODDs::ODD odd = ODDs::minimize(div2NM(10) & div2NM(10) & div3(10));
     auto pred = [](int n) -> bool {
         return n % 6 == 0;
     };
     EXPECT_TRUE(checkPredicate(odd, pred));
-    for (int i = 0; i < odd.countLayers(); i++)
-        EXPECT_EQ(6, odd.getLayer(i).width());
+    EXPECT_EQ(2, odd.getLayer(0).width());
+    for (int i = 1; i < odd.countLayers() - 1; i++)
+        EXPECT_EQ(3, odd.getLayer(i).width());
+    EXPECT_EQ(2, odd.getLayer(odd.countLayers() - 1).width());
 }

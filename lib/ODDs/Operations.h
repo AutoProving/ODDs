@@ -123,6 +123,6 @@ ODD diagramLazyPowerSet(const ODD& odd);
  * If the automation is not complete or non-determinate, first performs
  * diagramLazyPowerSet.
  */
-ODD minimize(const ODD& odd);
+ODD minimize(ODD odd);
 
 }
