@@ -53,5 +53,15 @@ dkms.conf
 
 # Idea files
 .idea
-cmake*
 .vscode
+
+# CMake build dir
+build/*
+!build/.keep
+
+# Doxygen docs dir
+doc/*
+!doc/.keep
+
+# YCM Config
+.ycm_extra_conf.py
