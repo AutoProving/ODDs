@@ -40,3 +40,7 @@ $ doxygen Doxyfile
 ```
 
 The home page of documentation will be available at `doc/html/index.html`.
+
+## Contributors
+
+See the [Contributors.md](Contributors.md) file.
