@@ -128,7 +128,7 @@ namespace {
 
 template<class B>
 void prettyprintJSON(B& buffer, const ODD& odd) {
-    rapidjson::PrettyWriter writer(buffer);
+    rapidjson::PrettyWriter<B> writer(buffer);
     writer.SetIndent(' ', 2);
     writeJSON(odd, writer);
 }

@@ -31,8 +31,9 @@ void testLayersSanity(const ODDs::ODD& odd) {
         ASSERT_TRUE(odd.getLayer(i).checkSanity());
         ASSERT_EQ(i == 0, odd.getLayer(i).isInitial);
         ASSERT_EQ(i + 1 == odd.countLayers(), odd.getLayer(i).isFinal);
-        if (!odd.getLayer(i).isFinal)
+        if (!odd.getLayer(i).isFinal) {
             ASSERT_EQ(odd.getLayer(i).rightStates, odd.getLayer(i + 1).leftStates);
+        }
     }
 }
 
@@ -238,11 +239,11 @@ TEST_F(ODDBuilderTest, trivial) {
 }
 
 TEST_F(ODDBuilderTest, noLayers) {
-    ODDs::ODD::StateContainer initialStates = {1, 2};
-    ODDs::ODD::StateContainer finalStates = {0, 1};
+    ODDs::ODD::StateContainer localInitialStates = {1, 2};
+    ODDs::ODD::StateContainer localFinalStates = {0, 1};
     ODDs::ODDBuilder builder(3);
-    builder.setInitialStates(initialStates);
-    builder.setFinalStates(finalStates);
+    builder.setInitialStates(localInitialStates);
+    builder.setFinalStates(localFinalStates);
     ODDs::ODD odd = builder.build();
     testLayersSanity(odd);
 }

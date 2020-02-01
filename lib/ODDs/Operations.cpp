@@ -21,6 +21,7 @@
 #include <ODDs/Operations.h>
 
 #include <algorithm>
+#include <cassert>
 #include <iterator>
 
 namespace ODDs {
