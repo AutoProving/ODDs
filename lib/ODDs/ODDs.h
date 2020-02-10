@@ -274,6 +274,11 @@ public:
          */
         bool hasKey(State from, Symbol symbol) const;
 
+        /**
+         * @breif Returns a range of transitions from given started state.
+         */
+        Range proceedFrom(State from) const;
+
     private:
         Base m_;
         std::set<Transition> p_;

@@ -319,3 +319,24 @@ TEST(ODDsStructuresTest, transitionContainerHasKey) {
     EXPECT_TRUE(transitions.hasKey({0, 0}));
     EXPECT_FALSE(transitions.hasKey(1, 1));
 }
+
+TEST(ODDsStructuresTest, transitionContainerProceedFrom) {
+    ODDs::ODD::TransitionContainer transitions = {
+        {0, 0, 1},
+        {0, 1, 0},
+        {1, 0, 1},
+        {0, 0, 0}
+    };
+    std::vector<ODDs::ODD::Transition> expected = {
+        {0, 0, 1},
+        {0, 0, 0},
+        {0, 1, 0}
+    };
+
+    std::vector<ODDs::ODD::Transition> transitionsFrom;
+    for (const ODDs::ODD::Transition& transition : transitions.proceedFrom(0)) {
+        transitionsFrom.push_back(transition);
+    }
+
+    EXPECT_EQ(expected, transitionsFrom);
+}

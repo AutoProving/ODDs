@@ -179,6 +179,12 @@ bool TC::hasKey(State from, Symbol symbol) const {
     return hasKey({from, symbol});
 }
 
+TC::Range TC::proceedFrom(State from) const {
+    const auto min = std::numeric_limits<ODD::Symbol>::min();
+    const auto max = std::numeric_limits<ODD::Symbol>::max();
+    return Range(m_.lower_bound({from, min}), m_.upper_bound({from, max}));
+}
+
 int ODD::AlphabetMap::addSymbol(const std::string& symbol) {
     auto it = s2n_.lower_bound(symbol);
     if (it != s2n_.end() && it->first == symbol) {
