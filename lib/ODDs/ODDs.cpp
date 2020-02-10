@@ -20,6 +20,8 @@
 
 #include <ODDs/ODDs.h>
 
+#include <cassert>
+
 namespace ODDs {
 
 ODD::Transition::Transition(ODD::State fromState, ODD::Symbol bySymbol, ODD::State stateTo)
