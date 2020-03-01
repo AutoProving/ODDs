@@ -1,12 +1,14 @@
 # List of contributors
 
-## Maintainer
+## Owner
 
 [Mateus de Oliveira Oliveira](https://github.com/mateusoliveiraoliveira)
 
-## Contributors
+## Maintainer
 
-* [Vasily Alferov](https://github.com/vasalf)
+[Vasily Alferov](https://github.com/vasalf)
+
+## Contributors
 
 * [MarkusRa1](https://github.com/MarkusRa1)
 * [Ole Magnus Lie](https://github.com/omlie)
