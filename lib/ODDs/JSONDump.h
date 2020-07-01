@@ -79,6 +79,12 @@ namespace ODDs {
 void writeJSON(std::ostream& os, const ODD& odd);
 
 /**
+ * @brief Write a non-prettyprinted JSON description of an ODD layer to an
+ * output stream.
+ */
+void writeJSON(std::ostream& os, const ODD::Layer& layer);
+
+/**
  * @brief Get a prettyprinted JSON description of an ODD.
  *
  * Uses 2 spaces for indentaion.
@@ -100,6 +106,13 @@ public:
  * @throws JSONParseError in case of malformated input.
  */
 ODD readJSON(std::istream& is);
+
+/**
+ * @brief Read a JSON layer description from an input stream.
+ *
+ * @throws JSONParseError in case of malformed input.
+ */
+ODD::Layer readLayerJSON(std::istream& is);
 
 /**
  * @brief Read a JSON description from a string.
