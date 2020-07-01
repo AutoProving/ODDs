@@ -19,8 +19,11 @@
 // SOFTWARE.
 
 #include <ODDs/ODDs.h>
+#include <ODDs/JSONDump.h>
 
 #include <cassert>
+#include <filesystem>
+#include <fstream>
 
 namespace ODDs {
 
@@ -247,7 +250,8 @@ ODD::ODD(const std::string& dirName)
 
 ODD::~ODD() {
     if (mode_ == Mode::Disk) {
-        // TODO
+        namespace fs = std::filesystem;
+        fs::remove_all(fs::path(dirName_));
     }
 }
 
@@ -258,11 +262,28 @@ int ODD::countLayers() const {
 namespace {
 
 void unloadLayer(ODD::Layer& layer) {
+    layer.alphabet = {};
+    layer.initialStates.clear();
+    layer.finalStates.clear();
+    layer.transitions = {};
+}
 
+std::string layerFileName(int i) {
+    return "layer" + std::to_string(i) + ".json";
 }
 
 void loadLayer(ODD::Layer& layer, const std::string& dirName, int i) {
+    namespace fs = std::filesystem;
+    fs::path path = fs::path(dirName) / layerFileName(i);
+    std::ifstream fin(path);
+    layer = readLayerJSON(fin);
+}
 
+void writeLayer(const ODD::Layer& layer, const std::string& dirName, int i) {
+    namespace fs = std::filesystem;
+    fs::path path = fs::path(dirName) / layerFileName(i);
+    std::ofstream fout(path);
+    writeJSON(fout, layer);
 }
 
 }
@@ -413,13 +434,71 @@ private:
     std::vector<ODD::TransitionContainer> transitions_;
 };
 
+class DiskBuilder : public ODDBuilder::Impl {
+public:
+    DiskBuilder(int firstLayerCount, const std::string& diskName)
+        : ODDBuilder::Impl(diskName)
+    {
+        currentLayer_.leftStates = firstLayerCount;
+        currentLayer_.isInitial = false;
+        currentLayer_.isFinal = false;
+
+        namespace fs = std::filesystem;
+        fs::create_directories(fs::path(dirName_));
+    }
+
+    virtual void addLayer(const ODD::AlphabetMap& alphabet,
+                          const ODD::TransitionContainer& transitions,
+                          int rightStateCount) override {
+        currentLayer_.alphabet = alphabet;
+        currentLayer_.transitions = transitions;
+        currentLayer_.rightStates = rightStateCount;
+        writeLayer(currentLayer_, dirName_, i_);
+        shift();
+    }
+
+    virtual ODD build() override {
+        layers_.resize(i_);
+        {
+            // Set initial states
+            ODD::Layer initialLayer;
+            loadLayer(initialLayer, dirName_, 0);
+            initialLayer.isInitial = true;
+            initialLayer.initialStates = std::move(initialStates_);
+            writeLayer(initialLayer, dirName_, 0);
+        }
+        {
+            // Set final states
+            ODD::Layer finalLayer;
+            loadLayer(finalLayer, dirName_, i_ - 1);
+            finalLayer.isFinal = true;
+            finalLayer.finalStates = std::move(finalStates_);
+            writeLayer(finalLayer, dirName_, i_ - 1);
+        }
+        return doBuild();
+    }
+
+private:
+    void shift() {
+        currentLayer_.alphabet = {};
+        currentLayer_.leftStates = currentLayer_.rightStates;
+        currentLayer_.transitions = {};
+        i_++;
+    }
+
+    ODD::Layer currentLayer_;
+    int i_ = 0;
+};
+
 }
 
-ODDBuilder::ODDBuilder(int leftStateCount, ODD::Mode mode) {
-    if (mode == ODD::Mode::Memory) {
-        impl_.reset(new MemoryBuilder(leftStateCount));
-    }
-}
+ODDBuilder::ODDBuilder(int leftStateCount)
+    : impl_(std::make_unique<MemoryBuilder>(leftStateCount))
+{}
+
+ODDBuilder::ODDBuilder(int leftStateCount, const std::string& dirName)
+    : impl_(std::make_unique<DiskBuilder>(leftStateCount, dirName))
+{}
 
 ODDBuilder::~ODDBuilder() = default;
 

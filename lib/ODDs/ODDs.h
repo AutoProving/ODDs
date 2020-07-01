@@ -465,10 +465,16 @@ public:
     class Impl;
 
     /**
-     * @brief Construct a builder given the number of vertices in the first
-     * layer.
+     * @brief Construct a memory builder given the number of vertices in the
+     * first layer.
      */
-    ODDBuilder(int leftStateCount, ODD::Mode mode = ODD::Mode::Memory);
+    ODDBuilder(int leftStateCount);
+
+    /**
+     * @brief Construct a disk builder given the number of vertices in the
+     * first layer and directory name.
+     */
+    ODDBuilder(int leftStateCount, const std::string& dirName);
 
     ~ODDBuilder();
     ODDBuilder(const ODDBuilder&) = delete;

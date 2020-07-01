@@ -22,6 +22,7 @@
 #include <ODDs/ODDs.h>
 #include <ODDs/JSONDump.h>
 
+#include <filesystem>
 #include <sstream>
 
 namespace {
@@ -132,13 +133,22 @@ protected:
         ASSERT_EQ(finalStates, odd.getLayer(1).finalStates);
     }
 
-    virtual ODDs::ODD buildODD() {
-        ODDs::ODDBuilder builder(states0);
+    virtual ODDs::ODD doBuildODD(ODDs::ODDBuilder& builder) {
         builder.addLayer(alphabet0, transitions0, states1);
         builder.addLayer(alphabet1, transitions1, states2);
         builder.setInitialStates(initialStates);
         builder.setFinalStates(finalStates);
         return builder.build();
+    }
+
+    virtual ODDs::ODD buildODD() {
+        ODDs::ODDBuilder builder(states0);
+        return doBuildODD(builder);
+    }
+
+    virtual ODDs::ODD buildODD(const std::string& dirName) {
+        ODDs::ODDBuilder builder(states0, dirName);
+        return doBuildODD(builder);
     }
 };
 
@@ -236,6 +246,17 @@ std::string ODDBuilderTest::jsonDescription = R"({
 TEST_F(ODDBuilderTest, trivial) {
     ODDs::ODD odd = buildODD();
     checkODD(odd);
+}
+
+TEST_F(ODDBuilderTest, trivialDisk) {
+    namespace fs = std::filesystem;
+    std::string dirName = std::tmpnam(nullptr);
+    {
+        ODDs::ODD odd = buildODD(dirName);
+        checkODD(odd);
+        EXPECT_TRUE(fs::exists(fs::path(dirName)));
+    }
+    EXPECT_FALSE(fs::exists(fs::path(dirName)));
 }
 
 TEST_F(ODDBuilderTest, noLayers) {
