@@ -363,10 +363,22 @@ public:
         bool checkSanity() const;
     };
 
+    enum class Mode {
+        Memory,
+        Disk
+    };
+
 private:
     ODD(); // Use ODDBuilder to construct ODDs
 
+    ODD(const std::string& dirName); // Use ODDBuilder to construct ODDs
+
 public:
+    /**
+     * Destroys the ODD on disk if nessessary.
+     */
+    ~ODD();
+
     /**
      * @brief Returns number of layers.
      *
@@ -395,7 +407,10 @@ public:
     bool accepts(const std::vector<std::string>& string) const;
 
 private:
-    std::vector<Layer> layers_;
+    Mode mode_;
+    mutable int loaded_;
+    std::string dirName_;
+    mutable std::vector<Layer> layers_;
 
     friend class ODDBuilder;
 };
@@ -445,10 +460,15 @@ private:
 class ODDBuilder {
 public:
     /**
+     * Implementation-defined inner class.
+     */
+    class Impl;
+
+    /**
      * @brief Construct a builder given the number of vertices in the first
      * layer.
      */
-    ODDBuilder(int leftStateCount);
+    ODDBuilder(int leftStateCount, ODD::Mode mode = ODD::Mode::Memory);
 
     ~ODDBuilder();
     ODDBuilder(const ODDBuilder&) = delete;
@@ -482,7 +502,6 @@ public:
     ODD build();
 
 private:
-    class Impl;
     std::unique_ptr<Impl> impl_;
 };
 

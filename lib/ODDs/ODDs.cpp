@@ -233,13 +233,52 @@ bool ODD::Layer::checkSanity() const {
     return true;
 }
 
-ODD::ODD() = default;
+ODD::ODD()
+    : mode_(Mode::Memory)
+    , layers_()
+{}
+
+ODD::ODD(const std::string& dirName)
+    : mode_(Mode::Disk)
+    , loaded_(-1)
+    , dirName_(dirName)
+    , layers_()
+{}
+
+ODD::~ODD() {
+    if (mode_ == Mode::Disk) {
+        // TODO
+    }
+}
 
 int ODD::countLayers() const {
     return layers_.size();
 }
 
+namespace {
+
+void unloadLayer(ODD::Layer& layer) {
+
+}
+
+void loadLayer(ODD::Layer& layer, const std::string& dirName, int i) {
+
+}
+
+}
+
 const ODD::Layer& ODD::getLayer(int i) const {
+    if (mode_ == Mode::Memory) {
+        return layers_[i];
+    }
+    // Else mode_ == Mode::Disk
+    if (loaded_ != i) {
+        if (loaded_ != -1) {
+            unloadLayer(layers_[i]);
+        }
+        loadLayer(layers_[i], dirName_, i);
+        loaded_ = i;
+    }
     return layers_[i];
 }
 
@@ -289,17 +328,19 @@ bool ODD::accepts(const std::vector<std::string>& string) const {
 
 class ODDBuilder::Impl {
 public:
-    Impl(int firstLayerCount)
-        : stateCounts_({firstLayerCount})
+    Impl()
+        : mode_(ODD::Mode::Memory)
+        , dirName_("")
+        , layers_()
     {}
 
-    void addLayer(const ODD::AlphabetMap& alphabet,
-                  const ODD::TransitionContainer& transitions,
-                  int rightStateCount) {
-        alphabets_.push_back(alphabet);
-        transitions_.push_back(transitions);
-        stateCounts_.push_back(rightStateCount);
-    }
+    Impl(const std::string& dirName)
+        : mode_(ODD::Mode::Disk)
+        , dirName_(dirName)
+        , layers_()
+    {}
+
+    virtual ~Impl() = default;
 
     void setInitialStates(const ODD::StateContainer& initialStates) {
         initialStates_ = initialStates;
@@ -309,36 +350,76 @@ public:
         finalStates_ = finalStates;
     }
 
-    ODD build() {
-        // We try to use std::move whereever possible.
+    virtual void addLayer(const ODD::AlphabetMap& alphabet,
+                          const ODD::TransitionContainer& transitions,
+                          int rightStateCount) = 0;
+
+    virtual ODD build() = 0;
+
+protected:
+    ODD doBuild() const {
         ODD ret;
-        ret.layers_.resize(alphabets_.size());
-        for (int i = 0; i < (int)alphabets_.size(); i++) {
-            ret.layers_[i].alphabet = std::move(alphabets_[i]);
-            ret.layers_[i].leftStates = stateCounts_[i];
-            ret.layers_[i].rightStates = stateCounts_[i + 1];
-            ret.layers_[i].transitions = std::move(transitions_[i]);
-            ret.layers_[i].isInitial = i == 0;
-            ret.layers_[i].isFinal = i + 2 == (int)stateCounts_.size();
-        }
-        if (!ret.layers_.empty()) {
-            ret.layers_[0].initialStates = std::move(initialStates_);
-            ret.layers_.back().finalStates = std::move(finalStates_);
-        }
+        ret.mode_ = mode_;
+        ret.loaded_ = -1;
+        ret.dirName_ = std::move(dirName_);
+        ret.layers_ = std::move(layers_);
         return ret;
+    }
+
+    ODD::Mode mode_;
+    std::string dirName_;
+    std::vector<ODD::Layer> layers_;
+    ODD::StateContainer initialStates_;
+    ODD::StateContainer finalStates_;
+};
+
+namespace {
+
+class MemoryBuilder : public ODDBuilder::Impl {
+public:
+    MemoryBuilder(int firstLayerCount)
+        : stateCounts_({firstLayerCount})
+    {}
+
+    virtual void addLayer(const ODD::AlphabetMap& alphabet,
+                          const ODD::TransitionContainer& transitions,
+                          int rightStateCount) override {
+        alphabets_.push_back(alphabet);
+        transitions_.push_back(transitions);
+        stateCounts_.push_back(rightStateCount);
+    }
+
+    virtual ODD build() override {
+        // We try to use std::move whereever possible.
+        layers_.resize(alphabets_.size());
+        for (int i = 0; i < (int)alphabets_.size(); i++) {
+            layers_[i].alphabet = std::move(alphabets_[i]);
+            layers_[i].leftStates = stateCounts_[i];
+            layers_[i].rightStates = stateCounts_[i + 1];
+            layers_[i].transitions = std::move(transitions_[i]);
+            layers_[i].isInitial = i == 0;
+            layers_[i].isFinal = i + 2 == (int)stateCounts_.size();
+        }
+        if (!layers_.empty()) {
+            layers_[0].initialStates = std::move(initialStates_);
+            layers_.back().finalStates = std::move(finalStates_);
+        }
+        return doBuild();
     }
 
 private:
     std::vector<int> stateCounts_;
     std::vector<ODD::AlphabetMap> alphabets_;
     std::vector<ODD::TransitionContainer> transitions_;
-    ODD::StateContainer initialStates_;
-    ODD::StateContainer finalStates_;
 };
 
-ODDBuilder::ODDBuilder(int leftStateCount)
-    : impl_(std::make_unique<ODDBuilder::Impl>(leftStateCount))
-{}
+}
+
+ODDBuilder::ODDBuilder(int leftStateCount, ODD::Mode mode) {
+    if (mode == ODD::Mode::Memory) {
+        impl_.reset(new MemoryBuilder(leftStateCount));
+    }
+}
 
 ODDBuilder::~ODDBuilder() = default;
 
