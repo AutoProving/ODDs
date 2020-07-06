@@ -32,6 +32,14 @@ namespace ODDs {
 
 /**
  * @brief An Ordered Decision Diagram.
+ *
+ * An ODD can be stored in memory or on disk. When it is stored on disk, at
+ * most one layer is stored in the memory at a time, but operations are much
+ * slower. In disk mode the ODD is stored in some files in the directory
+ * provided to ODDBuilder. Normally, the directory is deleted after the ODD
+ * object is destroyed; one should call ODD::detachDir to prevent this. An
+ * ODD can be restored from the directory where it was stored by calling
+ * ODDs::readFromDirectory.
  */
 class ODD {
 public:
