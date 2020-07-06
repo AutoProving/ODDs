@@ -766,8 +766,10 @@ void minAddLayer(ODDBuilder& builder,
 
 }
 
-ODD minimize(ODD odd) {
-    if (!isDeterministic(odd) || !isComplete(odd)) {
+ODD minimize(const ODD& initialOdd) {
+    ODDs::ODD odd = copyODD(initialOdd);
+
+    if (!isDeterministic(initialOdd) || !isComplete(initialOdd)) {
         odd = diagramLazyPowerSet(odd);
     }
 

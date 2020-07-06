@@ -259,6 +259,58 @@ TEST_F(ODDBuilderTest, trivialDisk) {
     EXPECT_FALSE(fs::exists(fs::path(dirName)));
 }
 
+TEST_F(ODDBuilderTest, copyODDMemoryToMemory) {
+    ODDs::ODD odd = buildODD();
+    ODDs::ODD copy = ODDs::copyODD(odd);
+    checkODD(copy);
+}
+
+TEST_F(ODDBuilderTest, copyODDMemoryToDisk) {
+    std::string dirName = std::tmpnam(nullptr);
+    ODDs::ODD odd = buildODD();
+    ODDs::ODD copy = ODDs::copyODD(odd, dirName);
+    checkODD(copy);
+}
+
+TEST_F(ODDBuilderTest, copyODDDiskToMemory) {
+    std::string dirName = std::tmpnam(nullptr);
+    ODDs::ODD odd = buildODD(dirName);
+    ODDs::ODD copy = ODDs::copyODD(odd);
+    checkODD(copy);
+}
+
+TEST_F(ODDBuilderTest, copyODDDiskToDisk) {
+    namespace fs = std::filesystem;
+    std::string dirName = std::tmpnam(nullptr);
+    std::string copyDirName = std::tmpnam(nullptr);
+    std::unique_ptr<ODDs::ODD> copy;
+    {
+        ODDs::ODD odd = buildODD(dirName);
+        ASSERT_TRUE(fs::exists(dirName));
+        copy.reset(new ODDs::ODD(copyODD(odd, copyDirName)));
+        ASSERT_TRUE(fs::exists(copyDirName));
+    }
+    EXPECT_FALSE(fs::exists(dirName));
+    checkODD(*copy);
+}
+
+TEST_F(ODDBuilderTest, saveDirAndLoad) {
+    namespace fs = std::filesystem;
+    std::string dirName = std::tmpnam(nullptr);
+    {
+        ODDs::ODD odd = buildODD(dirName);
+        checkODD(odd);
+        odd.detachDir();
+    }
+    ASSERT_TRUE(fs::exists(fs::path(dirName)));
+    {
+        auto odd = ODDs::readFromDirectory(dirName);
+        ASSERT_TRUE(odd.has_value());
+        checkODD(odd.value());
+    }
+    EXPECT_FALSE(fs::exists(fs::path(dirName)));
+}
+
 TEST_F(ODDBuilderTest, noLayers) {
     ODDs::ODD::StateContainer localInitialStates = {1, 2};
     ODDs::ODD::StateContainer localFinalStates = {0, 1};

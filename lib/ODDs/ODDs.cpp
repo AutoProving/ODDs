@@ -249,10 +249,28 @@ ODD::ODD(const std::string& dirName)
 {}
 
 ODD::~ODD() {
-    if (mode_ == Mode::Disk) {
+    if (mode_ == Mode::Disk && !detached_) {
         namespace fs = std::filesystem;
         fs::remove_all(fs::path(dirName_));
     }
+}
+
+ODD::ODD(ODD&& other) {
+    mode_ = other.mode_;
+    loaded_ = other.loaded_;
+    dirName_ = std::move(other.dirName_);
+    layers_ = std::move(other.layers_);
+    detached_ = other.detached_;
+    other.detached_ = true;
+}
+
+ODD& ODD::operator=(ODD&& rhs) {
+    std::swap(mode_, rhs.mode_);
+    std::swap(loaded_, rhs.loaded_);
+    std::swap(dirName_, rhs.dirName_);
+    std::swap(layers_, rhs.layers_);
+    std::swap(detached_, rhs.detached_);
+    return *this;
 }
 
 int ODD::countLayers() const {
@@ -309,6 +327,10 @@ const ODD::StateContainer& ODD::initialStates() const {
 
 const ODD::StateContainer& ODD::finalStates() const {
     return getLayer(countLayers() - 1).finalStates;
+}
+
+void ODD::detachDir() {
+    detached_ = true;
 }
 
 namespace {
@@ -518,6 +540,83 @@ void ODDBuilder::setFinalStates(const ODD::StateContainer& finalStates) {
 
 ODD ODDBuilder::build() {
     return impl_->build();
+}
+
+namespace {
+
+ODD doCopyODD(const ODD& odd, ODDBuilder& builder) {
+    builder.setInitialStates(odd.initialStates());
+    for (int i = 0; i < odd.countLayers(); i++) {
+        builder.addLayer(
+            odd.getLayer(i).alphabet,
+            odd.getLayer(i).transitions,
+            odd.getLayer(i).rightStates
+        );
+    }
+    builder.setFinalStates(odd.finalStates());
+    return builder.build();
+}
+
+}
+
+ODD copyODD(const ODD& odd) {
+    ODDBuilder builder(odd.getLayer(0).leftStates);
+    return doCopyODD(odd, builder);
+}
+
+ODD copyODD(const ODD& odd, const std::string& dirName) {
+    ODDBuilder builder(odd.getLayer(0).leftStates, dirName);
+    return doCopyODD(odd, builder);
+}
+
+namespace {
+
+int countLayers(const std::string& dirName) {
+    namespace fs = std::filesystem;
+    for (int ret = 0; ; ret++) {
+        fs::path path = fs::path(dirName) / layerFileName(ret);
+        if (!fs::exists(path)) {
+            return ret;
+        }
+    }
+}
+
+}
+
+std::optional<ODD> readFromDirectory(const std::string& dirName) {
+    int layers = countLayers(dirName);
+    if (layers == 0) {
+        return {};
+    }
+    int lastRight = -1;
+    for (int i = 0; i < layers; i++) {
+        namespace fs = std::filesystem;
+        fs::path path = fs::path(dirName) / layerFileName(i);
+        std::ifstream in(path);
+        if (!in) {
+            return {};
+        }
+        ODD::Layer layer;
+        try {
+            layer = readLayerJSON(in);
+        } catch (JSONParseError&) {
+            return {};
+        }
+        if (!layer.checkSanity()) {
+            return {};
+        }
+        if (lastRight != -1 && lastRight != layer.leftStates) {
+            return {};
+        }
+        lastRight = layer.rightStates;
+    }
+
+    ODD ret;
+    ret.mode_ = ODD::Mode::Disk;
+    ret.loaded_ = -1;
+    ret.dirName_ = dirName;
+    ret.layers_.resize(layers);
+    return {std::move(ret)};
 }
 
 namespace {

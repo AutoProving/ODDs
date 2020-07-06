@@ -375,9 +375,26 @@ private:
 
 public:
     /**
-     * Destroys the ODD on disk if nessessary.
+     * @brief Destroys the ODD on disk if nessessary.
      */
     ~ODD();
+
+    /**
+     * Direct copying of ODDs is prohibited because they might incapsulate
+     * ownership of directories.
+     */
+    ODD(const ODD&) = delete;
+    ODD& operator=(const ODD&) = delete;
+
+    /**
+     * @brief Move constructor.
+     */
+    ODD(ODD&& other);
+
+    /**
+     * @brief Move-assignment operator.
+     */
+    ODD& operator=(ODD&& rhs);
 
     /**
      * @brief Returns number of layers.
@@ -406,13 +423,24 @@ public:
      */
     bool accepts(const std::vector<std::string>& string) const;
 
+    /**
+     * @brief Withdraws ownership for the directory.
+     *
+     * If the ODD is in disk mode, this implies that the directory will not be
+     * removed after the object is destroyed. No effect if the ODD is in memory
+     * mode.
+     */
+    void detachDir();
+
 private:
     Mode mode_;
     mutable int loaded_;
     std::string dirName_;
     mutable std::vector<Layer> layers_;
+    bool detached_ = false;
 
     friend class ODDBuilder;
+    friend std::optional<ODD> readFromDirectory(const std::string&);
 };
 
 /**
@@ -510,6 +538,28 @@ public:
 private:
     std::unique_ptr<Impl> impl_;
 };
+
+/**
+ * @brief Creates a memory copy of given ODD.
+ *
+ * A memory analogue of copy constructor.
+ */
+ODD copyODD(const ODD& odd);
+
+/**
+ * @brief Creates a disk copy of given ODD.
+ *
+ * A disk analogue of copy constructor.
+ */
+ODD copyODD(const ODD& odd, const std::string& dirName);
+
+/**
+ * @brief Tries to load an ODD from directory.
+ *
+ * @return Disk-mode ODD if provided dir contains a correct ODD, nothing
+ * otherwise.
+ */
+std::optional<ODD> readFromDirectory(const std::string& dirName);
 
 /**
  * @brief Reads ODD description from an input stream.
