@@ -271,6 +271,7 @@ ODD& ODD::operator=(ODD&& rhs) {
     std::swap(dirName_, rhs.dirName_);
     std::swap(layers_, rhs.layers_);
     std::swap(detached_, rhs.detached_);
+    std::swap(countLayers_, rhs.countLayers_);
     return *this;
 }
 
