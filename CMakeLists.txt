@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 
+# std::filesystem is only available on Catalina.
+set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15)
+
 project(ODDs)
 
 set(CMAKE_CXX_STANDARD 17)

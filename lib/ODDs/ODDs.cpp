@@ -261,6 +261,7 @@ ODD::ODD(ODD&& other) {
     dirName_ = std::move(other.dirName_);
     layers_ = std::move(other.layers_);
     detached_ = other.detached_;
+    countLayers_ = other.countLayers_;
     other.detached_ = true;
 }
 
