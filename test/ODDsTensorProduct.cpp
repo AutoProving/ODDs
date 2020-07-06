@@ -26,17 +26,31 @@
 
 #include <Common/DivisionODDs.h>
 
+#include <filesystem>
 #include <string>
 
 namespace {
 
-void doTest(std::string lhsDesc,
-            std::string rhsDesc,
-            std::string expectedDesc) {
+void doTest(const std::string& lhsDesc,
+            const std::string& rhsDesc,
+            const std::string& expectedDesc) {
     ODDs::ODD lhs = ODDs::readJSON(lhsDesc);
     ODDs::ODD rhs = ODDs::readJSON(rhsDesc);
     ODDs::ODD expected = ODDs::readJSON(expectedDesc);
     ODDs::ODD result = ODDs::diagramTensorProduct(lhs, rhs);
+    ASSERT_EQ(ODDs::writeJSON(expected), ODDs::writeJSON(result));
+}
+
+void doDiskTest(const std::string& lhsDesc,
+                const std::string& rhsDesc,
+                const std::string& expectedDesc) {
+    namespace fs = std::filesystem;
+    ODDs::ODD lhs = ODDs::readJSON(lhsDesc);
+    ODDs::ODD rhs = ODDs::readJSON(rhsDesc);
+    ODDs::ODD expected = ODDs::readJSON(expectedDesc);
+    std::string dirName = std::tmpnam(nullptr);
+    ODDs::ODD result = ODDs::diagramTensorProduct(lhs, rhs, dirName);
+    EXPECT_TRUE(fs::exists(dirName));
     ASSERT_EQ(ODDs::writeJSON(expected), ODDs::writeJSON(result));
 }
 
@@ -147,4 +161,8 @@ std::string ODDsTensorProductTest::trivialExpectedDesc = R"(
 
 TEST_F(ODDsTensorProductTest, trivial) {
     doTest(trivialLhsDesc, trivialRhsDesc, trivialExpectedDesc);
+}
+
+TEST_F(ODDsTensorProductTest, trivialDisk) {
+    doDiskTest(trivialLhsDesc, trivialRhsDesc, trivialExpectedDesc);
 }

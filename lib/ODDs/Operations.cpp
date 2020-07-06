@@ -27,6 +27,18 @@
 namespace ODDs {
 namespace {
 
+using ODDBuilderFactory = std::function<ODDBuilder(int)>;
+
+ODDBuilder memoryFactory(int n) {
+    return ODDBuilder(n);
+}
+
+ODDBuilderFactory diskFactory(const std::string& dirName) {
+    return [dirName](int n) {
+        return ODDBuilder(n, dirName);
+    };
+}
+
 ODD::AlphabetMap alphabetUnion(const ODD::AlphabetMap& lhs,
                                const ODD::AlphabetMap& rhs) {
     ODD::AlphabetMap ret = lhs;
@@ -61,12 +73,10 @@ ODD::StateContainer stateSetUnion(const ODD::StateContainer& lhs,
     return ans;
 }
 
-}
-
-ODD diagramUnion(const ODD& lhs, const ODD& rhs) {
+ODD diagramUnion(const ODD& lhs, const ODD& rhs, ODDBuilderFactory bf) {
     assert(lhs.countLayers() == rhs.countLayers());
 
-    ODDBuilder builder(lhs.getLayer(0).leftStates + rhs.getLayer(0).leftStates);
+    ODDBuilder builder = bf(lhs.getLayer(0).leftStates + rhs.getLayer(0).leftStates);
     for (int i = 0; i < lhs.countLayers(); i++) {
         ODD::AlphabetMap alphabet = alphabetUnion(lhs.getLayer(i).alphabet,
                                                   rhs.getLayer(i).alphabet);
@@ -98,6 +108,16 @@ ODD diagramUnion(const ODD& lhs, const ODD& rhs) {
                                          lhs.getLayer(n - 1).rightStates));
 
     return builder.build();
+}
+
+}
+
+ODD diagramUnion(const ODD& lhs, const ODD& rhs) {
+    return diagramUnion(lhs, rhs, memoryFactory);
+}
+
+ODD diagramUnion(const ODD& lhs, const ODD& rhs, const std::string& dirName) {
+    return diagramUnion(lhs, rhs, diskFactory(dirName));
 }
 
 namespace {
@@ -157,12 +177,10 @@ ODD::StateContainer crossProduct(const ODD::StateContainer& lhs,
     return ans;
 }
 
-}
-
-ODD diagramIntersection(const ODD& lhs, const ODD& rhs) {
+ODD diagramIntersection(const ODD& lhs, const ODD& rhs, ODDBuilderFactory bf) {
     assert(lhs.countLayers() == rhs.countLayers());
 
-    ODDBuilder builder(lhs.getLayer(0).leftStates * rhs.getLayer(0).leftStates);
+    ODDBuilder builder = bf(lhs.getLayer(0).leftStates * rhs.getLayer(0).leftStates);
     builder.setInitialStates(
         crossProduct(
             lhs.initialStates(),
@@ -199,6 +217,16 @@ ODD diagramIntersection(const ODD& lhs, const ODD& rhs) {
         )
     );
     return builder.build();
+}
+
+}
+
+ODD diagramIntersection(const ODD& lhs, const ODD& rhs) {
+    return diagramIntersection(lhs, rhs, memoryFactory);
+}
+
+ODD diagramIntersection(const ODD& lhs, const ODD& rhs, const std::string& dirName) {
+    return diagramIntersection(lhs, rhs, diskFactory(dirName));
 }
 
 namespace {
@@ -241,12 +269,10 @@ ODD::TransitionContainer tensorProductTransitions(const ODD::TransitionContainer
     return transitions;
 }
 
-}
-
-ODD diagramTensorProduct(const ODD& lhs, const ODD& rhs) {
+ODD diagramTensorProduct(const ODD& lhs, const ODD& rhs, ODDBuilderFactory bf) {
     assert(lhs.countLayers() == rhs.countLayers());
 
-    ODDBuilder builder(lhs.getLayer(0).leftStates * rhs.getLayer(0).leftStates);
+    ODDBuilder builder = bf(lhs.getLayer(0).leftStates * rhs.getLayer(0).leftStates);
     builder.setInitialStates(
         crossProduct(
             lhs.initialStates(),
@@ -285,6 +311,16 @@ ODD diagramTensorProduct(const ODD& lhs, const ODD& rhs) {
     return builder.build();
 }
 
+}
+
+ODD diagramTensorProduct(const ODD& lhs, const ODD& rhs) {
+    return diagramTensorProduct(lhs, rhs, memoryFactory);
+}
+
+ODD diagramTensorProduct(const ODD& lhs, const ODD& rhs, const std::string& dirName) {
+    return diagramTensorProduct(lhs, rhs, diskFactory(dirName));
+}
+
 namespace {
 
 ODD::StateContainer negateStates(const ODD::StateContainer& states, int n) {
@@ -299,10 +335,8 @@ ODD::StateContainer negateStates(const ODD::StateContainer& states, int n) {
     return ret;
 }
 
-}
-
-ODD diagramNegation(const ODD& odd) {
-    ODDBuilder builder(odd.getLayer(0).leftStates);
+ODD diagramNegation(const ODD& odd, ODDBuilderFactory bf) {
+    ODDBuilder builder = bf(odd.getLayer(0).leftStates);
     builder.setInitialStates(odd.initialStates());
     for (int i = 0; i < odd.countLayers(); i++) {
         builder.addLayer(
@@ -318,6 +352,16 @@ ODD diagramNegation(const ODD& odd) {
         )
     );
     return builder.build();
+}
+
+}
+
+ODD diagramNegation(const ODD& odd) {
+    return diagramNegation(odd, memoryFactory);
+}
+
+ODD diagramNegation(const ODD& odd, const std::string& dirName) {
+    return diagramNegation(odd, diskFactory(dirName));
 }
 
 namespace {
@@ -346,11 +390,10 @@ ODD::TransitionContainer transitionMapping(const AlphabetMapping& g,
     return ret;
 }
 
-}
-
-ODD diagramMapping(const std::vector<AlphabetMapping>& gs, const ODD& odd) {
+ODD diagramMapping(const std::vector<AlphabetMapping>& gs,
+                   const ODD& odd, ODDBuilderFactory bf) {
     assert((int)gs.size() == odd.countLayers());
-    ODDBuilder builder(odd.getLayer(0).leftStates);
+    ODDBuilder builder = bf(odd.getLayer(0).leftStates);
     builder.setInitialStates(odd.initialStates());
     for (int i = 0; i < odd.countLayers(); i++) {
         ODD::AlphabetMap oldAlphabet = odd.getLayer(i).alphabet;
@@ -366,6 +409,18 @@ ODD diagramMapping(const std::vector<AlphabetMapping>& gs, const ODD& odd) {
     }
     builder.setFinalStates(odd.finalStates());
     return builder.build();
+}
+
+}
+
+ODD diagramMapping(const std::vector<AlphabetMapping>& gs, const ODD& odd) {
+    return diagramMapping(gs, odd, memoryFactory);
+}
+
+ODD diagramMapping(const std::vector<AlphabetMapping>& gs,
+                   const ODD& odd,
+                   const std::string& dirName) {
+    return diagramMapping(gs, odd, diskFactory(dirName));
 }
 
 namespace {
@@ -398,14 +453,13 @@ ODD::TransitionContainer transitionInvMapping(const AlphabetMapping& g,
     return ret;
 }
 
-}
-
 ODD diagramInverseMapping(const std::vector<AlphabetMapping>& gs,
                           const std::vector<ODD::AlphabetMap>& newAlphabets,
-                          const ODD& odd) {
+                          const ODD& odd,
+                          ODDBuilderFactory bf) {
     assert((int)gs.size() == odd.countLayers());
     assert((int)newAlphabets.size() == odd.countLayers());
-    ODDBuilder builder(odd.getLayer(0).leftStates);
+    ODDBuilder builder = bf(odd.getLayer(0).leftStates);
     builder.setInitialStates(odd.initialStates());
     for (int i = 0; i < odd.countLayers(); i++) {
         ODD::AlphabetMap oldAlphabet = odd.getLayer(i).alphabet;
@@ -421,6 +475,21 @@ ODD diagramInverseMapping(const std::vector<AlphabetMapping>& gs,
     }
     builder.setFinalStates(odd.finalStates());
     return builder.build();
+}
+
+}
+
+ODD diagramInverseMapping(const std::vector<AlphabetMapping>& gs,
+                          const std::vector<ODD::AlphabetMap>& newAlphabets,
+                          const ODD& odd) {
+    return diagramInverseMapping(gs, newAlphabets, odd, memoryFactory);
+}
+
+ODD diagramInverseMapping(const std::vector<AlphabetMapping>& gs,
+                          const std::vector<ODD::AlphabetMap>& newAlphabets,
+                          const ODD& odd,
+                          const std::string& dirName) {
+    return diagramInverseMapping(gs, newAlphabets, odd, diskFactory(dirName));
 }
 
 bool isDeterministic(const ODD& odd) {
@@ -515,10 +584,8 @@ ODD::StateContainer dpsFinalStates(const ODD::Layer& rightLayer) {
     return ret;
 }
 
-}
-
-ODD diagramPowerSet(const ODD& odd) {
-    ODDBuilder builder(1);
+ODD diagramPowerSet(const ODD& odd, ODDBuilderFactory bf) {
+    ODDBuilder builder = bf(1);
     builder.setInitialStates({0});
     builder.addLayer(
         odd.getLayer(0).alphabet,
@@ -536,6 +603,16 @@ ODD diagramPowerSet(const ODD& odd) {
         )
     );
     return builder.build();
+}
+
+}
+
+ODD diagramPowerSet(const ODD& odd) {
+    return diagramPowerSet(odd, memoryFactory);
+}
+
+ODD diagramPowerSet(const ODD& odd, const std::string& dirName) {
+    return diagramPowerSet(odd, diskFactory(dirName));
 }
 
 namespace {
@@ -605,10 +682,8 @@ ODD::StateContainer dlpsFinalStates(const ODD::Layer& rightLayer,
     return ret;
 }
 
-}
-
-ODD diagramLazyPowerSet(const ODD& odd) {
-    ODDBuilder builder(1);
+ODD diagramLazyPowerSet(const ODD& odd, ODDBuilderFactory bf) {
+    ODDBuilder builder = bf(1);
     builder.setInitialStates({0});
     StateSubsetList next = {odd.initialStates()};
     for (int i = 0; i < odd.countLayers(); i++) {
@@ -621,6 +696,16 @@ ODD diagramLazyPowerSet(const ODD& odd) {
         )
     );
     return builder.build();
+}
+
+}
+
+ODD diagramLazyPowerSet(const ODD& odd) {
+    return diagramLazyPowerSet(odd, memoryFactory);
+}
+
+ODD diagramLazyPowerSet(const ODD& odd, const std::string& dirName) {
+    return diagramLazyPowerSet(odd, diskFactory(dirName));
 }
 
 namespace {
@@ -764,15 +849,7 @@ void minAddLayer(ODDBuilder& builder,
     );
 }
 
-}
-
-ODD minimize(const ODD& initialOdd) {
-    ODDs::ODD odd = copyODD(initialOdd);
-
-    if (!isDeterministic(initialOdd) || !isComplete(initialOdd)) {
-        odd = diagramLazyPowerSet(odd);
-    }
-
+ODD minimize(const ODD& odd, ODDBuilderFactory bf) {
     int n = odd.countLayers();
     ReachabilityMap reachable = reachabilityMap(odd);
     std::vector<ComponentMap> maps(odd.countLayers() + 1);
@@ -781,7 +858,7 @@ ODD minimize(const ODD& initialOdd) {
         maps[i] = glueLayer(odd.getLayer(i), reachable[i], maps[i + 1]);
     }
 
-    ODDBuilder builder(1);
+    ODDBuilder builder = bf(1);
     builder.setInitialStates({0});
     for (int i = 0; i < n; i++) {
         minAddLayer(builder, odd.getLayer(i), maps[i], maps[i + 1]);
@@ -794,6 +871,26 @@ ODD minimize(const ODD& initialOdd) {
     }
 
     return builder.build();
+}
+
+}
+
+ODD minimize(const ODD& odd) {
+    if (!isDeterministic(odd) || !isComplete(odd)) {
+        return minimize(diagramLazyPowerSet(odd), memoryFactory);
+    } else {
+        return minimize(odd, memoryFactory);
+    }
+}
+
+ODD minimize(const ODD& odd,
+             const std::string& dirName,
+             const std::string& tempDirName) {
+    if (!isDeterministic(odd) || !isComplete(odd)) {
+        ODD copy = diagramLazyPowerSet(odd, tempDirName);
+        return minimize(copy, diskFactory(dirName));
+    }
+    return minimize(odd, diskFactory(dirName));
 }
 
 }

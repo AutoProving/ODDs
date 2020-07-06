@@ -26,17 +26,31 @@
 
 #include <Common/DivisionODDs.h>
 
+#include <filesystem>
 #include <string>
 
 namespace {
 
-void doTest(std::string lhsDesc,
-            std::string rhsDesc,
-            std::string expectedDesc) {
+void doTest(const std::string& lhsDesc,
+            const std::string& rhsDesc,
+            const std::string& expectedDesc) {
     ODDs::ODD lhs = ODDs::readJSON(lhsDesc);
     ODDs::ODD rhs = ODDs::readJSON(rhsDesc);
     ODDs::ODD expected = ODDs::readJSON(expectedDesc);
     ODDs::ODD result = ODDs::diagramUnion(lhs, rhs);
+    ASSERT_EQ(ODDs::writeJSON(expected), ODDs::writeJSON(result));
+}
+
+void doDiskTest(const std::string& lhsDesc,
+                const std::string& rhsDesc,
+                const std::string& expectedDesc) {
+    namespace fs = std::filesystem;
+    ODDs::ODD lhs = ODDs::readJSON(lhsDesc);
+    ODDs::ODD rhs = ODDs::readJSON(rhsDesc);
+    ODDs::ODD expected = ODDs::readJSON(expectedDesc);
+    std::string dirName = std::tmpnam(nullptr);
+    ODDs::ODD result = ODDs::diagramUnion(lhs, rhs, dirName);
+    EXPECT_TRUE(fs::exists(dirName));
     ASSERT_EQ(ODDs::writeJSON(expected), ODDs::writeJSON(result));
 }
 
@@ -158,6 +172,10 @@ TEST_F(ODDsUnionTest, trivial) {
     doTest(trivialLhsDesc, trivialRhsDesc, trivialExpectedDesc);
 }
 
+TEST_F(ODDsUnionTest, trivialDisk) {
+    doDiskTest(trivialLhsDesc, trivialRhsDesc, trivialExpectedDesc);
+}
+
 //{abc,abd} non-deterministic
 std::string ODDsUnionTest::nonDetLhsDesc = R"(
 {
@@ -270,8 +288,25 @@ TEST_F(ODDsUnionTest, nonDet) {
     doTest(nonDetLhsDesc, nonDetRhsDesc, nonDetExpectedDesc);
 }
 
+TEST_F(ODDsUnionTest, nonDetDisk) {
+    doDiskTest(nonDetLhsDesc, nonDetRhsDesc, nonDetExpectedDesc);
+}
+
 TEST_F(ODDsUnionTest, div2div3) {
     auto odd = TestCommon::div2(10) | TestCommon::div3(10);
+    auto pred = [](int n) -> bool {
+        return n % 2 == 0 || n % 3 == 0;
+    };
+    ASSERT_TRUE(TestCommon::checkPredicate(odd, pred));
+}
+
+TEST_F(ODDsUnionTest, div2div3Disk) {
+    namespace fs = std::filesystem;
+    std::string dirName = std::tmpnam(nullptr);
+    auto odd = ODDs::diagramUnion(TestCommon::div2(10),
+                                  TestCommon::div3(10),
+                                  dirName);
+    EXPECT_TRUE(fs::exists(dirName));
     auto pred = [](int n) -> bool {
         return n % 2 == 0 || n % 3 == 0;
     };

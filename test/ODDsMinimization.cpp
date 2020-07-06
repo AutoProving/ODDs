@@ -26,6 +26,8 @@
 
 #include <Common/DivisionODDs.h>
 
+#include <filesystem>
+
 class ODDsMinimizationTest : public ::testing::Test {
 protected:
     static std::string trivialArgDesc;
@@ -152,9 +154,32 @@ TEST_F(ODDsMinimizationTest, trivial) {
     ASSERT_EQ(ODDs::writeJSON(expected), ODDs::writeJSON(actual));
 }
 
+
+TEST_F(ODDsMinimizationTest, trivialDisk) {
+    namespace fs = std::filesystem;
+    ODDs::ODD arg = ODDs::readJSON(trivialArgDesc);
+    ODDs::ODD expected = ODDs::readJSON(trivialExpectedDesc);
+    std::string dirName = std::tmpnam(nullptr), temp = std::tmpnam(nullptr);
+    ODDs::ODD actual = ODDs::minimize(arg, dirName, temp);
+    EXPECT_TRUE(fs::exists(dirName));
+    EXPECT_FALSE(fs::exists(temp));
+    ASSERT_EQ(ODDs::writeJSON(expected), ODDs::writeJSON(actual));
+}
+
 TEST_F(ODDsMinimizationTest, everyAccepted) {
     ODDs::ODD arg = ODDs::readJSON(everyAccepted);
     ODDs::ODD odd = ODDs::minimize(arg);
+    for (int i = 0; i < odd.countLayers(); i++)
+        EXPECT_EQ(1, odd.getLayer(i).width());
+}
+
+TEST_F(ODDsMinimizationTest, everyAcceptedDisk) {
+    namespace fs = std::filesystem;
+    ODDs::ODD arg = ODDs::readJSON(everyAccepted);
+    std::string dirName = std::tmpnam(nullptr), temp = std::tmpnam(nullptr);
+    ODDs::ODD odd = ODDs::minimize(arg, dirName, temp);
+    EXPECT_TRUE(fs::exists(dirName));
+    EXPECT_FALSE(fs::exists(temp));
     for (int i = 0; i < odd.countLayers(); i++)
         EXPECT_EQ(1, odd.getLayer(i).width());
 }
@@ -166,11 +191,34 @@ TEST_F(ODDsMinimizationTest, noneAccepted) {
         EXPECT_EQ(1, odd.getLayer(i).width());
 }
 
+TEST_F(ODDsMinimizationTest, noneAcceptedDisk) {
+    namespace fs = std::filesystem;
+    ODDs::ODD arg = ODDs::readJSON(noneAccepted);
+    std::string dirName = std::tmpnam(nullptr), temp = std::tmpnam(nullptr);
+    ODDs::ODD odd = ODDs::minimize(arg, dirName, temp);
+    EXPECT_TRUE(fs::exists(dirName));
+    EXPECT_FALSE(fs::exists(temp));
+    for (int i = 0; i < odd.countLayers(); i++)
+        EXPECT_EQ(1, odd.getLayer(i).width());
+}
+
 TEST_F(ODDsMinimizationTest, div3) {
     ASSERT_TRUE(
         ODDs::isDeterministic(
             ODDs::minimize(
                 TestCommon::div3(10)
+            )
+        )
+    );
+}
+
+TEST_F(ODDsMinimizationTest, div3Disk) {
+    ASSERT_TRUE(
+        ODDs::isDeterministic(
+            ODDs::minimize(
+                TestCommon::div3(10),
+                std::tmpnam(nullptr),
+                std::tmpnam(nullptr)
             )
         )
     );

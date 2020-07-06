@@ -26,24 +26,51 @@
 #include <ODDs/Operations.h>
 #include <ODDs/JSONDump.h>
 
+#include <filesystem>
+
 namespace {
 
-void doTest(std::vector<ODDs::AlphabetMapping> gs,
-            std::string argDesc,
-            std::string expectedDesc) {
+void doTest(const std::vector<ODDs::AlphabetMapping>& gs,
+            const std::string& argDesc,
+            const std::string& expectedDesc) {
     ODDs::ODD arg = ODDs::readJSON(argDesc);
     ODDs::ODD expected = ODDs::readJSON(expectedDesc);
     ODDs::ODD result = ODDs::diagramMapping(gs, arg);
     ASSERT_EQ(ODDs::writeJSON(expected), ODDs::writeJSON(result));
 }
 
+void doDiskTest(const std::vector<ODDs::AlphabetMapping>& gs,
+                const std::string& argDesc,
+                const std::string& expectedDesc) {
+    namespace fs = std::filesystem;
+    ODDs::ODD arg = ODDs::readJSON(argDesc);
+    ODDs::ODD expected = ODDs::readJSON(expectedDesc);
+    std::string dirName = std::tmpnam(nullptr);
+    ODDs::ODD result = ODDs::diagramMapping(gs, arg, dirName);
+    EXPECT_TRUE(fs::exists(dirName));
+    ASSERT_EQ(ODDs::writeJSON(expected), ODDs::writeJSON(result));
+}
+
 void doTestInverse(const std::vector<ODDs::AlphabetMapping>& gs,
                    const std::vector<ODDs::ODD::AlphabetMap>& as,
-                   std::string argDesc,
-                   std::string expectedDesc) {
+                   const std::string& argDesc,
+                   const std::string& expectedDesc) {
     ODDs::ODD arg = ODDs::readJSON(argDesc);
     ODDs::ODD expected = ODDs::readJSON(expectedDesc);
     ODDs::ODD result = ODDs::diagramInverseMapping(gs, as, arg);
+    ASSERT_EQ(ODDs::writeJSON(expected), ODDs::writeJSON(result));
+}
+
+void doDiskTestInverse(const std::vector<ODDs::AlphabetMapping>& gs,
+                       const std::vector<ODDs::ODD::AlphabetMap>& as,
+                       const std::string& argDesc,
+                       const std::string& expectedDesc) {
+    namespace fs = std::filesystem;
+    ODDs::ODD arg = ODDs::readJSON(argDesc);
+    ODDs::ODD expected = ODDs::readJSON(expectedDesc);
+    std::string dirName = std::tmpnam(nullptr);
+    ODDs::ODD result = ODDs::diagramInverseMapping(gs, as, arg, dirName);
+    EXPECT_TRUE(fs::exists(dirName));
     ASSERT_EQ(ODDs::writeJSON(expected), ODDs::writeJSON(result));
 }
 
@@ -172,6 +199,11 @@ TEST_F(ODDsMappingTest, trivial) {
     doTest(maps, trivialArg, trivialExpected);
 }
 
+TEST_F(ODDsMappingTest, trivialDisk) {
+    std::vector<ODDs::AlphabetMapping> maps = {swapMap, swapMap, swapMap};
+    doDiskTest(maps, trivialArg, trivialExpected);
+}
+
 TEST_F(ODDsMappingTest, div3) {
     auto pred = [](int n) -> bool {
         int m = ~n & ~1023;
@@ -199,6 +231,23 @@ TEST_F(ODDsMappingTest, inverseTrivial) {
     std::vector<ODDs::ODD::AlphabetMap> alphabets = {a, b, bac};
     std::vector<ODDs::AlphabetMapping> maps = {swapMap, swapMap, swapMap};
     doTestInverse(maps, alphabets, trivialExpected, trivialInverseExpected);
+}
+
+TEST_F(ODDsMappingTest, inverseTrivialDisk) {
+    ODDs::ODD::AlphabetMap a;
+    a.addSymbol("a");
+
+    ODDs::ODD::AlphabetMap b;
+    b.addSymbol("b");
+
+    ODDs::ODD::AlphabetMap bac;
+    bac.addSymbol("b");
+    bac.addSymbol("a");
+    bac.addSymbol("c");
+
+    std::vector<ODDs::ODD::AlphabetMap> alphabets = {a, b, bac};
+    std::vector<ODDs::AlphabetMapping> maps = {swapMap, swapMap, swapMap};
+    doDiskTestInverse(maps, alphabets, trivialExpected, trivialInverseExpected);
 }
 
 TEST_F(ODDsMappingTest, inverseDiv3) {
