@@ -40,6 +40,22 @@ namespace ODDs {
  * object is destroyed; one should call ODD::detachDir to prevent this. An
  * ODD can be restored from the directory where it was stored by calling
  * ODDs::readFromDirectory.
+ *
+ * @warning Since disk mode ODD dynamically loads and unloads layers, make
+ * sure you don't work with two layers simultaneously with undefined operation
+ * order. For instance, the following assertion might fail:
+ * @code
+ * // Assuming odd is a valid ODD with at least two layers.
+ * assert(odd.getLayer(0).rightStates == odd.getLayer(1).leftStates);
+ * @endcode
+ * The reason is that layer 0 may be unloaded by the time the number of its
+ * right states is requested. A correct way to do the same assertion is as
+ * follows:
+ * @code
+ * int leftStates = odd.getLayer(0).rightStates;
+ * int rightStates = odd.getLayer(1).leftStates;
+ * assert(leftStates == rightStates);
+ * @endcode
  */
 class ODD {
 public:
@@ -440,12 +456,22 @@ public:
      */
     void detachDir();
 
+    /**
+     * @brief Reduces amount of space used by disk-mode ODD.
+     *
+     * Unloads loaded layer, if there is such layer.
+     */
+    void unload() const;
+
 private:
+    std::vector<Layer> layers_;
+
     Mode mode_;
     mutable int loaded_;
     std::string dirName_;
-    mutable std::vector<Layer> layers_;
     bool detached_ = false;
+    int countLayers_;
+    mutable Layer loadedLayer_;
 
     friend class ODDBuilder;
     friend std::optional<ODD> readFromDirectory(const std::string&);

@@ -33,7 +33,9 @@ void testLayersSanity(const ODDs::ODD& odd) {
         ASSERT_EQ(i == 0, odd.getLayer(i).isInitial);
         ASSERT_EQ(i + 1 == odd.countLayers(), odd.getLayer(i).isFinal);
         if (!odd.getLayer(i).isFinal) {
-            ASSERT_EQ(odd.getLayer(i).rightStates, odd.getLayer(i + 1).leftStates);
+            int leftStates = odd.getLayer(i).rightStates;
+            int rightStates = odd.getLayer(i + 1).leftStates;
+            ASSERT_EQ(leftStates, rightStates);
         }
     }
 }

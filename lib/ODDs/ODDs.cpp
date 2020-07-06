@@ -237,15 +237,15 @@ bool ODD::Layer::checkSanity() const {
 }
 
 ODD::ODD()
-    : mode_(Mode::Memory)
-    , layers_()
+    : layers_()
+    , mode_(Mode::Memory)
 {}
 
 ODD::ODD(const std::string& dirName)
-    : mode_(Mode::Disk)
+    : layers_()
+    , mode_(Mode::Disk)
     , loaded_(-1)
     , dirName_(dirName)
-    , layers_()
 {}
 
 ODD::~ODD() {
@@ -274,7 +274,7 @@ ODD& ODD::operator=(ODD&& rhs) {
 }
 
 int ODD::countLayers() const {
-    return layers_.size();
+    return countLayers_;
 }
 
 namespace {
@@ -313,12 +313,12 @@ const ODD::Layer& ODD::getLayer(int i) const {
     // Else mode_ == Mode::Disk
     if (loaded_ != i) {
         if (loaded_ != -1) {
-            unloadLayer(layers_[i]);
+            unloadLayer(loadedLayer_);
         }
-        loadLayer(layers_[i], dirName_, i);
+        loadLayer(loadedLayer_, dirName_, i);
         loaded_ = i;
     }
-    return layers_[i];
+    return loadedLayer_;
 }
 
 const ODD::StateContainer& ODD::initialStates() const {
@@ -331,6 +331,13 @@ const ODD::StateContainer& ODD::finalStates() const {
 
 void ODD::detachDir() {
     detached_ = true;
+}
+
+void ODD::unload() const {
+    if (loaded_ != -1) {
+        unloadLayer(loadedLayer_);
+        loaded_ = -1;
+    }
 }
 
 namespace {
@@ -400,12 +407,13 @@ public:
     virtual ODD build() = 0;
 
 protected:
-    ODD doBuild() const {
+    ODD doBuild(int countLayers) const {
         ODD ret;
+        ret.layers_ = std::move(layers_);
         ret.mode_ = mode_;
         ret.loaded_ = -1;
         ret.dirName_ = std::move(dirName_);
-        ret.layers_ = std::move(layers_);
+        ret.countLayers_ = countLayers;
         return ret;
     }
 
@@ -447,7 +455,7 @@ public:
             layers_[0].initialStates = std::move(initialStates_);
             layers_.back().finalStates = std::move(finalStates_);
         }
-        return doBuild();
+        return doBuild(layers_.size());
     }
 
 private:
@@ -480,7 +488,6 @@ public:
     }
 
     virtual ODD build() override {
-        layers_.resize(i_);
         {
             // Set initial states
             ODD::Layer initialLayer;
@@ -497,7 +504,7 @@ public:
             finalLayer.finalStates = std::move(finalStates_);
             writeLayer(finalLayer, dirName_, i_ - 1);
         }
-        return doBuild();
+        return doBuild(i_);
     }
 
 private:
@@ -615,7 +622,7 @@ std::optional<ODD> readFromDirectory(const std::string& dirName) {
     ret.mode_ = ODD::Mode::Disk;
     ret.loaded_ = -1;
     ret.dirName_ = dirName;
-    ret.layers_.resize(layers);
+    ret.countLayers_ = layers;
     return {std::move(ret)};
 }
 
