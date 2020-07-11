@@ -262,6 +262,7 @@ ODD::ODD(ODD&& other) {
     layers_ = std::move(other.layers_);
     detached_ = other.detached_;
     countLayers_ = other.countLayers_;
+    loadedLayer_ = std::move(other.loadedLayer_);
     other.detached_ = true;
 }
 
@@ -272,6 +273,7 @@ ODD& ODD::operator=(ODD&& rhs) {
     std::swap(layers_, rhs.layers_);
     std::swap(detached_, rhs.detached_);
     std::swap(countLayers_, rhs.countLayers_);
+    std::swap(loadedLayer_, rhs.loadedLayer_);
     return *this;
 }
 

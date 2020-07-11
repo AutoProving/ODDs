@@ -261,6 +261,24 @@ TEST_F(ODDBuilderTest, trivialDisk) {
     EXPECT_FALSE(fs::exists(fs::path(dirName)));
 }
 
+TEST_F(ODDBuilderTest, finalStatesAfterMove) {
+    ODDs::ODD odd = buildODD(std::tmpnam(nullptr));
+    auto expected = odd.finalStates();
+    ODDs::ODD moved(std::move(odd));
+    EXPECT_EQ(expected, moved.finalStates());
+}
+
+TEST_F(ODDBuilderTest, finalStatesAfterMoveAssignment) {
+    ODDs::ODD moveAssigned = buildODD(std::tmpnam(nullptr));
+    ODDs::ODD::StateContainer expected;
+    {
+        ODDs::ODD odd = buildODD(std::tmpnam(nullptr));
+        expected = odd.finalStates();
+        moveAssigned = std::move(odd);
+    }
+    EXPECT_EQ(expected, moveAssigned.finalStates());
+}
+
 TEST_F(ODDBuilderTest, copyODDMemoryToMemory) {
     ODDs::ODD odd = buildODD();
     ODDs::ODD copy = ODDs::copyODD(odd);
