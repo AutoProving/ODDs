@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 
+# std::filesystem is only available on Catalina.
+set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15)
+
 project(ODDs)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -31,7 +34,8 @@ if (NOT ODDs_DISABLE_TESTS)
         test/ODDsNegation.cpp
         test/ODDsMapping.cpp
         test/ODDsPowerSet.cpp
-        test/ODDsMinimization.cpp)
+        test/ODDsMinimization.cpp
+        test/JSONLayers.cpp)
     target_include_directories(ODDsTest PUBLIC lib/)
     target_include_directories(ODDsTest PUBLIC test/)
     target_include_directories(ODDsTest PUBLIC ext/googletest/googletest/include/)

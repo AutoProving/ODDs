@@ -22,6 +22,7 @@
 #include <ODDs/ODDs.h>
 #include <ODDs/JSONDump.h>
 
+#include <filesystem>
 #include <sstream>
 
 namespace {
@@ -32,7 +33,9 @@ void testLayersSanity(const ODDs::ODD& odd) {
         ASSERT_EQ(i == 0, odd.getLayer(i).isInitial);
         ASSERT_EQ(i + 1 == odd.countLayers(), odd.getLayer(i).isFinal);
         if (!odd.getLayer(i).isFinal) {
-            ASSERT_EQ(odd.getLayer(i).rightStates, odd.getLayer(i + 1).leftStates);
+            int leftStates = odd.getLayer(i).rightStates;
+            int rightStates = odd.getLayer(i + 1).leftStates;
+            ASSERT_EQ(leftStates, rightStates);
         }
     }
 }
@@ -132,13 +135,22 @@ protected:
         ASSERT_EQ(finalStates, odd.getLayer(1).finalStates);
     }
 
-    virtual ODDs::ODD buildODD() {
-        ODDs::ODDBuilder builder(states0);
+    virtual ODDs::ODD doBuildODD(ODDs::ODDBuilder& builder) {
         builder.addLayer(alphabet0, transitions0, states1);
         builder.addLayer(alphabet1, transitions1, states2);
         builder.setInitialStates(initialStates);
         builder.setFinalStates(finalStates);
         return builder.build();
+    }
+
+    virtual ODDs::ODD buildODD() {
+        ODDs::ODDBuilder builder(states0);
+        return doBuildODD(builder);
+    }
+
+    virtual ODDs::ODD buildODD(const std::string& dirName) {
+        ODDs::ODDBuilder builder(states0, dirName);
+        return doBuildODD(builder);
     }
 };
 
@@ -236,6 +248,87 @@ std::string ODDBuilderTest::jsonDescription = R"({
 TEST_F(ODDBuilderTest, trivial) {
     ODDs::ODD odd = buildODD();
     checkODD(odd);
+}
+
+TEST_F(ODDBuilderTest, trivialDisk) {
+    namespace fs = std::filesystem;
+    std::string dirName = std::tmpnam(nullptr);
+    {
+        ODDs::ODD odd = buildODD(dirName);
+        checkODD(odd);
+        EXPECT_TRUE(fs::exists(fs::path(dirName)));
+    }
+    EXPECT_FALSE(fs::exists(fs::path(dirName)));
+}
+
+TEST_F(ODDBuilderTest, finalStatesAfterMove) {
+    ODDs::ODD odd = buildODD(std::tmpnam(nullptr));
+    auto expected = odd.finalStates();
+    ODDs::ODD moved(std::move(odd));
+    EXPECT_EQ(expected, moved.finalStates());
+}
+
+TEST_F(ODDBuilderTest, finalStatesAfterMoveAssignment) {
+    ODDs::ODD moveAssigned = buildODD(std::tmpnam(nullptr));
+    ODDs::ODD::StateContainer expected;
+    {
+        ODDs::ODD odd = buildODD(std::tmpnam(nullptr));
+        expected = odd.finalStates();
+        moveAssigned = std::move(odd);
+    }
+    EXPECT_EQ(expected, moveAssigned.finalStates());
+}
+
+TEST_F(ODDBuilderTest, copyODDMemoryToMemory) {
+    ODDs::ODD odd = buildODD();
+    ODDs::ODD copy = ODDs::copyODD(odd);
+    checkODD(copy);
+}
+
+TEST_F(ODDBuilderTest, copyODDMemoryToDisk) {
+    std::string dirName = std::tmpnam(nullptr);
+    ODDs::ODD odd = buildODD();
+    ODDs::ODD copy = ODDs::copyODD(odd, dirName);
+    checkODD(copy);
+}
+
+TEST_F(ODDBuilderTest, copyODDDiskToMemory) {
+    std::string dirName = std::tmpnam(nullptr);
+    ODDs::ODD odd = buildODD(dirName);
+    ODDs::ODD copy = ODDs::copyODD(odd);
+    checkODD(copy);
+}
+
+TEST_F(ODDBuilderTest, copyODDDiskToDisk) {
+    namespace fs = std::filesystem;
+    std::string dirName = std::tmpnam(nullptr);
+    std::string copyDirName = std::tmpnam(nullptr);
+    std::unique_ptr<ODDs::ODD> copy;
+    {
+        ODDs::ODD odd = buildODD(dirName);
+        ASSERT_TRUE(fs::exists(dirName));
+        copy.reset(new ODDs::ODD(copyODD(odd, copyDirName)));
+        ASSERT_TRUE(fs::exists(copyDirName));
+    }
+    EXPECT_FALSE(fs::exists(dirName));
+    checkODD(*copy);
+}
+
+TEST_F(ODDBuilderTest, saveDirAndLoad) {
+    namespace fs = std::filesystem;
+    std::string dirName = std::tmpnam(nullptr);
+    {
+        ODDs::ODD odd = buildODD(dirName);
+        checkODD(odd);
+        odd.detachDir();
+    }
+    ASSERT_TRUE(fs::exists(fs::path(dirName)));
+    {
+        auto odd = ODDs::readFromDirectory(dirName);
+        ASSERT_TRUE(odd.has_value());
+        checkODD(odd.value());
+    }
+    EXPECT_FALSE(fs::exists(fs::path(dirName)));
 }
 
 TEST_F(ODDBuilderTest, noLayers) {

@@ -26,6 +26,8 @@
 #include <ODDs/Operations.h>
 #include <ODDs/JSONDump.h>
 
+#include <filesystem>
+
 namespace {
 
 void doTest(std::string lhsDesc,
@@ -35,6 +37,19 @@ void doTest(std::string lhsDesc,
     ODDs::ODD rhs = ODDs::readJSON(rhsDesc);
     ODDs::ODD expected = ODDs::readJSON(expectedDesc);
     ODDs::ODD result = ODDs::diagramIntersection(lhs, rhs);
+    ASSERT_EQ(ODDs::writeJSON(expected), ODDs::writeJSON(result));
+}
+
+void doDiskTest(const std::string& lhsDesc,
+                const std::string& rhsDesc,
+                const std::string& expectedDesc) {
+    namespace fs = std::filesystem;
+    ODDs::ODD lhs = ODDs::readJSON(lhsDesc);
+    ODDs::ODD rhs = ODDs::readJSON(rhsDesc);
+    ODDs::ODD expected = ODDs::readJSON(expectedDesc);
+    std::string dirName = std::tmpnam(nullptr);
+    ODDs::ODD result = ODDs::diagramIntersection(lhs, rhs, dirName);
+    EXPECT_TRUE(fs::exists(dirName));
     ASSERT_EQ(ODDs::writeJSON(expected), ODDs::writeJSON(result));
 }
 
@@ -157,6 +172,10 @@ std::string ODDsIntersectionTest::trivialExpectedDesc = R"(
 
 TEST_F(ODDsIntersectionTest, trivial) {
     doTest(trivialLhsDesc, trivialRhsDesc, trivialExpectedDesc);
+}
+
+TEST_F(ODDsIntersectionTest, trivialDisk) {
+    doDiskTest(trivialLhsDesc, trivialRhsDesc, trivialExpectedDesc);
 }
 
 TEST_F(ODDsIntersectionTest, div2div3) {

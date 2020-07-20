@@ -43,6 +43,12 @@ void writeInt(W& writer, const char* key, int value) {
 }
 
 template<class W>
+void writeBool(W& writer, const char* key, bool value) {
+    writer.Key(key);
+    writer.Bool(value);
+}
+
+template<class W>
 void writeString(W& writer, const char* key, std::string value) {
     writer.Key(key);
     writer.String(value.c_str());
@@ -97,6 +103,31 @@ void writeTransitionSet(W& writer,
 }
 
 template<class W>
+void writeLayer(const ODD::Layer& layer, W& writer) {
+    const ODD::AlphabetMap& alphabet = layer.alphabet;
+    writer.StartObject();
+    writeAlphabet(writer, "alphabet", alphabet);
+    writeTransitionSet(writer, "transitions", layer.transitions, alphabet);
+    writeInt(writer, "rightLayerStates", layer.rightStates);
+    writer.EndObject();
+}
+
+template<class W>
+void writeLayerDetailed(const ODD::Layer& layer, W& writer) {
+    const ODD::AlphabetMap& alphabet = layer.alphabet;
+    writer.StartObject();
+    writeAlphabet(writer, "alphabet", alphabet);
+    writeInt(writer, "leftLayerStates", layer.leftStates);
+    writeStateSet(writer, "initialStates", layer.initialStates);
+    writeInt(writer, "rightLayerStates", layer.rightStates);
+    writeStateSet(writer, "finalStates", layer.finalStates);
+    writeTransitionSet(writer, "transitions", layer.transitions, alphabet);
+    writeBool(writer, "isInitial", layer.isInitial);
+    writeBool(writer, "isFinal", layer.isFinal);
+    writer.EndObject();
+}
+
+template<class W>
 void writeJSON(const ODD& odd, W& writer) {
     writer.StartObject();
 
@@ -107,12 +138,7 @@ void writeJSON(const ODD& odd, W& writer) {
     writer.StartArray();
     for (int i = 0; i < odd.countLayers(); i++) {
         const ODD::Layer& layer = odd.getLayer(i);
-        const ODD::AlphabetMap& alphabet = layer.alphabet;
-        writer.StartObject();
-        writeAlphabet(writer, "alphabet", alphabet);
-        writeTransitionSet(writer, "transitions", layer.transitions, alphabet);
-        writeInt(writer, "rightLayerStates", layer.rightStates);
-        writer.EndObject();
+        writeLayer(layer, writer);
     }
     writer.EndArray();
 
@@ -138,6 +164,12 @@ void prettyprintJSON(B& buffer, const ODD& odd) {
 void writeJSON(std::ostream& os, const ODD& odd) {
     rapidjson::OStreamWrapper s(os);
     prettyprintJSON(s, odd);
+}
+
+void writeJSON(std::ostream& os, const ODD::Layer& layer) {
+    rapidjson::OStreamWrapper s(os);
+    rapidjson::Writer<rapidjson::OStreamWrapper> w(s);
+    writeLayerDetailed(layer, w);
 }
 
 std::string writeJSON(const ODD& odd) {
@@ -170,6 +202,15 @@ int readInt(const T& object, const char* key) {
     if (!object[key].IsInt())
         throw JSONKeyError(key, "int");
     return object[key].GetInt();
+}
+
+template<class T>
+bool readBool(const T& object, const char* key) {
+    if (!object.HasMember(key))
+        throw JSONKeyError(key, "bool");
+    if (!object[key].IsBool())
+        throw JSONKeyError(key, "bool");
+    return object[key].GetBool();
 }
 
 template<class T>
@@ -239,6 +280,44 @@ ODD::TransitionContainer readTransitionSet(const T& object,
     return transitions;
 }
 
+template<class T>
+ODD::Layer readLayerDetailed(const T& layer) {
+    if (!layer.IsObject())
+        throw JSONKeyError("layers", "layer");
+    ODD::AlphabetMap alphabet = readAlphabetMap(layer, "alphabet");
+    int leftStates = readInt(layer, "leftLayerStates");
+    ODD::StateContainer initialStates = readStateSet(layer, "initialStates");
+    int rightStates = readInt(layer, "rightLayerStates");
+    ODD::StateContainer finalStates = readStateSet(layer, "finalStates");
+    ODD::TransitionContainer transitions =
+        readTransitionSet(layer, "transitions", alphabet);
+    bool isInitial = readBool(layer, "isInitial");
+    bool isFinal = readBool(layer, "isFinal");
+    return ODD::Layer {
+        std::move(alphabet),
+        leftStates,
+        std::move(initialStates),
+        rightStates,
+        std::move(finalStates),
+        std::move(transitions),
+        isInitial,
+        isFinal
+    };
+}
+
+template<class S>
+ODD::Layer streamReadLayerDetailed(S& stream) {
+    rapidjson::Document d;
+    if (d.ParseStream(stream).HasParseError()) {
+        throw JSONParseError(rapidjson::GetParseError_En(d.GetParseError()));
+    }
+    if (!d.IsObject()) {
+        throw JSONKeyError("<document>", "object");
+    }
+
+    return readLayerDetailed<>(d);
+}
+
 template<class S>
 ODD readJSON(S& stream) {
     rapidjson::Document d;
@@ -282,6 +361,11 @@ JSONParseError::JSONParseError(std::string message)
 ODD readJSON(std::istream& is) {
     rapidjson::IStreamWrapper w(is);
     return readJSON<>(w);
+}
+
+ODD::Layer readLayerJSON(std::istream& is) {
+    rapidjson::IStreamWrapper w(is);
+    return streamReadLayerDetailed<>(w);
 }
 
 ODD readJSON(const std::string& description) {

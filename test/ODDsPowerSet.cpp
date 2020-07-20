@@ -26,6 +26,8 @@
 
 #include <Common/DivisionODDs.h>
 
+#include <filesystem>
+
 class ODDsPowerSetTest : public ::testing::Test {
 protected:
     static std::string trivialArgDesc;
@@ -233,9 +235,28 @@ TEST_F(ODDsPowerSetTest, trivial) {
     ASSERT_EQ(ODDs::writeJSON(expected), ODDs::writeJSON(actual));
 }
 
+TEST_F(ODDsPowerSetTest, trivialDisk) {
+    namespace fs = std::filesystem;
+    ODDs::ODD arg = ODDs::readJSON(trivialArgDesc);
+    ODDs::ODD expected = ODDs::readJSON(trivialNLExpectedDesc);
+    std::string dirName = std::tmpnam(nullptr);
+    ODDs::ODD actual = ODDs::diagramPowerSet(arg, dirName);
+    EXPECT_TRUE(fs::exists(dirName));
+    ASSERT_EQ(ODDs::writeJSON(expected), ODDs::writeJSON(actual));
+}
+
 TEST_F(ODDsPowerSetTest, incomplete) {
     ODDs::ODD odd = ODDs::readJSON(incompleteDesc);
     ODDs::ODD actual = ODDs::diagramPowerSet(odd);
+    ASSERT_TRUE(isComplete(actual));
+}
+
+TEST_F(ODDsPowerSetTest, incompleteDisk) {
+    namespace fs = std::filesystem;
+    ODDs::ODD odd = ODDs::readJSON(incompleteDesc);
+    std::string dirName = std::tmpnam(nullptr);
+    ODDs::ODD actual = ODDs::diagramPowerSet(odd, dirName);
+    EXPECT_TRUE(fs::exists(dirName));
     ASSERT_TRUE(isComplete(actual));
 }
 
@@ -243,13 +264,16 @@ TEST_F(ODDsPowerSetTest, lazyTrivial) {
     ODDs::ODD arg = ODDs::readJSON(trivialArgDesc);
     ODDs::ODD expected = ODDs::readJSON(trivialExpectedDesc);
     ODDs::ODD actual = ODDs::diagramLazyPowerSet(arg);
-    if (ODDs::writeJSON(expected) != ODDs::writeJSON(actual)) {
-        std::cout << "Expected:" << std::endl;
-        ODDs::writeJSON(std::cout, expected);
-        std::cout << std::endl << "Actual: " << std::endl;
-        ODDs::writeJSON(std::cout, actual);
-        std::cout << std::endl;
-    }
+    ASSERT_EQ(ODDs::writeJSON(expected), ODDs::writeJSON(actual));
+}
+
+TEST_F(ODDsPowerSetTest, lazyTrivialDisk) {
+    namespace fs = std::filesystem;
+    ODDs::ODD arg = ODDs::readJSON(trivialArgDesc);
+    ODDs::ODD expected = ODDs::readJSON(trivialExpectedDesc);
+    std::string dirName = std::tmpnam(nullptr);
+    ODDs::ODD actual = ODDs::diagramLazyPowerSet(arg, dirName);
+    EXPECT_TRUE(fs::exists(dirName));
     ASSERT_EQ(ODDs::writeJSON(expected), ODDs::writeJSON(actual));
 }
 
@@ -259,8 +283,26 @@ TEST_F(ODDsPowerSetTest, lazyDetComplete) {
     ASSERT_EQ(ODDs::writeJSON(odd), ODDs::writeJSON(actual));
 }
 
+TEST_F(ODDsPowerSetTest, lazyDetCompleteDisk) {
+    namespace fs = std::filesystem;
+    ODDs::ODD odd = ODDs::readJSON(trivialExpectedDesc);
+    std::string dirName = std::tmpnam(nullptr);
+    ODDs::ODD actual = ODDs::diagramLazyPowerSet(odd, dirName);
+    EXPECT_TRUE(fs::exists(dirName));
+    ASSERT_EQ(ODDs::writeJSON(odd), ODDs::writeJSON(actual));
+}
+
 TEST_F(ODDsPowerSetTest, lazyIncomplete) {
     ODDs::ODD odd = ODDs::readJSON(incompleteDesc);
     ODDs::ODD actual = ODDs::diagramLazyPowerSet(odd);
+    ASSERT_TRUE(isComplete(actual));
+}
+
+TEST_F(ODDsPowerSetTest, lazyIncompleteDisk) {
+    namespace fs = std::filesystem;
+    ODDs::ODD odd = ODDs::readJSON(incompleteDesc);
+    std::string dirName = std::tmpnam(nullptr);
+    ODDs::ODD actual = ODDs::diagramLazyPowerSet(odd, dirName);
+    EXPECT_TRUE(fs::exists(dirName));
     ASSERT_TRUE(isComplete(actual));
 }

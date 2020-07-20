@@ -26,6 +26,7 @@
 
 #include <Common/DivisionODDs.h>
 
+#include <filesystem>
 #include <string>
 
 namespace {
@@ -34,6 +35,16 @@ void doTest(std::string argDesc, std::string expectedDesc) {
     ODDs::ODD arg = ODDs::readJSON(argDesc);
     ODDs::ODD expected = ODDs::readJSON(expectedDesc);
     ODDs::ODD result = ODDs::diagramNegation(arg);
+    ASSERT_EQ(ODDs::writeJSON(expected), ODDs::writeJSON(result));
+}
+
+void doDiskTest(std::string argDesc, std::string expectedDesc) {
+    namespace fs = std::filesystem;
+    ODDs::ODD arg = ODDs::readJSON(argDesc);
+    ODDs::ODD expected = ODDs::readJSON(expectedDesc);
+    std::string dirName = std::tmpnam(nullptr);
+    ODDs::ODD result = ODDs::diagramNegation(arg, dirName);
+    EXPECT_TRUE(fs::exists(dirName));
     ASSERT_EQ(ODDs::writeJSON(expected), ODDs::writeJSON(result));
 }
 
@@ -104,6 +115,12 @@ std::string ODDsNegationTest::trivialExpectedDesc = R"(
 TEST_F(ODDsNegationTest, trivial) {
     doTest(trivialArgDesc, trivialExpectedDesc);
 }
+
+
+TEST_F(ODDsNegationTest, trivialDisk) {
+    doDiskTest(trivialArgDesc, trivialExpectedDesc);
+}
+
 
 TEST_F(ODDsNegationTest, div2) {
     auto pred = [](int n) -> bool {

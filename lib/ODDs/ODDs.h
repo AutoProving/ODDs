@@ -32,6 +32,30 @@ namespace ODDs {
 
 /**
  * @brief An Ordered Decision Diagram.
+ *
+ * An ODD can be stored in memory or on disk. When it is stored on disk, at
+ * most one layer is stored in the memory at a time, but operations are much
+ * slower. In disk mode the ODD is stored in some files in the directory
+ * provided to ODDBuilder. Normally, the directory is deleted after the ODD
+ * object is destroyed; one should call ODD::detachDir to prevent this. An
+ * ODD can be restored from the directory where it was stored by calling
+ * ODDs::readFromDirectory.
+ *
+ * @warning Since disk mode ODD dynamically loads and unloads layers, make
+ * sure you don't work with two layers simultaneously with undefined operation
+ * order. For instance, the following assertion might fail:
+ * @code
+ * // Assuming odd is a valid ODD with at least two layers.
+ * assert(odd.getLayer(0).rightStates == odd.getLayer(1).leftStates);
+ * @endcode
+ * The reason is that layer 0 may be unloaded by the time the number of its
+ * right states is requested. A correct way to do the same assertion is as
+ * follows:
+ * @code
+ * int leftStates = odd.getLayer(0).rightStates;
+ * int rightStates = odd.getLayer(1).leftStates;
+ * assert(leftStates == rightStates);
+ * @endcode
  */
 class ODD {
 public:
@@ -363,10 +387,39 @@ public:
         bool checkSanity() const;
     };
 
+    enum class Mode {
+        Memory,
+        Disk
+    };
+
 private:
     ODD(); // Use ODDBuilder to construct ODDs
 
+    ODD(const std::string& dirName); // Use ODDBuilder to construct ODDs
+
 public:
+    /**
+     * @brief Destroys the ODD on disk if nessessary.
+     */
+    ~ODD();
+
+    /**
+     * Direct copying of ODDs is prohibited because they might incapsulate
+     * ownership of directories.
+     */
+    ODD(const ODD&) = delete;
+    ODD& operator=(const ODD&) = delete;
+
+    /**
+     * @brief Move constructor.
+     */
+    ODD(ODD&& other);
+
+    /**
+     * @brief Move-assignment operator.
+     */
+    ODD& operator=(ODD&& rhs);
+
     /**
      * @brief Returns number of layers.
      *
@@ -394,10 +447,34 @@ public:
      */
     bool accepts(const std::vector<std::string>& string) const;
 
+    /**
+     * @brief Withdraws ownership for the directory.
+     *
+     * If the ODD is in disk mode, this implies that the directory will not be
+     * removed after the object is destroyed. No effect if the ODD is in memory
+     * mode.
+     */
+    void detachDir();
+
+    /**
+     * @brief Reduces amount of space used by disk-mode ODD.
+     *
+     * Unloads loaded layer, if there is such layer.
+     */
+    void unload() const;
+
 private:
     std::vector<Layer> layers_;
 
+    Mode mode_;
+    mutable int loaded_;
+    std::string dirName_;
+    bool detached_ = false;
+    int countLayers_;
+    mutable Layer loadedLayer_;
+
     friend class ODDBuilder;
+    friend std::optional<ODD> readFromDirectory(const std::string&);
 };
 
 /**
@@ -445,10 +522,21 @@ private:
 class ODDBuilder {
 public:
     /**
-     * @brief Construct a builder given the number of vertices in the first
-     * layer.
+     * Implementation-defined inner class.
+     */
+    class Impl;
+
+    /**
+     * @brief Construct a memory builder given the number of vertices in the
+     * first layer.
      */
     ODDBuilder(int leftStateCount);
+
+    /**
+     * @brief Construct a disk builder given the number of vertices in the
+     * first layer and directory name.
+     */
+    ODDBuilder(int leftStateCount, const std::string& dirName);
 
     ~ODDBuilder();
     ODDBuilder(const ODDBuilder&) = delete;
@@ -482,9 +570,30 @@ public:
     ODD build();
 
 private:
-    class Impl;
     std::unique_ptr<Impl> impl_;
 };
+
+/**
+ * @brief Creates a memory copy of given ODD.
+ *
+ * A memory analogue of copy constructor.
+ */
+ODD copyODD(const ODD& odd);
+
+/**
+ * @brief Creates a disk copy of given ODD.
+ *
+ * A disk analogue of copy constructor.
+ */
+ODD copyODD(const ODD& odd, const std::string& dirName);
+
+/**
+ * @brief Tries to load an ODD from directory.
+ *
+ * @return Disk-mode ODD if provided dir contains a correct ODD, nothing
+ * otherwise.
+ */
+std::optional<ODD> readFromDirectory(const std::string& dirName);
 
 /**
  * @brief Reads ODD description from an input stream.
