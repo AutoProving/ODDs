@@ -1,6 +1,0 @@
-[submodule "ext/googletest"]
-	path = ext/googletest
-	url = https://github.com/google/googletest
-[submodule "ext/rapidjson"]
-	path = ext/rapidjson
-	url = https://github.com/Tencent/rapidjson/
