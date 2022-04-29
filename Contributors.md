@@ -8,7 +8,9 @@
 
 [Vasily Alferov](https://github.com/vasalf)
 
-## Contributors
+## Contributors to a Previous Preliminary Version
+
+A very preliminary version of this software, written in C counted with the participation of several contributors (listed below). The current version has been implemented from scratch in C++.
 
 * [MarkusRa1](https://github.com/MarkusRa1)
 * [Ole Magnus Lie](https://github.com/omlie)
